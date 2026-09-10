@@ -63,12 +63,20 @@ export function HeroCentralSection({ anchorRef, progressRef }: HeroCentralSectio
     };
   }, [webglOk]);
 
-  if (webglOk === false) return <AnchoredPoster anchor={anchor} />;
-  if (!ready || !anchor.ready) return <AnchoredPoster anchor={anchor} />;
+  if (webglOk === false) return <AnchoredPoster anchor={anchor} reason="no-webgl" />;
+  if (!ready || !anchor.ready) return <AnchoredPoster anchor={anchor} reason="not-ready" />;
 
   return (
-    <CanvasErrorBoundary fallback={<AnchoredPoster anchor={anchor} />}>
-      <Suspense fallback={<AnchoredPoster anchor={anchor} />}>
+    <CanvasErrorBoundary
+      fallback={(error) => (
+        <AnchoredPoster
+          anchor={anchor}
+          reason="error"
+          detail={error instanceof Error ? `${error.name}: ${error.message}` : String(error)}
+        />
+      )}
+    >
+      <Suspense fallback={<AnchoredPoster anchor={anchor} reason="loading" />}>
         <HeroCentralCanvas
           animate={!prefersReducedMotion}
           anchor={anchor}

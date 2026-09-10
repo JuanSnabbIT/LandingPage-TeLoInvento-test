@@ -1,5 +1,5 @@
 import { useCallback, useState, type RefObject } from 'react';
-import { useGLTF } from '@react-three/drei';
+import { useGLTF, useProgress } from '@react-three/drei';
 import { SceneCanvas } from '../../components/canvas/SceneCanvas';
 import { PageCamera } from '../../components/canvas/PageCamera';
 import { AnchoredPoster } from './AnchoredPoster';
@@ -30,6 +30,10 @@ interface HeroCentralCanvasProps {
 export default function HeroCentralCanvas({ animate, anchor, anchorRef, progressRef }: HeroCentralCanvasProps) {
   const [tier] = useState(getDeviceTier);
   const [contextLost, setContextLost] = useState(false);
+  // drei's loader store -- readable OUTSIDE the <Canvas>, which is where a
+  // DOM poster must live. `active` is true while any useGLTF/useLoader
+  // request in the scene is still in flight.
+  const loading = useProgress((state) => state.active);
 
   const handleContextLost = useCallback(() => setContextLost(true), []);
   const handleContextRestored = useCallback(() => setContextLost(false), []);
@@ -47,7 +51,12 @@ export default function HeroCentralCanvas({ animate, anchor, anchorRef, progress
         // three.js with it) into the main bundle, undoing the lazy-load
         // split below. Not worth that complexity/cost for this harness.
         frameloop="always"
-        fallback={<AnchoredPoster anchor={anchor} />}
+        // No DOM fallback INSIDE the canvas: r3f throws ("Div is not part
+        // of the THREE namespace") for any HTML element in its tree, which
+        // turned the perfectly normal "GLB still loading" state into a
+        // caught error -> permanent poster on slower loads. The loading
+        // poster is rendered as a sibling below instead (useProgress).
+        fallback={null}
         onContextLost={handleContextLost}
         onContextRestored={handleContextRestored}
       >
@@ -63,7 +72,11 @@ export default function HeroCentralCanvas({ animate, anchor, anchorRef, progress
       {/* Context loss overlays the poster near the same anchor rather than
           unmounting the canvas -- WebGL auto-restore can bring the
           context back without us tearing anything down. */}
-      {contextLost && <AnchoredPoster anchor={anchor} />}
+      {contextLost ? (
+        <AnchoredPoster anchor={anchor} reason="context-lost" />
+      ) : loading ? (
+        <AnchoredPoster anchor={anchor} reason="loading" />
+      ) : null}
     </>
   );
 }

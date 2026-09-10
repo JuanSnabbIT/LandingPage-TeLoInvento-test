@@ -2,11 +2,13 @@ import { Component, type ReactNode } from 'react';
 
 interface CanvasErrorBoundaryProps {
   children: ReactNode;
-  fallback: ReactNode;
+  /** Static node, or a function receiving the caught error (so a poster can show it in dev). */
+  fallback: ReactNode | ((error: unknown) => ReactNode);
 }
 
 interface CanvasErrorBoundaryState {
   hasError: boolean;
+  error?: unknown;
 }
 
 /**
@@ -20,8 +22,8 @@ interface CanvasErrorBoundaryState {
 export class CanvasErrorBoundary extends Component<CanvasErrorBoundaryProps, CanvasErrorBoundaryState> {
   state: CanvasErrorBoundaryState = { hasError: false };
 
-  static getDerivedStateFromError(): CanvasErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: unknown): CanvasErrorBoundaryState {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: unknown) {
@@ -30,7 +32,10 @@ export class CanvasErrorBoundary extends Component<CanvasErrorBoundaryProps, Can
   }
 
   render() {
-    if (this.state.hasError) return this.props.fallback;
+    if (this.state.hasError) {
+      const { fallback } = this.props;
+      return typeof fallback === 'function' ? fallback(this.state.error) : fallback;
+    }
     return this.props.children;
   }
 }
