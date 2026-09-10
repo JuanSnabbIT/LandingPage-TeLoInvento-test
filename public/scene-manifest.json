@@ -1,0 +1,44 @@
+{
+  "hero-central": {
+    "pipeline": "variant-a-runtime",
+    "note": "Vertices are read directly off the loaded GLB at runtime (useGLTF) and driven by a custom ShaderMaterial vertex shader -- no baked position EXR, no GPGPU/TSL compute for this scene. Locked decision for the T9 spike (see docs/architecture/3d-web-standard.md §4, variant A): the logo's source vertex count is well within variant A's validated ~15-20k range once tier-capped.",
+    "assets": {
+      "central": {
+        "file": "models/hero-central/central-lod1.glb",
+        "role": "solid PBR device, rendered as-authored (not converted to particles)",
+        "meshes": ["ScreenPanel", "UnibodyChassis"],
+        "vertices": 984
+      },
+      "logo": {
+        "file": "models/hero-central/logo-lod1.glb",
+        "role": "source geometry for the particle field -- per-tier maxParticles below caps how many are actually drawn",
+        "meshCount": 22,
+        "vertices": 32075
+      }
+    },
+    "tiers": {
+      "high": {
+        "maxParticles": 16000,
+        "dprMax": 2,
+        "condition": "viewport width >= 1024px and navigator.hardwareConcurrency >= 8"
+      },
+      "medium": {
+        "maxParticles": 9000,
+        "dprMax": 1.5,
+        "condition": "viewport width >= 768px and navigator.hardwareConcurrency >= 4"
+      },
+      "low": {
+        "maxParticles": 4000,
+        "dprMax": 1,
+        "condition": "fallback tier (mobile / low core count)"
+      },
+      "reducedMotionOrNoWebGL": {
+        "maxParticles": 0,
+        "note": "prefers-reduced-motion keeps the real models rendered statically (canvas mounts, frameloop='demand', no uTime updates); absence of WebGL/WebGPU instead shows the static poster (ScenePoster + HeroCentralPoster) -- never a blank stage either way."
+      }
+    },
+    "boundingBox": {
+      "note": "Not applicable in the classic sense (no baked position texture) -- the logo point cloud is recentered around its own centroid at runtime in useLogoParticles.ts and fit into the Central's ScreenPanel mesh bounding box, computed live from the loaded GLTF rather than hardcoded."
+    }
+  }
+}

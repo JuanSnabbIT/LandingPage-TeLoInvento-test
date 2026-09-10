@@ -1,0 +1,66 @@
+import { useCallback, useState, type RefObject } from 'react';
+import { useGLTF } from '@react-three/drei';
+import { SceneCanvas } from '../../components/canvas/SceneCanvas';
+import { PageCamera } from '../../components/canvas/PageCamera';
+import { AnchoredPoster } from './AnchoredPoster';
+import { HeroCentralScene } from './HeroCentralScene';
+import { getDeviceTier } from './deviceTier';
+import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
+
+const LOGO_URL = '/models/hero-central/logo-lod1.glb';
+useGLTF.preload(LOGO_URL);
+
+interface HeroCentralCanvasProps {
+  /** false when prefers-reduced-motion is set -- gates mouse parallax only. */
+  animate: boolean;
+  anchor: ViewportAnchor;
+  /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
+  progressRef: RefObject<number>;
+}
+
+/**
+ * The actual scene content mounted inside the persistent, page-level
+ * <Canvas> (see PersistentSceneLayer in App.tsx). Split into its own
+ * module so HeroCentralSection.tsx can `lazy()` it -- keeps three.js/r3f
+ * out of the main bundle and off the critical path for first paint.
+ */
+export default function HeroCentralCanvas({ animate, anchor, progressRef }: HeroCentralCanvasProps) {
+  const [tier] = useState(getDeviceTier);
+  const [contextLost, setContextLost] = useState(false);
+
+  const handleContextLost = useCallback(() => setContextLost(true), []);
+  const handleContextRestored = useCallback(() => setContextLost(false), []);
+
+  return (
+    <>
+      <SceneCanvas
+        dpr={tier.dpr}
+        // Always rendering (not "demand" when reduced-motion) on purpose:
+        // uProgress is scroll-driven and must keep updating/rendering
+        // regardless of prefers-reduced-motion (it's a content-position
+        // change, not "motion"), and driving that correctly under
+        // "demand" would need an `invalidate()` call reachable from
+        // outside the Canvas tree -- which pulls @react-three/fiber (and
+        // three.js with it) into the main bundle, undoing the lazy-load
+        // split below. Not worth that complexity/cost for this harness.
+        frameloop="always"
+        fallback={<AnchoredPoster anchor={anchor} />}
+        onContextLost={handleContextLost}
+        onContextRestored={handleContextRestored}
+      >
+        <PageCamera />
+        <HeroCentralScene
+          maxParticles={tier.maxParticles}
+          animate={animate}
+          anchor={anchor}
+          progressRef={progressRef}
+        />
+      </SceneCanvas>
+
+      {/* Context loss overlays the poster near the same anchor rather than
+          unmounting the canvas -- WebGL auto-restore can bring the
+          context back without us tearing anything down. */}
+      {contextLost && <AnchoredPoster anchor={anchor} />}
+    </>
+  );
+}
