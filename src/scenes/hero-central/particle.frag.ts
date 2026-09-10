@@ -11,11 +11,12 @@ export const particleFragmentShader = /* glsl */ `
   uniform vec3 uColorB;
 
   varying float vNoise;
+  varying float vFade;
 
   void main() {
     vec2 centered = gl_PointCoord - 0.5;
     float dist = length(centered);
-    float alpha = smoothstep(0.5, 0.0, dist);
+    float alpha = smoothstep(0.5, 0.0, dist) * vFade;
     if (alpha <= 0.001) discard;
 
     vec3 color = mix(uColorA, uColorB, smoothstep(-1.0, 1.0, vNoise));

@@ -1,9 +1,17 @@
-import type { RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useDissolveLab } from '../scenes/hero-central/dissolveLab';
 import './Hero.css';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface HeroProps {
   /** Forwarded to App.tsx's PersistentSceneLayer/HeroCentralSection -- see Hero.css for why this is an anchor, not a rendered box. */
   anchorRef: RefObject<HTMLDivElement | null>;
+  /** Scroll-driven 0..1 for the logo particles' dissolve (useDisplayProgress.setProgress). */
+  onProgress: (value: number) => void;
 }
 
 /**
@@ -19,9 +27,33 @@ interface HeroProps {
  * Problema like every other section (a pin left a blank spacer gap
  * between Hero and Problema in the full-page layout).
  */
-export function Hero({ anchorRef }: HeroProps) {
+export function Hero({ anchorRef, onProgress }: HeroProps) {
+  const heroRef = useRef<HTMLElement | null>(null);
+  const { pin, lengthVh } = useDissolveLab();
+
+  // T12 (exploration): the dissolve is scrubbed by the Hero's own scroll,
+  // starting once the whole product stage is on screen (Hero's bottom
+  // reaches the viewport bottom) so the device is fully visible while it
+  // plays. Without pin, it plays while the Hero scrolls away; with pin,
+  // the Hero holds still for `lengthVh` and the dissolve plays in place.
+  // Both are candidates; which one ships is the open Capa-2 decision.
+  useGSAP(
+    () => {
+      if (!heroRef.current) return;
+      ScrollTrigger.create({
+        trigger: heroRef.current,
+        start: 'bottom bottom',
+        end: `+=${lengthVh}%`,
+        pin,
+        scrub: true,
+        onUpdate: (self) => onProgress(self.progress),
+      });
+    },
+    { scope: heroRef, dependencies: [pin, lengthVh, onProgress], revertOnUpdate: true },
+  );
+
   return (
-    <section className="hero dark">
+    <section ref={heroRef} className="hero dark">
       <div className="hero__text wrap">
         <div className="eyebrow" style={{ justifyContent: 'center', display: 'flex' }}>
           TELOINVENTO

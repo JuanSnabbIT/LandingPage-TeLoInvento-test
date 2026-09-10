@@ -26,9 +26,21 @@ export const particleVertexShader = /* glsl */ `
   uniform float uSize;
   uniform float uPixelRatio;
 
+  // Dissolve lab (T12 exploration): which choreography uProgress drives.
+  //   0 = explode back behind the device (original T9 behaviour)
+  //   1 = dust: erodes bottom-up, particles drift upward and fade
+  //   2 = radial burst in the screen plane, fading outward
+  //   3 = stream: flows down/forward out of the screen toward the next section
+  // Chosen at runtime (dissolveLab.ts) so variants can be compared live.
+  uniform float uMode;
+  // Dispersion budget in DisplayAnchor-local units: (screen width, screen height, device maxDim).
+  uniform vec3 uSpread;
+
   attribute vec3 explodedPosition;
+  attribute float aSeed;
 
   varying float vNoise;
+  varying float vFade;
 
   // Simplex 3D noise, Ian McEwan / Ashima Arts (webgl-noise, MIT license).
   // Public-domain-equivalent, widely reused implementation -- not an asset,
@@ -108,9 +120,47 @@ export const particleVertexShader = /* glsl */ `
     // The only thing that varies here: a mix between two positions that
     // were both computed once, at setup. Not a recomputation, not a
     // continuous animation -- a single lerp driven by uProgress.
-    float eased = smoothstep(0.0, 1.0, uProgress);
-    vec3 displayPosition = mix(position, explodedPosition, eased);
+    vec3 displayPosition = position;
+    float fade = 1.0;
+    float shrink = 0.0;
 
+    if (uMode < 0.5) {
+      // 0: original -- single lerp toward the pre-computed exploded target.
+      float eased = smoothstep(0.0, 1.0, uProgress);
+      displayPosition = mix(position, explodedPosition, eased);
+    } else if (uMode < 1.5) {
+      // 1: dust. Bottom rows leave first (order by height), each particle
+      // with its own small delay, then drifts up and slightly sideways.
+      float order = 0.5 - position.y / max(uSpread.y, 1e-5); // ~0 top .. ~1 bottom
+      float local = clamp((uProgress * 1.6 - order * 0.45 - aSeed * 0.15) / 0.55, 0.0, 1.0);
+      float e = local * local;
+      vec3 drift = vec3((aSeed - 0.5) * uSpread.x * 0.6, uSpread.y * (0.9 + aSeed * 0.5), uSpread.z * 0.15 * (aSeed - 0.5));
+      displayPosition = position + drift * e;
+      fade = 1.0 - local;
+      shrink = local;
+    } else if (uMode < 2.5) {
+      // 2: radial burst. Outer particles leave first, all fly outward in
+      // the screen plane and fade.
+      vec2 dir = position.xy;
+      float r = length(dir) / max(uSpread.y * 0.5, 1e-5);
+      dir = r > 1e-5 ? normalize(dir) : vec2(0.0, 1.0);
+      float local = clamp((uProgress * 1.5 - (1.0 - r) * 0.35 - aSeed * 0.15) / 0.6, 0.0, 1.0);
+      float e = local * local;
+      displayPosition = position + vec3(dir * uSpread.x * (0.8 + aSeed * 0.6) * e, uSpread.z * 0.3 * e);
+      fade = 1.0 - local * local;
+      shrink = local * 0.7;
+    } else {
+      // 3: stream. Everything peels off the screen and flows down and
+      // forward (toward the camera / next section), with a lazy curl.
+      float local = clamp((uProgress * 1.4 - aSeed * 0.4) / 0.7, 0.0, 1.0);
+      float e = local * local;
+      float curl = sin(aSeed * 6.2831 + local * 3.0) * uSpread.x * 0.25;
+      displayPosition = position + vec3(uSpread.x * 0.5 * e + curl * local, -uSpread.y * 1.6 * e, uSpread.z * 0.9 * e);
+      fade = 1.0 - smoothstep(0.55, 1.0, local);
+      shrink = local * 0.5;
+    }
+
+    vFade = fade;
     vec4 mvPosition = modelViewMatrix * vec4(displayPosition, 1.0);
 
     // Flat pixel size, deliberately NOT attenuated by view-space depth.
@@ -120,7 +170,7 @@ export const particleVertexShader = /* glsl */ `
     // distance that formula inflated points to thousands of pixels each --
     // that's what was flooding the canvas white. The camera here is
     // static (no zoom/dolly), so a flat size is correct, not a hack.
-    gl_PointSize = uSize * uPixelRatio;
+    gl_PointSize = uSize * uPixelRatio * (1.0 - 0.6 * shrink);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;

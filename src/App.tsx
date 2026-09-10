@@ -4,6 +4,7 @@ import './App.css';
 import './styles/tokens.css';
 import { PersistentSceneLayer } from './components/canvas/PersistentSceneLayer';
 import { HeroCentralSection } from './scenes/hero-central/HeroCentralSection';
+import { DissolveLabPicker } from './scenes/hero-central/DissolveLabPicker';
 import { useDisplayProgress } from './hooks/useDisplayProgress';
 import { Header } from './sections/Header';
 import { Hero } from './sections/Hero';
@@ -36,7 +37,7 @@ const SHOW_DEBUG_PANEL =
 
 function App() {
   const heroAnchorRef = useRef<HTMLDivElement>(null);
-  const { progressRef } = useDisplayProgress();
+  const { progressRef, setProgress } = useDisplayProgress();
 
   return (
     <>
@@ -47,7 +48,7 @@ function App() {
 
       <Header />
       <main className="page-content">
-        <Hero anchorRef={heroAnchorRef} />
+        <Hero anchorRef={heroAnchorRef} onProgress={setProgress} />
         <Problema />
         <Solucion />
         <Capacidades />
@@ -57,6 +58,7 @@ function App() {
         <Contacto />
       </main>
       <Footer />
+      {import.meta.env.DEV && <DissolveLabPicker />}
     </>
   );
 }

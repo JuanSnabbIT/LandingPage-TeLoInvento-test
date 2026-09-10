@@ -11,6 +11,7 @@ import { glowVertexShader } from './glow.vert';
 import { glowFragmentShader } from './glow.frag';
 import { anchorToWorldXY, viewportWorldHeight } from '../../components/canvas/pageCameraMath';
 import { useNormalizedPointer } from '../../hooks/useNormalizedPointer';
+import { dissolveLab } from './dissolveLab';
 
 const CENTRAL_URL = '/models/hero-central/central-lod1.glb';
 
@@ -97,6 +98,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
     glowSize,
     overallCenter,
     maxDim,
+    screenSize,
   } = useMemo(() => {
     centralScene.updateWorldMatrix(true, true);
 
@@ -209,6 +211,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       glowSize,
       overallCenter,
       maxDim,
+      screenSize: new THREE.Vector3(plane.size.x, plane.size.y, 0),
     };
   }, [centralScene, logoGeometry]);
 
@@ -221,12 +224,15 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
   const uniforms = useMemo(
     () => ({
       uProgress: { value: 0 },
+      uMode: { value: dissolveLab.get().mode },
+      uSpread: { value: new THREE.Vector3(screenSize.x, screenSize.y, maxDim) },
       uFrequency: { value: 0.55 },
       uSize: { value: 2.1 },
       uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 },
       uColorA: { value: new THREE.Color('#f5a623') },
       uColorB: { value: new THREE.Color('#2b95c3') },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- uniforms are created once; uSpread's inputs are fixed per loaded asset.
     [],
   );
 
@@ -245,6 +251,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
     // unconditionally -- never gated by `animate`.
     if (materialRef.current) {
       materialRef.current.uniforms.uProgress.value = progressRef.current;
+      materialRef.current.uniforms.uMode.value = dissolveLab.get().mode;
     }
 
     // Live position: read the anchor's REAL on-screen rect this frame,

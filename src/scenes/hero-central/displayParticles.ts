@@ -45,6 +45,10 @@ export function buildDisplayParticleGeometry({
 
   const flat = new Float32Array(count * 3);
   const exploded = new Float32Array(count * 3);
+  // Per-particle deterministic seed in [0,1) -- used by the dissolve
+  // variants (particle.vert.ts) to stagger when each particle starts to
+  // leave and to give it its own drift. Computed once, never per frame.
+  const seed = new Float32Array(count);
 
   // Dispersion budget: lateral/vertical spread relative to the display's
   // own size, depth relative to the Device's own overall size -- so the
@@ -70,11 +74,14 @@ export function buildDisplayParticleGeometry({
     exploded[i * 3] = x + lateralOffset;
     exploded[i * 3 + 1] = y + verticalOffset;
     exploded[i * 3 + 2] = -depth;
+
+    seed[i] = hash(i, 4.0);
   }
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(flat, 3));
   geometry.setAttribute('explodedPosition', new THREE.BufferAttribute(exploded, 3));
+  geometry.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
   geometry.computeBoundingSphere();
 
   return geometry;
