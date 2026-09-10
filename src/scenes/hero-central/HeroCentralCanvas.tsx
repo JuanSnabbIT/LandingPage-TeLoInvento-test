@@ -5,6 +5,7 @@ import { PageCamera } from '../../components/canvas/PageCamera';
 import { AnchoredPoster } from './AnchoredPoster';
 import { HeroCentralScene } from './HeroCentralScene';
 import { getDeviceTier } from './deviceTier';
+import { FrameBudgetGuard } from '../../components/canvas/FrameBudgetGuard';
 import { AnchoredModel, type AnchoredModelSpec } from '../anchored-model/AnchoredModel';
 import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
 
@@ -24,6 +25,8 @@ interface HeroCentralCanvasProps {
   models?: AnchoredModelSpec[];
   /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
   progressRef: RefObject<number>;
+  /** T16: the device can't sustain the scene -- host swaps to the static poster. */
+  onDegrade: () => void;
 }
 
 /**
@@ -39,6 +42,7 @@ export default function HeroCentralCanvas({
   targetAnchorRef,
   models = [],
   progressRef,
+  onDegrade,
 }: HeroCentralCanvasProps) {
   const [tier] = useState(getDeviceTier);
   const [contextLost, setContextLost] = useState(false);
@@ -80,6 +84,7 @@ export default function HeroCentralCanvas({
         onContextRestored={handleContextRestored}
       >
         <PageCamera />
+        <FrameBudgetGuard onDegrade={onDegrade} />
         <HeroCentralScene
           maxParticles={tier.maxParticles}
           animate={animate}

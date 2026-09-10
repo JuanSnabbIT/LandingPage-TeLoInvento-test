@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type RefObject } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type RefObject } from 'react';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { useElementViewportAnchor } from '../../hooks/useElementViewportAnchor';
 import { hasWebglSupport } from '../../components/canvas/webglSupport';
@@ -7,6 +7,22 @@ import { AnchoredPoster } from './AnchoredPoster';
 import type { AnchoredModelSpec } from '../anchored-model/AnchoredModel';
 
 const HeroCentralCanvas = lazy(() => import('./HeroCentralCanvas'));
+
+// T16: remembered for the session so a weak device isn't re-measured (and
+// re-janked) on every navigation. `?no3d` forces the poster, `?force3d`
+// ignores a stored verdict -- both for testing.
+const DEGRADED_KEY = 'teloinvento:scene-degraded';
+function readDegraded(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('no3d')) return true;
+  if (params.has('force3d')) return false;
+  try {
+    return sessionStorage.getItem(DEGRADED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 interface HeroCentralSectionProps {
   /**
@@ -51,6 +67,18 @@ export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progres
   const anchor = useElementViewportAnchor(anchorRef, { trackScroll: true });
   const [webglOk, setWebglOk] = useState<boolean | null>(null);
   const [ready, setReady] = useState(false);
+  const [degraded, setDegraded] = useState(readDegraded);
+
+  const handleDegrade = useCallback(() => {
+    try {
+      sessionStorage.setItem(DEGRADED_KEY, '1');
+    } catch {
+      /* private mode etc. -- in-memory state still applies for this page */
+    }
+    // eslint-disable-next-line no-console
+    console.warn('[canvas-scene] frame rate below budget on this device -- switching to the static poster.');
+    setDegraded(true);
+  }, []);
 
   useEffect(() => {
     setWebglOk(hasWebglSupport());
@@ -69,6 +97,7 @@ export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progres
   }, [webglOk]);
 
   if (webglOk === false) return <AnchoredPoster anchor={anchor} reason="no-webgl" />;
+  if (degraded) return <AnchoredPoster anchor={anchor} reason="degraded" />;
   if (!ready || !anchor.ready) return <AnchoredPoster anchor={anchor} reason="not-ready" />;
 
   return (
@@ -89,6 +118,7 @@ export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progres
           targetAnchorRef={targetAnchorRef}
           models={models}
           progressRef={progressRef}
+          onDegrade={handleDegrade}
         />
       </Suspense>
     </CanvasErrorBoundary>

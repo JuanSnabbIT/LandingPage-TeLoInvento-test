@@ -58,6 +58,16 @@ section {
   margin: 0 auto;
 }
 
+/* T15: visible keyboard focus everywhere, without affecting mouse clicks. */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.dark :focus-visible {
+  outline-color: var(--blue-dark);
+}
+
 a.btn {
   display: inline-flex;
   align-items: center;

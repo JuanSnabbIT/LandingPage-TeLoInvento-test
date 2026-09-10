@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
 import { HeroCentralPoster } from './HeroCentralPoster';
 
-export type PosterReason = 'no-webgl' | 'not-ready' | 'loading' | 'error' | 'context-lost';
+export type PosterReason = 'no-webgl' | 'not-ready' | 'loading' | 'error' | 'context-lost' | 'degraded';
 
 interface AnchoredPosterProps {
   anchor: ViewportAnchor;
@@ -18,6 +18,7 @@ const REASON_LABEL: Record<PosterReason, string> = {
   loading: 'cargando chunk de three.js o los GLB (Suspense)',
   error: 'la escena lanzó un error (ver consola: [canvas-scene])',
   'context-lost': 'el navegador perdió el contexto WebGL',
+  degraded: 'fps sostenidos bajo el presupuesto (FrameBudgetGuard) o ?no3d -- se recuerda por sesión',
 };
 
 const diagStyle: CSSProperties = {
