@@ -27,31 +27,37 @@ registrar o consultar decisiones de arquitectura usar el skill
 `adr-obsidian`** en vez de editar `09-registro-decisiones.md` a mano — su
 descripción referencia explícitamente este mismo patrón de vault.
 
-## Estado actual (2026-09-09)
+## Estado actual (2026-09-10)
 
 - Dirección visual **decidida y validada**: réplica fiel de una maqueta
   hecha en Relume por el dueño del proyecto (paleta `#5479E1` / `#809BE9`,
   Inter, 9 secciones alternando fondo claro/oscuro) — **no** los colores
   del logo oficial (`#F5A623`/`#2B95C3`/`#0D3559`). Ver `06-direccion-visual.md`.
-- Maqueta HTML/CSS de referencia de las 9 secciones ya construida y
-  aprobada (Hero, Problema, Solución, Capacidades, Hogar-Próximamente,
-  Valor de negocio, Cómo trabajamos, Contacto, Footer) — vive en este repo
-  en **`reference/maqueta-aprobada.html`**. Abrila directo en el navegador
-  para verla; T10 es portar esto a componentes React, no rehacerla.
-- Scaffold técnico ya armado en este repo: Vite + React **19.2.8 pineado**
-  (exacto, no rango — `@react-three/fiber@9.7.0` todavía no soporta React
-  19.3.x) + TypeScript + `three` + `@react-three/fiber` + `@react-three/drei`
-  + `gsap` + `@gsap/react`. `npm run build` verificado, compila limpio.
-- **Próximo paso:** T9 (spike técnico r3f del objeto "Central") y T10
-  (portar la maqueta HTML/CSS a componentes React) — ver
-  `08-TBB-orquestador-tareas.md` §5 para el detalle y qué puede correr en paralelo.
+- Maqueta HTML/CSS de referencia aprobada en **`reference/maqueta-aprobada.html`**
+  (solo lectura, no se modifica).
+- **T9 (Capa 1) y T10 hechos**: las 9 secciones están portadas a React en
+  `src/sections/`, y la escena r3f `src/scenes/hero-central/` muestra la
+  Central sólida con el logo en partículas dentro de la pantalla, anclada
+  al DOM (`.hero__anchor`, rect leído por frame, sin pin) y escalada al
+  stage del Hero. Panel de debug `leva` solo con `?debug`.
+- **T13 hecho en código**: `src/lib/submitLead.ts` envía los leads del
+  formulario de contacto y de la lista de espera Hogar a un destino
+  configurado por env (`.env.example`); en dev sin env se simula.
+- Stack: Vite + React **19.2.8 pineado** + TypeScript + `three` +
+  `@react-three/fiber` + `@react-three/drei` + `gsap` + `@gsap/react` +
+  `leva`. `npm run build` compila limpio.
+- **Próximo paso:** T12 (animaciones de scroll; antes cerrar la coreografía
+  de Capa 2 en el vault) y T8/T11 (assets reales) — ver
+  `08-TBB-orquestador-tareas.md` §5.
 
 ## Pendiente / bloqueado (no resolver acá sin el dueño del proyecto)
 
 - Fotografía real de producto — sin producir, la maqueta usa placeholders
   marcados explícitamente ("foto real pendiente de producir").
-- Destino real del formulario de contacto (correo o backend) — se deja
-  para el final a propósito, no bloquea T9/T10.
+- Destino real del formulario de contacto (correo o backend) — el código
+  ya está listo; solo falta completar `VITE_LEAD_ENDPOINT` o
+  `VITE_LEAD_FALLBACK_EMAIL` en `.env.local`. Bloquea el lanzamiento, no
+  el build.
 - Si el sensor de humedad es parte del kit base de Riego o un add-on
   opcional — contradicción entre lo que dice el negocio y el firmware real
   (`kit_riego_espnow/espnow_protocol.h`), pendiente de confirmar con el
