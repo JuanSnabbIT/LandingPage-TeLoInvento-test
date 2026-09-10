@@ -6,6 +6,7 @@ import { PersistentSceneLayer } from './components/canvas/PersistentSceneLayer';
 import { HeroCentralSection } from './scenes/hero-central/HeroCentralSection';
 import { DissolveLabPicker } from './scenes/hero-central/DissolveLabPicker';
 import { useDisplayProgress } from './hooks/useDisplayProgress';
+import { useSectionReveals } from './hooks/useSectionReveals';
 import { Header } from './sections/Header';
 import { Hero } from './sections/Hero';
 import { Problema } from './sections/Problema';
@@ -38,6 +39,8 @@ const SHOW_DEBUG_PANEL =
 function App() {
   const heroAnchorRef = useRef<HTMLDivElement>(null);
   const { progressRef, setProgress } = useDisplayProgress();
+  const mainRef = useRef<HTMLElement>(null);
+  useSectionReveals(mainRef);
 
   return (
     <>
@@ -47,7 +50,7 @@ function App() {
       </PersistentSceneLayer>
 
       <Header />
-      <main className="page-content">
+      <main ref={mainRef} className="page-content">
         <Hero anchorRef={heroAnchorRef} onProgress={setProgress} />
         <Problema />
         <Solucion />
