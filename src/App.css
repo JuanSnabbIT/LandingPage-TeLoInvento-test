@@ -1,0 +1,5 @@
+/* Keeps every ported section above the persistent r3f canvas (z-index:0, see PersistentSceneLayer). */
+.page-content {
+  position: relative;
+  z-index: 1;
+}

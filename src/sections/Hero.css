@@ -1,0 +1,57 @@
+/*
+ * Ported from reference/maqueta-aprobada.html's `.hero` -- two intentional
+ * deviations, both carried over from the T9 follow-up fixes, not oversights:
+ *
+ * 1. No `background` set here. The maqueta gives `.hero` its own
+ *    `linear-gradient(180deg, var(--dark) 0%, #060810 100%)`, but this
+ *    section sits above the persistent r3f canvas (PersistentSceneLayer,
+ *    mounted in App.tsx, z-index:0) -- an opaque section background here
+ *    would paint over the canvas and hide the 3D scene. `index.css`'s
+ *    `body` already carries that exact same gradient as the page-wide
+ *    backdrop, so visually it's identical; only sections that don't host
+ *    part of the persistent scene should set their own opaque background.
+ * 2. No `.stage` box (icon + "foto real pendiente de producir" caption).
+ *    That was a placeholder for 3D content that didn't exist yet -- it
+ *    does now (T9's hero-central scene). `.hero__anchor` replaces it: an
+ *    invisible layout marker, not a rendered container -- see App.tsx and
+ *    docs/architecture/3d-web-standard.md §2/§7 for why it's not boxed.
+ */
+.hero {
+  color: var(--dark-ink);
+  text-align: center;
+}
+.hero h1 {
+  font-weight: 800;
+  font-size: clamp(32px, 4.6vw, 52px);
+  line-height: 1.12;
+  max-width: 22ch;
+  margin: 0 auto;
+}
+.hero .sub {
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--dark-ink-dim);
+  max-width: 56ch;
+  margin: 20px auto 0;
+}
+.hero .cta-row {
+  margin-top: 28px;
+}
+
+/*
+ * Two explicit parts, per the project owner's direction: `.hero__text`
+ * (copy) and `.hero__stage` (product presentation -- the Central, and
+ * only the Central, doesn't appear anywhere else on the page). Previously
+ * both lived in one `.wrap`; split into two siblings so the product
+ * presentation reads as its own distinct part of the Hero, not a tail end
+ * of the copy block.
+ */
+.hero__stage {
+  margin-top: clamp(40px, 7vw, 64px);
+}
+
+/* Invisible reference point for the 3D group's on-screen anchor -- see the note above. Size/offset not locked, see the T9 follow-up report. */
+.hero__anchor {
+  width: 100%;
+  min-height: clamp(240px, 40vw, 340px);
+}

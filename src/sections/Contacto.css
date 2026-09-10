@@ -1,0 +1,74 @@
+/*
+ * Ported from reference/maqueta-aprobada.html's `.contacto`. One
+ * deviation: the maqueta's `label, input, select, textarea` rules are
+ * bare tag selectors (global) -- harmless there since Contacto was the
+ * only section using those tags, but scoped here under `.contacto` so a
+ * later section with its own form isn't silently affected.
+ */
+.contacto {
+  background: var(--paper-tint);
+}
+.contacto .grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: clamp(32px, 5vw, 64px);
+}
+.contacto h2 {
+  font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.18;
+  margin: 0 0 14px;
+  max-width: 16ch;
+}
+.contacto p.lead {
+  color: var(--ink-dim);
+  font-size: 15.5px;
+  line-height: 1.6;
+  max-width: 40ch;
+}
+.contacto .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.contacto .form-grid .full {
+  grid-column: 1 / -1;
+}
+.contacto label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.contacto input,
+.contacto select,
+.contacto textarea {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.contacto textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+.contacto .btn {
+  margin-top: 6px;
+}
+.contacto .fine {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 12px;
+}
+@media (max-width: 780px) {
+  .contacto .grid {
+    grid-template-columns: 1fr;
+  }
+  .contacto .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

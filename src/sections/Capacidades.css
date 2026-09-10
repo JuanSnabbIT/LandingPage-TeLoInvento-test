@@ -1,0 +1,59 @@
+/* Ported from reference/maqueta-aprobada.html's `.capacidades` -- see Problema.css for why `background: var(--paper)` is now explicit here. */
+.capacidades {
+  background: var(--paper);
+}
+.capacidades h2 {
+  font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.18;
+  margin: 0 0 16px;
+  max-width: 20ch;
+}
+.capacidades p.lead {
+  color: var(--ink-dim);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 52ch;
+  margin: 0 0 clamp(32px, 5vw, 52px);
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 26px;
+}
+.card .icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.card .icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--blue);
+}
+.card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.card p {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}

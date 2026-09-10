@@ -1,0 +1,54 @@
+/* Ported 1:1 from reference/maqueta-aprobada.html (header + .word/nav.main styles). */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--dark);
+  border-bottom: 1px solid var(--dark-line);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 32px;
+  padding: 18px clamp(20px, 5vw, 56px);
+}
+
+.word {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--dark-ink);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.word .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+nav.main {
+  display: flex;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 36px);
+}
+nav.main a {
+  color: var(--dark-ink-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+nav.main a:hover {
+  color: var(--dark-ink);
+}
+
+@media (max-width: 780px) {
+  .site-header {
+    grid-template-columns: auto auto;
+  }
+  nav.main {
+    display: none;
+  }
+}
