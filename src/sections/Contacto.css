@@ -59,6 +59,85 @@
 .contacto .btn {
   margin-top: 6px;
 }
+.contacto .btn.submit {
+  /* tokens.css styles `a.btn` only (tag-scoped); this is a <button>, so restate the primary look here. */
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 13px 22px;
+  border-radius: 4px;
+  background: var(--amber);
+  color: var(--amber-ink);
+  border: none;
+  cursor: pointer;
+  margin-top: 18px;
+}
+.contacto .btn.submit:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.contacto .btn.submit:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* T13: validation + submit-state feedback (04-BDD.md "Validación de campos" / "Envío exitoso"). */
+.contacto [aria-invalid='true'] {
+  border-color: #d64545;
+}
+.contacto .field-error {
+  font-size: 12.5px;
+  color: #b93232;
+  margin: 6px 0 0;
+}
+.contacto .form-error {
+  font-size: 13.5px;
+  color: #b93232;
+  margin: 12px 0 0;
+}
+.contacto .form-success {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  padding: clamp(28px, 4vw, 40px);
+  align-self: start;
+}
+.contacto .form-success__check {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+.contacto .form-success h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.contacto .form-success p {
+  color: var(--ink-dim);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  max-width: 44ch;
+}
+.contacto .form-success .btn.ghost {
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 12px 20px;
+  border-radius: 4px;
+}
 .contacto .fine {
   font-size: 12.5px;
   color: var(--ink-faint);

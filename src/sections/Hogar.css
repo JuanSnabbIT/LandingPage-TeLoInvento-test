@@ -42,7 +42,30 @@
 }
 .hogar form {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hogar .hogar__row {
+  display: flex;
   gap: 8px;
+}
+.hogar button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.hogar input[aria-invalid='true'] {
+  border-color: #d64545;
+}
+.hogar__status {
+  font-size: 13px;
+  margin: 0;
+}
+.hogar__status--ok {
+  color: var(--blue);
+  font-weight: 600;
+}
+.hogar__status--error {
+  color: #b93232;
 }
 .hogar input[type='email'] {
   font-family: var(--font);
