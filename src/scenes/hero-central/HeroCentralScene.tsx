@@ -11,7 +11,6 @@ import { glowVertexShader } from './glow.vert';
 import { glowFragmentShader } from './glow.frag';
 import { anchorToWorldXY, viewportWorldHeight } from '../../components/canvas/pageCameraMath';
 import { useNormalizedPointer } from '../../hooks/useNormalizedPointer';
-import { dissolveLab } from './dissolveLab';
 import { useNodoTargets } from './useNodoTargets';
 
 const CENTRAL_URL = '/models/hero-central/central-lod1.glb';
@@ -101,10 +100,10 @@ export function HeroCentralScene({
   const pointerRef = useNormalizedPointer();
 
   // Everything derived from the Device's OWN geometry. `displayGeometry`
-  // carries BOTH the flat resting position (as the standard `position`
-  // attribute) and the exploded/dispersed target (`explodedPosition`) --
-  // see displayParticles.ts. Nothing here is recomputed per frame; the
-  // shader only mixes between the two via `uProgress`.
+  // carries the flat resting position (standard `position` attribute),
+  // a per-particle seed and the Capa-2 `targetPosition` -- see
+  // displayParticles.ts. Nothing here is recomputed per frame; the shader
+  // only blends between fixed inputs via `uProgress`.
   const {
     displayGeometry,
     displayAnchorPosition,
@@ -201,10 +200,6 @@ export function HeroCentralScene({
     const displayGeometry = buildDisplayParticleGeometry({
       logoGeometry,
       fitScale,
-      // Real per-plane width/height (its own local 2D basis), not an
-      // axis-aligned Box3 -- z isn't used by buildDisplayParticleGeometry.
-      screenSize: new THREE.Vector3(plane.size.x, plane.size.y, 0),
-      maxDim,
       targetPositions: nodo.positions,
     });
 
@@ -242,7 +237,6 @@ export function HeroCentralScene({
   const uniforms = useMemo(
     () => ({
       uProgress: { value: 0 },
-      uMode: { value: dissolveLab.get().mode },
       uSpread: { value: new THREE.Vector3(screenSize.x, screenSize.y, maxDim) },
       uTargetMatrix: { value: new THREE.Matrix4() },
       uFrequency: { value: 0.55 },
@@ -270,7 +264,6 @@ export function HeroCentralScene({
     // unconditionally -- never gated by `animate`.
     if (materialRef.current) {
       materialRef.current.uniforms.uProgress.value = progressRef.current;
-      materialRef.current.uniforms.uMode.value = dissolveLab.get().mode;
     }
 
     // Live position: read the anchor's REAL on-screen rect this frame,
@@ -440,12 +433,11 @@ export function HeroCentralScene({
                   as a rigid unit with the Device -- there is no
                   independent billboard/decoupling here anymore, and no
                   per-particle color/position animation either. `uProgress`
-                  (scroll-driven, see HeroCentralCanvas.tsx) mixes toward
-                  `explodedPosition`, dispersing the cloud behind the
-                  Device using DisplayAnchor's own -Z ("back") axis --
-                  real depth-tested occlusion against the opaque Device
-                  mesh handles hiding particles that end up behind it,
-                  nothing here fakes that with per-particle opacity. */}
+                  (scroll-driven, see useChoreographyScroll.ts) streams the
+                  cloud off the screen and then onto the Nodo in Problema
+                  (Capa 2) -- real depth-tested occlusion against the
+                  opaque Device mesh handles anything that passes behind
+                  it, nothing here fakes that with per-particle opacity. */}
               <points ref={pointsRef} geometry={displayGeometry} frustumCulled={false}>
                 <shaderMaterial
                   ref={materialRef}

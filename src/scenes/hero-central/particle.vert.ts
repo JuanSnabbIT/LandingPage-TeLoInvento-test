@@ -14,25 +14,18 @@
 // it depends on the flat `position` alone, no time term, so it's computed
 // once and never changes frame to frame regardless of `uProgress`.
 //
-// `explodedPosition` (per-particle attribute, built once in
-// displayParticles.ts, in DisplayAnchor-local space) is where a particle
-// goes once fully dispersed behind the Device. `uProgress` (0..1, driven
-// by scroll -- see HeroCentralScene.tsx) mixes between the two POSITIONS
-// only; it is not "motion" in its own right, and both base positions are
-// fixed at setup time, never recomputed here.
+// `uProgress` (0..1, scrubbed by scroll -- see useChoreographyScroll.ts)
+// drives the Capa-2 choreography in two phases: the logo streams off the
+// screen (phase A, "Fluye" -- chosen by the project owner over explode /
+// dust / radial in the T12 dissolve lab, see vault 09-registro-decisiones
+// 2026-09-10), then every particle flies onto its Nodo target (phase B).
+// Nothing is recomputed per frame; the shader only blends fixed inputs.
 export const particleVertexShader = /* glsl */ `
   uniform float uProgress;
   uniform float uFrequency;
   uniform float uSize;
   uniform float uPixelRatio;
 
-  // Dissolve lab (T12 exploration): which choreography uProgress drives.
-  //   0 = explode back behind the device (original T9 behaviour)
-  //   1 = dust: erodes bottom-up, particles drift upward and fade
-  //   2 = radial burst in the screen plane, fading outward
-  //   3 = stream: flows down/forward out of the screen toward the next section
-  // Chosen at runtime (dissolveLab.ts) so variants can be compared live.
-  uniform float uMode;
   // Dispersion budget in DisplayAnchor-local units: (screen width, screen height, device maxDim).
   uniform vec3 uSpread;
   // Capa 2: maps targetPosition (Nodo units, centered) into THIS geometry's
@@ -41,7 +34,6 @@ export const particleVertexShader = /* glsl */ `
   // its own DOM anchor (Problema's .visual) and slow idle spin.
   uniform mat4 uTargetMatrix;
 
-  attribute vec3 explodedPosition;
   attribute vec3 targetPosition;
   attribute float aSeed;
 
@@ -123,54 +115,21 @@ export const particleVertexShader = /* glsl */ `
     // uProgress value, on every frame, forever.
     vNoise = snoise(position * uFrequency * 1.7);
 
-    // The only thing that varies here: a mix between two positions that
-    // were both computed once, at setup. Not a recomputation, not a
-    // continuous animation -- a single lerp driven by uProgress.
     // uProgress spans the whole Hero -> Problema scroll. Phase A (0..0.5)
-    // is the dissolve (one of the lab variants below); phase B (0.45..1)
-    // gathers every particle onto its Nodo target, staggered per particle.
+    // is the stream-off; phase B (0.45..1) gathers every particle onto its
+    // Nodo target, staggered per particle.
     float pA = clamp(uProgress * 2.0, 0.0, 1.0);
     float pB = smoothstep(0.0, 1.0, clamp((uProgress - 0.45 - aSeed * 0.12) / 0.43, 0.0, 1.0));
 
-    vec3 displayPosition = position;
-    float fade = 1.0;
-    float shrink = 0.0;
-
-    if (uMode < 0.5) {
-      // 0: original -- single lerp toward the pre-computed exploded target.
-      float eased = smoothstep(0.0, 1.0, pA);
-      displayPosition = mix(position, explodedPosition, eased);
-    } else if (uMode < 1.5) {
-      // 1: dust. Bottom rows leave first (order by height), each particle
-      // with its own small delay, then drifts up and slightly sideways.
-      float order = 0.5 - position.y / max(uSpread.y, 1e-5); // ~0 top .. ~1 bottom
-      float local = clamp((pA * 1.6 - order * 0.45 - aSeed * 0.15) / 0.55, 0.0, 1.0);
-      float e = local * local;
-      vec3 drift = vec3((aSeed - 0.5) * uSpread.x * 0.6, uSpread.y * (0.9 + aSeed * 0.5), uSpread.z * 0.15 * (aSeed - 0.5));
-      displayPosition = position + drift * e;
-      fade = 1.0 - local;
-      shrink = local;
-    } else if (uMode < 2.5) {
-      // 2: radial burst. Outer particles leave first, all fly outward in
-      // the screen plane and fade.
-      vec2 dir = position.xy;
-      float r = length(dir) / max(uSpread.y * 0.5, 1e-5);
-      dir = r > 1e-5 ? normalize(dir) : vec2(0.0, 1.0);
-      float local = clamp((pA * 1.5 - (1.0 - r) * 0.35 - aSeed * 0.15) / 0.6, 0.0, 1.0);
-      float e = local * local;
-      displayPosition = position + vec3(dir * uSpread.x * (0.8 + aSeed * 0.6) * e, uSpread.z * 0.3 * e);
-      fade = 1.0 - local * local;
-      shrink = local * 0.7;
-    } else {
-      // 3: stream. Everything peels off the screen and flows down and
-      // forward (toward the camera / next section), with a lazy curl.
-      float local = clamp((pA * 1.4 - aSeed * 0.4) / 0.7, 0.0, 1.0);
-      float e = local * local;
-      float curl = sin(aSeed * 6.2831 + local * 3.0) * uSpread.x * 0.25;
-      displayPosition = position + vec3(uSpread.x * 0.5 * e + curl * local, -uSpread.y * 1.6 * e, uSpread.z * 0.9 * e);
-      fade = 1.0 - smoothstep(0.55, 1.0, local);
-      shrink = local * 0.5;
-    }
+    // Phase A ("Fluye"): everything peels off the screen and flows down
+    // and forward (toward the camera / next section), with a lazy curl,
+    // each particle on its own slight delay.
+    float local = clamp((pA * 1.4 - aSeed * 0.4) / 0.7, 0.0, 1.0);
+    float e = local * local;
+    float curl = sin(aSeed * 6.2831 + local * 3.0) * uSpread.x * 0.25;
+    vec3 displayPosition = position + vec3(uSpread.x * 0.5 * e + curl * local, -uSpread.y * 1.6 * e, uSpread.z * 0.9 * e);
+    float fade = 1.0 - smoothstep(0.55, 1.0, local);
+    float shrink = local * 0.5;
 
     // Phase B: from wherever the dissolve left this particle, travel onto
     // the Nodo. Slight upward arc mid-flight so the swarm reads as flying,

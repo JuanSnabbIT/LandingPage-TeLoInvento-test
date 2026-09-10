@@ -4,7 +4,6 @@ import './App.css';
 import './styles/tokens.css';
 import { PersistentSceneLayer } from './components/canvas/PersistentSceneLayer';
 import { HeroCentralSection } from './scenes/hero-central/HeroCentralSection';
-import { DissolveLabPicker } from './scenes/hero-central/DissolveLabPicker';
 import { useDisplayProgress } from './hooks/useDisplayProgress';
 import { useSectionReveals } from './hooks/useSectionReveals';
 import { useChoreographyScroll } from './hooks/useChoreographyScroll';
@@ -69,7 +68,6 @@ function App() {
         <Contacto />
       </main>
       <Footer />
-      {import.meta.env.DEV && <DissolveLabPicker />}
     </>
   );
 }

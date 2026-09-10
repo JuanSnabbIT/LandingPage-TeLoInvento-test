@@ -46,9 +46,14 @@ descripción referencia explícitamente este mismo patrón de vault.
 - Stack: Vite + React **19.2.8 pineado** + TypeScript + `three` +
   `@react-three/fiber` + `@react-three/drei` + `gsap` + `@gsap/react` +
   `leva`. `npm run build` compila limpio.
-- **Próximo paso:** T12 (animaciones de scroll; antes cerrar la coreografía
-  de Capa 2 en el vault) y T8/T11 (assets reales) — ver
-  `08-TBB-orquestador-tareas.md` §5.
+- **T12 hecho (desktop)**: Capa 2 = la ampolleta de la pantalla se
+  disuelve ("Fluye"), viaja y se rearma como el Nodo
+  (`public/models/seccion-1/nodo.glb`) en el `.visual` de Problema, con un
+  solo progreso scrubbeado desde App (`useChoreographyScroll`). Reveals por
+  sección en `useSectionReveals`. El canvas persistente se dibuja sobre el
+  contenido (z 5) y bajo el header (z 20).
+- **Próximo paso:** T8/T11 (assets reales para los placeholders restantes),
+  T16 (validar en mobile real) — ver `08-TBB-orquestador-tareas.md` §5.
 
 ## Pendiente / bloqueado (no resolver acá sin el dueño del proyecto)
 
