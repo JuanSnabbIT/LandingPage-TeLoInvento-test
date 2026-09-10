@@ -1,11 +1,17 @@
+import type { RefObject } from 'react';
 import './Solucion.css';
 
+interface SolucionProps {
+  /** T11: the Central (kiosk concept) is rendered into this box by the persistent canvas (see App.tsx). */
+  visualRef: RefObject<HTMLDivElement | null>;
+}
+
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="solucion" id="solucion">`. */
-export function Solucion() {
+export function Solucion({ visualRef }: SolucionProps) {
   return (
     <section className="solucion" id="solucion">
       <div className="wrap grid">
-        <div className="photo-ph">
+        <div ref={visualRef} className="photo-ph">
           <div className="cap">Central instalada en el hogar — foto real pendiente de producir</div>
         </div>
         <div>

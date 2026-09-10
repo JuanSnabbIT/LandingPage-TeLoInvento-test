@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { Leva } from 'leva';
 import './App.css';
 import './styles/tokens.css';
@@ -40,6 +40,18 @@ function App() {
   const heroSectionRef = useRef<HTMLElement>(null);
   const heroAnchorRef = useRef<HTMLDivElement>(null);
   const problemaVisualRef = useRef<HTMLDivElement>(null);
+  const solucionVisualRef = useRef<HTMLDivElement>(null);
+  const valorVisualRef = useRef<HTMLDivElement>(null);
+  // T11: solid product models fitted into section boxes, all drawn by the
+  // one persistent canvas. Exported headlessly from assets-source/*.blend
+  // (see the vault's 05-inventario-assets.md for provenance).
+  const sectionModels = useMemo(
+    () => [
+      { url: '/models/solucion/central-kiosk.glb', anchorRef: solucionVisualRef, fit: 0.82, tilt: 0.12, yaw: -0.5 },
+      { url: '/models/valor/central-stand.glb', anchorRef: valorVisualRef, fit: 0.72, tilt: 0.22, yaw: 0.6 },
+    ],
+    [],
+  );
   const { progressRef, setProgress } = useDisplayProgress();
   const mainRef = useRef<HTMLElement>(null);
   useSectionReveals(mainRef);
@@ -52,6 +64,7 @@ function App() {
         <HeroCentralSection
           anchorRef={heroAnchorRef}
           targetAnchorRef={problemaVisualRef}
+          models={sectionModels}
           progressRef={progressRef}
         />
       </PersistentSceneLayer>
@@ -60,10 +73,10 @@ function App() {
       <main ref={mainRef} className="page-content">
         <Hero sectionRef={heroSectionRef} anchorRef={heroAnchorRef} />
         <Problema visualRef={problemaVisualRef} />
-        <Solucion />
+        <Solucion visualRef={solucionVisualRef} />
         <Capacidades />
         <Hogar />
-        <Valor />
+        <Valor visualRef={valorVisualRef} />
         <Proceso />
         <Contacto />
       </main>

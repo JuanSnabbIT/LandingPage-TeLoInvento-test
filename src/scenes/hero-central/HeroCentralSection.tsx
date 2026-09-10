@@ -4,6 +4,7 @@ import { useElementViewportAnchor } from '../../hooks/useElementViewportAnchor';
 import { hasWebglSupport } from '../../components/canvas/webglSupport';
 import { CanvasErrorBoundary } from '../../components/canvas/CanvasErrorBoundary';
 import { AnchoredPoster } from './AnchoredPoster';
+import type { AnchoredModelSpec } from '../anchored-model/AnchoredModel';
 
 const HeroCentralCanvas = lazy(() => import('./HeroCentralCanvas'));
 
@@ -17,6 +18,8 @@ interface HeroCentralSectionProps {
   anchorRef: RefObject<HTMLElement | null>;
   /** Capa 2 destination anchor: Problema's `.visual` box (see App.tsx). */
   targetAnchorRef: RefObject<HTMLElement | null>;
+  /** T11: extra solid GLBs fitted into other sections' boxes, rendered in the same persistent canvas. */
+  models?: AnchoredModelSpec[];
   /** 0..1 scroll-driven progress (see useDisplayProgress.ts), read every frame regardless of reduced-motion. */
   progressRef: RefObject<number>;
 }
@@ -33,7 +36,7 @@ interface HeroCentralSectionProps {
  *  - otherwise -> canvas, deferred by two RAFs so it never blocks first
  *    paint of the surrounding page text.
  */
-export function HeroCentralSection({ anchorRef, targetAnchorRef, progressRef }: HeroCentralSectionProps) {
+export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progressRef }: HeroCentralSectionProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   // This React-state anchor is now ONLY for readiness gating and the
   // static poster fallback below -- the live 3D group's position is read
@@ -84,6 +87,7 @@ export function HeroCentralSection({ anchorRef, targetAnchorRef, progressRef }: 
           anchor={anchor}
           anchorRef={anchorRef}
           targetAnchorRef={targetAnchorRef}
+          models={models}
           progressRef={progressRef}
         />
       </Suspense>

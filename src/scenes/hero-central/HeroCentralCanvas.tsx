@@ -5,6 +5,7 @@ import { PageCamera } from '../../components/canvas/PageCamera';
 import { AnchoredPoster } from './AnchoredPoster';
 import { HeroCentralScene } from './HeroCentralScene';
 import { getDeviceTier } from './deviceTier';
+import { AnchoredModel, type AnchoredModelSpec } from '../anchored-model/AnchoredModel';
 import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
 
 const LOGO_URL = '/models/hero-central/logo-lod1.glb';
@@ -19,6 +20,8 @@ interface HeroCentralCanvasProps {
   anchorRef: RefObject<HTMLElement | null>;
   /** Capa 2 destination anchor (Problema's .visual). */
   targetAnchorRef: RefObject<HTMLElement | null>;
+  /** T11: extra solid GLBs fitted into other sections' boxes. */
+  models?: AnchoredModelSpec[];
   /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
   progressRef: RefObject<number>;
 }
@@ -34,6 +37,7 @@ export default function HeroCentralCanvas({
   anchor,
   anchorRef,
   targetAnchorRef,
+  models = [],
   progressRef,
 }: HeroCentralCanvasProps) {
   const [tier] = useState(getDeviceTier);
@@ -83,6 +87,9 @@ export default function HeroCentralCanvas({
           targetAnchorRef={targetAnchorRef}
           progressRef={progressRef}
         />
+        {models.map((spec) => (
+          <AnchoredModel key={spec.url} {...spec} animate={animate} />
+        ))}
       </SceneCanvas>
 
       {/* Context loss overlays the poster near the same anchor rather than
