@@ -15,6 +15,8 @@ interface HeroCentralSectionProps {
    * is clipped by.
    */
   anchorRef: RefObject<HTMLElement | null>;
+  /** Capa 2 destination anchor: Problema's `.visual` box (see App.tsx). */
+  targetAnchorRef: RefObject<HTMLElement | null>;
   /** 0..1 scroll-driven progress (see useDisplayProgress.ts), read every frame regardless of reduced-motion. */
   progressRef: RefObject<number>;
 }
@@ -31,7 +33,7 @@ interface HeroCentralSectionProps {
  *  - otherwise -> canvas, deferred by two RAFs so it never blocks first
  *    paint of the surrounding page text.
  */
-export function HeroCentralSection({ anchorRef, progressRef }: HeroCentralSectionProps) {
+export function HeroCentralSection({ anchorRef, targetAnchorRef, progressRef }: HeroCentralSectionProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   // This React-state anchor is now ONLY for readiness gating and the
   // static poster fallback below -- the live 3D group's position is read
@@ -81,6 +83,7 @@ export function HeroCentralSection({ anchorRef, progressRef }: HeroCentralSectio
           animate={!prefersReducedMotion}
           anchor={anchor}
           anchorRef={anchorRef}
+          targetAnchorRef={targetAnchorRef}
           progressRef={progressRef}
         />
       </Suspense>

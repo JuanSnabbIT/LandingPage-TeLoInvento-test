@@ -4,7 +4,11 @@ const layerStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
   pointerEvents: 'none',
-  zIndex: 0,
+  // Above `.page-content` (z 1) so the Capa-2 particle cloud can land ON
+  // Problema's light `.visual` box (an opaque section background would
+  // otherwise paint over it), below the sticky Header (z 20). The layer
+  // is transparent wherever nothing is drawn, so page text is unaffected.
+  zIndex: 5,
 };
 
 interface PersistentSceneLayerProps {

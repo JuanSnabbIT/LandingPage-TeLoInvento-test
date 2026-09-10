@@ -1,4 +1,4 @@
-import { useCallback, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useState, type RefObject } from 'react';
 import { useGLTF, useProgress } from '@react-three/drei';
 import { SceneCanvas } from '../../components/canvas/SceneCanvas';
 import { PageCamera } from '../../components/canvas/PageCamera';
@@ -17,6 +17,8 @@ interface HeroCentralCanvasProps {
   anchor: ViewportAnchor;
   /** The raw DOM ref -- read directly every r3f frame for the group's live position (see HeroCentralScene.tsx). */
   anchorRef: RefObject<HTMLElement | null>;
+  /** Capa 2 destination anchor (Problema's .visual). */
+  targetAnchorRef: RefObject<HTMLElement | null>;
   /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
   progressRef: RefObject<number>;
 }
@@ -27,13 +29,26 @@ interface HeroCentralCanvasProps {
  * module so HeroCentralSection.tsx can `lazy()` it -- keeps three.js/r3f
  * out of the main bundle and off the critical path for first paint.
  */
-export default function HeroCentralCanvas({ animate, anchor, anchorRef, progressRef }: HeroCentralCanvasProps) {
+export default function HeroCentralCanvas({
+  animate,
+  anchor,
+  anchorRef,
+  targetAnchorRef,
+  progressRef,
+}: HeroCentralCanvasProps) {
   const [tier] = useState(getDeviceTier);
   const [contextLost, setContextLost] = useState(false);
   // drei's loader store -- readable OUTSIDE the <Canvas>, which is where a
   // DOM poster must live. `active` is true while any useGLTF/useLoader
   // request in the scene is still in flight.
   const loading = useProgress((state) => state.active);
+
+  // Lets CSS know the 3D scene is live (e.g. Problema hides its static
+  // placeholder icon so the Nodo cloud lands in an empty box).
+  useEffect(() => {
+    document.documentElement.classList.add('scene-3d');
+    return () => document.documentElement.classList.remove('scene-3d');
+  }, []);
 
   const handleContextLost = useCallback(() => setContextLost(true), []);
   const handleContextRestored = useCallback(() => setContextLost(false), []);
@@ -65,6 +80,7 @@ export default function HeroCentralCanvas({ animate, anchor, anchorRef, progress
           maxParticles={tier.maxParticles}
           animate={animate}
           anchorRef={anchorRef}
+          targetAnchorRef={targetAnchorRef}
           progressRef={progressRef}
         />
       </SceneCanvas>

@@ -35,8 +35,14 @@ export const particleVertexShader = /* glsl */ `
   uniform float uMode;
   // Dispersion budget in DisplayAnchor-local units: (screen width, screen height, device maxDim).
   uniform vec3 uSpread;
+  // Capa 2: maps targetPosition (Nodo units, centered) into THIS geometry's
+  // local space -- inverse(points.matrixWorld) * targetGroup.matrixWorld,
+  // rebuilt every frame in HeroCentralScene.tsx so the destination follows
+  // its own DOM anchor (Problema's .visual) and slow idle spin.
+  uniform mat4 uTargetMatrix;
 
   attribute vec3 explodedPosition;
+  attribute vec3 targetPosition;
   attribute float aSeed;
 
   varying float vNoise;
@@ -120,19 +126,25 @@ export const particleVertexShader = /* glsl */ `
     // The only thing that varies here: a mix between two positions that
     // were both computed once, at setup. Not a recomputation, not a
     // continuous animation -- a single lerp driven by uProgress.
+    // uProgress spans the whole Hero -> Problema scroll. Phase A (0..0.5)
+    // is the dissolve (one of the lab variants below); phase B (0.45..1)
+    // gathers every particle onto its Nodo target, staggered per particle.
+    float pA = clamp(uProgress * 2.0, 0.0, 1.0);
+    float pB = smoothstep(0.0, 1.0, clamp((uProgress - 0.45 - aSeed * 0.12) / 0.43, 0.0, 1.0));
+
     vec3 displayPosition = position;
     float fade = 1.0;
     float shrink = 0.0;
 
     if (uMode < 0.5) {
       // 0: original -- single lerp toward the pre-computed exploded target.
-      float eased = smoothstep(0.0, 1.0, uProgress);
+      float eased = smoothstep(0.0, 1.0, pA);
       displayPosition = mix(position, explodedPosition, eased);
     } else if (uMode < 1.5) {
       // 1: dust. Bottom rows leave first (order by height), each particle
       // with its own small delay, then drifts up and slightly sideways.
       float order = 0.5 - position.y / max(uSpread.y, 1e-5); // ~0 top .. ~1 bottom
-      float local = clamp((uProgress * 1.6 - order * 0.45 - aSeed * 0.15) / 0.55, 0.0, 1.0);
+      float local = clamp((pA * 1.6 - order * 0.45 - aSeed * 0.15) / 0.55, 0.0, 1.0);
       float e = local * local;
       vec3 drift = vec3((aSeed - 0.5) * uSpread.x * 0.6, uSpread.y * (0.9 + aSeed * 0.5), uSpread.z * 0.15 * (aSeed - 0.5));
       displayPosition = position + drift * e;
@@ -144,7 +156,7 @@ export const particleVertexShader = /* glsl */ `
       vec2 dir = position.xy;
       float r = length(dir) / max(uSpread.y * 0.5, 1e-5);
       dir = r > 1e-5 ? normalize(dir) : vec2(0.0, 1.0);
-      float local = clamp((uProgress * 1.5 - (1.0 - r) * 0.35 - aSeed * 0.15) / 0.6, 0.0, 1.0);
+      float local = clamp((pA * 1.5 - (1.0 - r) * 0.35 - aSeed * 0.15) / 0.6, 0.0, 1.0);
       float e = local * local;
       displayPosition = position + vec3(dir * uSpread.x * (0.8 + aSeed * 0.6) * e, uSpread.z * 0.3 * e);
       fade = 1.0 - local * local;
@@ -152,13 +164,24 @@ export const particleVertexShader = /* glsl */ `
     } else {
       // 3: stream. Everything peels off the screen and flows down and
       // forward (toward the camera / next section), with a lazy curl.
-      float local = clamp((uProgress * 1.4 - aSeed * 0.4) / 0.7, 0.0, 1.0);
+      float local = clamp((pA * 1.4 - aSeed * 0.4) / 0.7, 0.0, 1.0);
       float e = local * local;
       float curl = sin(aSeed * 6.2831 + local * 3.0) * uSpread.x * 0.25;
       displayPosition = position + vec3(uSpread.x * 0.5 * e + curl * local, -uSpread.y * 1.6 * e, uSpread.z * 0.9 * e);
       fade = 1.0 - smoothstep(0.55, 1.0, local);
       shrink = local * 0.5;
     }
+
+    // Phase B: from wherever the dissolve left this particle, travel onto
+    // the Nodo. Slight upward arc mid-flight so the swarm reads as flying,
+    // not sliding. Fade back to fully visible as it lands.
+    vec3 targetLocal = (uTargetMatrix * vec4(targetPosition, 1.0)).xyz;
+    float arc = sin(pB * 3.14159) * uSpread.y * 0.35 * (0.5 + aSeed);
+    displayPosition = mix(displayPosition, targetLocal, pB) + vec3(0.0, arc, 0.0);
+    // Re-appear early in the flight (not only on landing) so the swarm is
+    // visible travelling between the Hero and the Nodo's box.
+    fade = max(fade, smoothstep(0.0, 0.5, pB));
+    shrink = mix(shrink, 0.0, pB);
 
     vFade = fade;
     vec4 mvPosition = modelViewMatrix * vec4(displayPosition, 1.0);

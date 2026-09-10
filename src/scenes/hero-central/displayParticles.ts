@@ -9,6 +9,8 @@ interface BuildDisplayParticlesArgs {
   screenSize: THREE.Vector3;
   /** The Device's overall largest dimension -- used to scale the "explode" depth sensibly. */
   maxDim: number;
+  /** `count * 3` Capa-2 target positions (the Nodo surface, centered, its own units) -- see useNodoTargets.ts. */
+  targetPositions: Float32Array;
 }
 
 // Deterministic GLSL-style hash, ported to JS -- same output every time for
@@ -39,6 +41,7 @@ export function buildDisplayParticleGeometry({
   fitScale,
   screenSize,
   maxDim,
+  targetPositions,
 }: BuildDisplayParticlesArgs): THREE.BufferGeometry {
   const rawPositions = logoGeometry.getAttribute('position') as THREE.BufferAttribute;
   const count = rawPositions.count;
@@ -82,6 +85,11 @@ export function buildDisplayParticleGeometry({
   geometry.setAttribute('position', new THREE.BufferAttribute(flat, 3));
   geometry.setAttribute('explodedPosition', new THREE.BufferAttribute(exploded, 3));
   geometry.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+  // Where particle i ends up after the Capa-2 travel: a point on the Nodo,
+  // in the Nodo's OWN centered units. The shader maps it into this
+  // geometry's local space every frame through uTargetMatrix, so the
+  // destination can sit at a different DOM anchor, scale and rotation.
+  geometry.setAttribute('targetPosition', new THREE.BufferAttribute(targetPositions.slice(0, count * 3), 3));
   geometry.computeBoundingSphere();
 
   return geometry;

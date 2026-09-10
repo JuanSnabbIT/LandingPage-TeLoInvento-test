@@ -7,6 +7,7 @@ import { HeroCentralSection } from './scenes/hero-central/HeroCentralSection';
 import { DissolveLabPicker } from './scenes/hero-central/DissolveLabPicker';
 import { useDisplayProgress } from './hooks/useDisplayProgress';
 import { useSectionReveals } from './hooks/useSectionReveals';
+import { useChoreographyScroll } from './hooks/useChoreographyScroll';
 import { Header } from './sections/Header';
 import { Hero } from './sections/Hero';
 import { Problema } from './sections/Problema';
@@ -37,22 +38,29 @@ const SHOW_DEBUG_PANEL =
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 
 function App() {
+  const heroSectionRef = useRef<HTMLElement>(null);
   const heroAnchorRef = useRef<HTMLDivElement>(null);
+  const problemaVisualRef = useRef<HTMLDivElement>(null);
   const { progressRef, setProgress } = useDisplayProgress();
   const mainRef = useRef<HTMLElement>(null);
   useSectionReveals(mainRef);
+  useChoreographyScroll(heroSectionRef, problemaVisualRef, setProgress);
 
   return (
     <>
       <Leva hidden={!SHOW_DEBUG_PANEL} />
       <PersistentSceneLayer>
-        <HeroCentralSection anchorRef={heroAnchorRef} progressRef={progressRef} />
+        <HeroCentralSection
+          anchorRef={heroAnchorRef}
+          targetAnchorRef={problemaVisualRef}
+          progressRef={progressRef}
+        />
       </PersistentSceneLayer>
 
       <Header />
       <main ref={mainRef} className="page-content">
-        <Hero anchorRef={heroAnchorRef} onProgress={setProgress} />
-        <Problema />
+        <Hero sectionRef={heroSectionRef} anchorRef={heroAnchorRef} />
+        <Problema visualRef={problemaVisualRef} />
         <Solucion />
         <Capacidades />
         <Hogar />

@@ -5,8 +5,9 @@ import { useSyncExternalStore } from 'react';
  * decision (vault 09-registro-decisiones.md, "Coreografía de scroll de la
  * Capa 2"), so instead of committing to one, every candidate is switchable
  * live from a small dev-only picker (DissolveLabPicker.tsx) and the URL
- * (`?dissolve=dust&pin=1`). The scene reads `mode` every frame; Hero
- * rebuilds its ScrollTrigger when `pin`/`length` change.
+ * (`?dissolve=dust`). The scene reads `mode` every frame. The scroll
+ * range itself is fixed by layout (Hero stage on screen -> Problema's
+ * visual centered), so there is nothing else to tune here.
  *
  * Once the project owner picks one, the winning branch becomes the only
  * one and this module goes away.
@@ -24,23 +25,13 @@ export interface DissolveLabState {
   /** Shader choreography (uMode). */
   mode: number;
   modeId: DissolveModeId;
-  /** Pin the Hero while the dissolve plays, or let it scroll away naturally. */
-  pin: boolean;
-  /** Scroll distance the dissolve spans, as a fraction of viewport height. */
-  lengthVh: number;
 }
 
 function fromUrl(): DissolveLabState {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const wanted = params?.get('dissolve') ?? 'explode';
   const entry = DISSOLVE_MODES.find((m) => m.id === wanted) ?? DISSOLVE_MODES[0];
-  const lengthRaw = Number(params?.get('len') ?? '');
-  return {
-    mode: entry.mode,
-    modeId: entry.id,
-    pin: params?.get('pin') === '1',
-    lengthVh: Number.isFinite(lengthRaw) && lengthRaw > 0 ? lengthRaw : 80,
-  };
+  return { mode: entry.mode, modeId: entry.id };
 }
 
 let state: DissolveLabState = fromUrl();
@@ -62,8 +53,6 @@ export const dissolveLab = {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('dissolve', state.modeId);
-      url.searchParams.set('pin', state.pin ? '1' : '0');
-      url.searchParams.set('len', String(state.lengthVh));
       window.history.replaceState(null, '', url);
     }
     emit();

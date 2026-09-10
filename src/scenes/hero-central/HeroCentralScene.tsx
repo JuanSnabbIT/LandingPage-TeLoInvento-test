@@ -12,6 +12,7 @@ import { glowFragmentShader } from './glow.frag';
 import { anchorToWorldXY, viewportWorldHeight } from '../../components/canvas/pageCameraMath';
 import { useNormalizedPointer } from '../../hooks/useNormalizedPointer';
 import { dissolveLab } from './dissolveLab';
+import { useNodoTargets } from './useNodoTargets';
 
 const CENTRAL_URL = '/models/hero-central/central-lod1.glb';
 
@@ -33,6 +34,8 @@ interface HeroCentralSceneProps {
    * scroll once it releases, without needing separate logic for either.
    */
   anchorRef: RefObject<HTMLElement | null>;
+  /** Capa 2 destination: Problema's `.visual` box. The Nodo point cloud is fitted into its live rect. */
+  targetAnchorRef: RefObject<HTMLElement | null>;
   /**
    * 0..1, scroll-driven (currently a leva debug slider -- see
    * useDisplayProgress.ts; no real scroll trigger exists yet, that's a
@@ -74,9 +77,23 @@ const MAX_YAW_RAD = 0.34; // ~19.5°, left/right
 // Unchanged -- still felt right at the larger yaw range when tested.
 const ROTATION_DAMPING_SPEED = 6;
 
-export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef }: HeroCentralSceneProps) {
+// Nodo cloud height as a fraction of its DOM anchor's height, and idle spin.
+const TARGET_HEIGHT_FRACTION = 0.8;
+const TARGET_SPIN_RAD_PER_S = 0.25;
+
+export function HeroCentralScene({
+  maxParticles,
+  animate,
+  anchorRef,
+  targetAnchorRef,
+  progressRef,
+}: HeroCentralSceneProps) {
   const { scene: centralScene } = useGLTF(CENTRAL_URL);
   const logoGeometry = useLogoParticles(maxParticles);
+  const nodo = useNodoTargets(logoGeometry.getAttribute('position').count);
+  const pointsRef = useRef<THREE.Points>(null);
+  const targetGroupRef = useRef<THREE.Group>(null);
+  const targetMatrix = useMemo(() => ({ inv: new THREE.Matrix4(), out: new THREE.Matrix4() }), []);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const parallaxRigRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
@@ -188,6 +205,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       // axis-aligned Box3 -- z isn't used by buildDisplayParticleGeometry.
       screenSize: new THREE.Vector3(plane.size.x, plane.size.y, 0),
       maxDim,
+      targetPositions: nodo.positions,
     });
 
     // Glow placement: behind the screen's REAL surface, along its real
@@ -213,7 +231,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       maxDim,
       screenSize: new THREE.Vector3(plane.size.x, plane.size.y, 0),
     };
-  }, [centralScene, logoGeometry]);
+  }, [centralScene, logoGeometry, nodo.positions]);
 
   // Initial SIZE only (before the first frame has measured the anchor):
   // a viewport-relative guess so the first painted frame isn't at scale
@@ -226,6 +244,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       uProgress: { value: 0 },
       uMode: { value: dissolveLab.get().mode },
       uSpread: { value: new THREE.Vector3(screenSize.x, screenSize.y, maxDim) },
+      uTargetMatrix: { value: new THREE.Matrix4() },
       uFrequency: { value: 0.55 },
       uSize: { value: 2.1 },
       uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 },
@@ -274,6 +293,33 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       if (desiredWorldSize > 0) groupRef.current.scale.setScalar(desiredWorldSize / maxDim);
     }
 
+    // Capa 2 destination: same live-rect treatment for the Nodo's anchor
+    // (Problema's .visual). The group holds no geometry -- it only exists
+    // so its matrixWorld (position/scale/idle spin) can be handed to the
+    // particle shader as uTargetMatrix, relative to the points' own space.
+    const targetEl = targetAnchorRef.current;
+    const targetGroup = targetGroupRef.current;
+    const points = pointsRef.current;
+    if (targetEl && targetGroup && points && materialRef.current) {
+      const rect = targetEl.getBoundingClientRect();
+      const u = (rect.left + rect.width / 2) / window.innerWidth;
+      const v = (rect.top + rect.height / 2) / window.innerHeight;
+      const aspect = size.width / Math.max(size.height, 1);
+      const { x, y } = anchorToWorldXY(u, v, aspect);
+      targetGroup.position.set(x, y, 0);
+      const worldPerPx = viewportWorldHeight() / Math.max(window.innerHeight, 1);
+      const desired = TARGET_HEIGHT_FRACTION * rect.height * worldPerPx;
+      if (desired > 0) targetGroup.scale.setScalar(desired / nodo.maxDim);
+      if (animate) targetGroup.rotation.y += TARGET_SPIN_RAD_PER_S * Math.min(delta, 1 / 30);
+      // Slight tilt so the Nodo's lid/terminals read in 3D, not top-down flat.
+      targetGroup.rotation.x = 0.35;
+      targetGroup.updateMatrixWorld(true);
+      points.updateMatrixWorld(true);
+      targetMatrix.inv.copy(points.matrixWorld).invert();
+      targetMatrix.out.multiplyMatrices(targetMatrix.inv, targetGroup.matrixWorld);
+      (materialRef.current.uniforms.uTargetMatrix.value as THREE.Matrix4).copy(targetMatrix.out);
+    }
+
     // Mouse parallax applies to ParallaxRig ONLY -- Device and
     // DisplayAnchor (and therefore the particles) are both its children,
     // so they inherit this exact same transform automatically. There is
@@ -302,6 +348,9 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
       <ambientLight intensity={0.6} />
       <directionalLight position={[2, 3, 2]} intensity={1.4} />
       <directionalLight position={[-2, -1, -1]} intensity={0.4} />
+
+      {/* Capa 2 destination transform (no geometry) -- see the useFrame above. */}
+      <group ref={targetGroupRef} />
 
       {/* Outer group: position is driven live every frame in the useFrame
           above (straight off the DOM anchor's real getBoundingClientRect(),
@@ -397,7 +446,7 @@ export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef
                   real depth-tested occlusion against the opaque Device
                   mesh handles hiding particles that end up behind it,
                   nothing here fakes that with per-particle opacity. */}
-              <points geometry={displayGeometry}>
+              <points ref={pointsRef} geometry={displayGeometry} frustumCulled={false}>
                 <shaderMaterial
                   ref={materialRef}
                   vertexShader={particleVertexShader}

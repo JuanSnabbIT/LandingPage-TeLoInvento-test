@@ -50,23 +50,10 @@ export function DissolveLabPicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: '0 0 10px', opacity: 0.7, lineHeight: 1.4 }}>{current.hint}</p>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <input type="checkbox" checked={s.pin} onChange={(e) => dissolveLab.set({ pin: e.target.checked })} />
-        Fijar el Hero mientras se disuelve
-      </label>
-      <label style={{ display: 'block' }}>
-        Largo del scroll: {s.lengthVh}% del alto
-        <input
-          type="range"
-          min={40}
-          max={200}
-          step={10}
-          value={s.lengthVh}
-          onChange={(e) => dissolveLab.set({ lengthVh: Number(e.target.value) })}
-          style={{ width: '100%' }}
-        />
-      </label>
+      <p style={{ margin: 0, opacity: 0.7, lineHeight: 1.4 }}>{current.hint}</p>
+      <p style={{ margin: '8px 0 0', opacity: 0.55, lineHeight: 1.4 }}>
+        Luego las partículas viajan y se rearman como el Nodo en la sección Problema.
+      </p>
     </div>
   );
 }
