@@ -10,7 +10,6 @@ import { particleFragmentShader } from './particle.frag';
 import { glowVertexShader } from './glow.vert';
 import { glowFragmentShader } from './glow.frag';
 import { anchorToWorldXY, viewportWorldHeight } from '../../components/canvas/pageCameraMath';
-import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
 import { useNormalizedPointer } from '../../hooks/useNormalizedPointer';
 
 const CENTRAL_URL = '/models/hero-central/central-lod1.glb';
@@ -19,8 +18,20 @@ interface HeroCentralSceneProps {
   maxParticles: number;
   /** false when prefers-reduced-motion is set -- mouse parallax is skipped/neutral. */
   animate: boolean;
-  /** Where the Central+logo unit should sit on screen -- see useElementViewportAnchor. */
-  anchor: ViewportAnchor;
+  /**
+   * The DOM anchor element, read directly with `getBoundingClientRect()`
+   * every r3f frame (see the useFrame below) -- deliberately NOT a
+   * React-state-derived ViewportAnchor. Measuring through a `scroll`
+   * event + setState + re-render round trip put the group's position a
+   * frame or more behind the section's real (compositor-driven) scroll
+   * position, which read as the group visibly lagging/detaching from the
+   * page instead of looking attached to it. Reading the live rect in the
+   * same per-frame loop that draws the scene removes every one of those
+   * hops -- this is also what keeps it lag-free through Hero's GSAP
+   * ScrollTrigger pin (see Hero.tsx) and the hand-off back to normal
+   * scroll once it releases, without needing separate logic for either.
+   */
+  anchorRef: RefObject<HTMLElement | null>;
   /**
    * 0..1, scroll-driven (currently a leva debug slider -- see
    * useDisplayProgress.ts; no real scroll trigger exists yet, that's a
@@ -32,13 +43,13 @@ interface HeroCentralSceneProps {
   progressRef: RefObject<number>;
 }
 
-// How tall the Central should read on screen, as a fraction of the full
-// viewport height. Not locked -- raised from an earlier 0.34 per the
-// visual-polish follow-up (project owner enlarged .hero__anchor's
-// reserved layout space and asked for the Device to read as the dominant
-// hero visual, closer to a real product-shot reference). Eyeballed
-// against that reference on one dev machine.
-const TARGET_HEIGHT_FRACTION = 0.58;
+// How tall the Central should read on screen, as a fraction of the DOM
+// anchor's (.hero__anchor / .hero__stage) own on-screen height -- NOT of
+// the viewport. Sizing off the stage is what guarantees the Device always
+// fits fully inside the product-shot area the layout reserves for it
+// (the approved reference shows the whole device, never cropped), on any
+// viewport/aspect. Eyeballed.
+const TARGET_ANCHOR_HEIGHT_FRACTION = 0.8;
 
 // Glow: how much bigger than the Device's own maxDim the glow plane is,
 // and how far behind the screen (along its real normal) it sits. Both
@@ -62,11 +73,12 @@ const MAX_YAW_RAD = 0.34; // ~19.5°, left/right
 // Unchanged -- still felt right at the larger yaw range when tested.
 const ROTATION_DAMPING_SPEED = 6;
 
-export function HeroCentralScene({ maxParticles, animate, anchor, progressRef }: HeroCentralSceneProps) {
+export function HeroCentralScene({ maxParticles, animate, anchorRef, progressRef }: HeroCentralSceneProps) {
   const { scene: centralScene } = useGLTF(CENTRAL_URL);
   const logoGeometry = useLogoParticles(maxParticles);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const parallaxRigRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const size = useThree((state) => state.size);
   const pointerRef = useNormalizedPointer();
 
@@ -200,18 +212,11 @@ export function HeroCentralScene({ maxParticles, animate, anchor, progressRef }:
     };
   }, [centralScene, logoGeometry]);
 
-  // Where the whole Central+logo unit sits on the page, derived from the
-  // DOM anchor instead of a camera framed around the model itself.
-  const { groupPosition, groupScale } = useMemo(() => {
-    const aspect = size.width / Math.max(size.height, 1);
-    const { x, y } = anchorToWorldXY(anchor.u, anchor.v, aspect);
-    const desiredWorldSize = TARGET_HEIGHT_FRACTION * viewportWorldHeight();
-
-    return {
-      groupPosition: [x, y, 0] as [number, number, number],
-      groupScale: desiredWorldSize / maxDim,
-    };
-  }, [anchor.u, anchor.v, size.width, size.height, maxDim]);
+  // Initial SIZE only (before the first frame has measured the anchor):
+  // a viewport-relative guess so the first painted frame isn't at scale
+  // 0/1. The real scale is derived from the anchor's live rect height in
+  // useFrame below, alongside its position.
+  const initialGroupScale = useMemo(() => (0.45 * viewportWorldHeight()) / maxDim, [maxDim]);
 
   const uniforms = useMemo(
     () => ({
@@ -240,6 +245,26 @@ export function HeroCentralScene({ maxParticles, animate, anchor, progressRef }:
     // unconditionally -- never gated by `animate`.
     if (materialRef.current) {
       materialRef.current.uniforms.uProgress.value = progressRef.current;
+    }
+
+    // Live position: read the anchor's REAL on-screen rect this frame,
+    // not a React-state value from some earlier scroll event -- see the
+    // prop doc comment above for why. No-op (keeps last known position)
+    // if the anchor isn't mounted yet, rather than snapping to origin.
+    const anchorEl = anchorRef.current;
+    if (anchorEl && groupRef.current) {
+      const rect = anchorEl.getBoundingClientRect();
+      const u = (rect.left + rect.width / 2) / window.innerWidth;
+      const v = (rect.top + rect.height / 2) / window.innerHeight;
+      const aspect = size.width / Math.max(size.height, 1);
+      const { x, y } = anchorToWorldXY(u, v, aspect);
+      groupRef.current.position.set(x, y, 0);
+
+      // Size follows the anchor too: world units per CSS pixel at z=0,
+      // times the pixel height we want the Device to occupy.
+      const worldPerPx = viewportWorldHeight() / Math.max(window.innerHeight, 1);
+      const desiredWorldSize = TARGET_ANCHOR_HEIGHT_FRACTION * rect.height * worldPerPx;
+      if (desiredWorldSize > 0) groupRef.current.scale.setScalar(desiredWorldSize / maxDim);
     }
 
     // Mouse parallax applies to ParallaxRig ONLY -- Device and
@@ -271,12 +296,14 @@ export function HeroCentralScene({ maxParticles, animate, anchor, progressRef }:
       <directionalLight position={[2, 3, 2]} intensity={1.4} />
       <directionalLight position={[-2, -1, -1]} intensity={0.4} />
 
-      {/* Outer group: places the whole unit at the DOM anchor's on-screen
-          position (useElementViewportAnchor + anchorToWorldXY) and scales
-          it to a sane on-screen size. Never rotates -- mouse parallax
-          happens one level down, on ParallaxRig, so it pivots around the
-          Device's own center rather than this anchor point. */}
-      <group position={groupPosition} scale={groupScale}>
+      {/* Outer group: position is driven live every frame in the useFrame
+          above (straight off the DOM anchor's real getBoundingClientRect(),
+          not React state -- see the anchorRef prop doc comment), and so is
+          its scale (a fraction of the anchor's live height, so the Device
+          always fits the stage the layout reserves). Never rotates -- mouse parallax happens one level down,
+          on ParallaxRig, so it pivots around the Device's own center
+          rather than this anchor point. */}
+      <group ref={groupRef} scale={initialGroupScale}>
         {/* ParallaxRig: recenters the Device's own bounding-box center
             onto this group's local origin (so it rotates around its own
             middle, not some off-center point) AND is the ONLY node the

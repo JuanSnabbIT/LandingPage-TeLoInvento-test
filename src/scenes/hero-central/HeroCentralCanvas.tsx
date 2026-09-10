@@ -13,7 +13,10 @@ useGLTF.preload(LOGO_URL);
 interface HeroCentralCanvasProps {
   /** false when prefers-reduced-motion is set -- gates mouse parallax only. */
   animate: boolean;
+  /** Readiness/poster-fallback only -- NOT used for the live group position, see HeroCentralScene.tsx. */
   anchor: ViewportAnchor;
+  /** The raw DOM ref -- read directly every r3f frame for the group's live position (see HeroCentralScene.tsx). */
+  anchorRef: RefObject<HTMLElement | null>;
   /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
   progressRef: RefObject<number>;
 }
@@ -24,7 +27,7 @@ interface HeroCentralCanvasProps {
  * module so HeroCentralSection.tsx can `lazy()` it -- keeps three.js/r3f
  * out of the main bundle and off the critical path for first paint.
  */
-export default function HeroCentralCanvas({ animate, anchor, progressRef }: HeroCentralCanvasProps) {
+export default function HeroCentralCanvas({ animate, anchor, anchorRef, progressRef }: HeroCentralCanvasProps) {
   const [tier] = useState(getDeviceTier);
   const [contextLost, setContextLost] = useState(false);
 
@@ -52,7 +55,7 @@ export default function HeroCentralCanvas({ animate, anchor, progressRef }: Hero
         <HeroCentralScene
           maxParticles={tier.maxParticles}
           animate={animate}
-          anchor={anchor}
+          anchorRef={anchorRef}
           progressRef={progressRef}
         />
       </SceneCanvas>

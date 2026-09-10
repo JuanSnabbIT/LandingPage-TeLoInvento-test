@@ -12,6 +12,12 @@ interface HeroProps {
  * part 1 is the copy (headline/sub/CTA), part 2 is the product presentation
  * (the Central, and only the Central -- it doesn't appear anywhere else on
  * the page). See Hero.css for the "no boxed container" deviation, unchanged.
+ *
+ * No scroll pin: the r3f group reads `.hero__anchor`'s live rect every
+ * frame (see HeroCentralScene.tsx), which already keeps the Central glued
+ * to the page without lag, so the section just flows normally into
+ * Problema like every other section (a pin left a blank spacer gap
+ * between Hero and Problema in the full-page layout).
  */
 export function Hero({ anchorRef }: HeroProps) {
   return (

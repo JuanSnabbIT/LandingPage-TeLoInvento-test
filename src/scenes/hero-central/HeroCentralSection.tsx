@@ -33,15 +33,16 @@ interface HeroCentralSectionProps {
  */
 export function HeroCentralSection({ anchorRef, progressRef }: HeroCentralSectionProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  // trackScroll:true -- without it, the anchor's on-screen position is
-  // measured once (mount/resize only) and never again, so the group
-  // freezes at that screen coordinate forever. Since PersistentSceneLayer
-  // is position:fixed covering the whole viewport, a frozen anchor makes
-  // the Central appear to float over every later section as the page
-  // scrolls, instead of scrolling away together with Hero -- exactly the
-  // bug this fixes. Not Capa-2-specific (that was travel to ANOTHER
-  // section's anchor, deliberately not built yet) -- this is just making
-  // Hero's own anchor track where Hero itself actually is on screen.
+  // This React-state anchor is now ONLY for readiness gating and the
+  // static poster fallback below -- the live 3D group's position is read
+  // directly off `anchorRef` every r3f frame (see HeroCentralScene.tsx),
+  // bypassing this scroll-event + setState round trip entirely, since
+  // that round trip is what caused a visible lag between the Hero
+  // section's real (compositor-driven, instant) scroll position and the
+  // group's (React-render-driven, always a frame or more behind)
+  // position. trackScroll:true kept anyway so the poster fallback (shown
+  // on WebGL loss/error, a rare case) still tracks reasonably rather than
+  // freezing at mount.
   const anchor = useElementViewportAnchor(anchorRef, { trackScroll: true });
   const [webglOk, setWebglOk] = useState<boolean | null>(null);
   const [ready, setReady] = useState(false);
@@ -68,7 +69,12 @@ export function HeroCentralSection({ anchorRef, progressRef }: HeroCentralSectio
   return (
     <CanvasErrorBoundary fallback={<AnchoredPoster anchor={anchor} />}>
       <Suspense fallback={<AnchoredPoster anchor={anchor} />}>
-        <HeroCentralCanvas animate={!prefersReducedMotion} anchor={anchor} progressRef={progressRef} />
+        <HeroCentralCanvas
+          animate={!prefersReducedMotion}
+          anchor={anchor}
+          anchorRef={anchorRef}
+          progressRef={progressRef}
+        />
       </Suspense>
     </CanvasErrorBoundary>
   );

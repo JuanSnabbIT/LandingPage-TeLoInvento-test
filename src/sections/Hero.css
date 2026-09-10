@@ -50,8 +50,34 @@
   margin-top: clamp(40px, 7vw, 64px);
 }
 
-/* Invisible reference point for the 3D group's on-screen anchor -- see the note above. Size/offset not locked, see the T9 follow-up report. */
+/*
+ * Product-shot stage, proportioned like the approved reference (a wide
+ * ~2.1:1 frame with the device standing centered on a dark floor). The
+ * frame is deliberately NOT filled -- only a hairline border and a
+ * transparent interior -- because the 3D Central is drawn on the
+ * persistent canvas BEHIND this section (see note 1 above); any opaque
+ * fill here would hide it. The floor reflection is a thin translucent
+ * gradient at the very bottom, drawn under the device's feet only.
+ * The r3f group sizes itself to this element's live height, so the
+ * Device always fits inside it fully, never cropped.
+ */
 .hero__anchor {
+  position: relative;
   width: 100%;
-  min-height: clamp(240px, 40vw, 340px);
+  aspect-ratio: 21 / 10;
+  min-height: 260px;
+  max-height: 70svh;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+.hero__anchor::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(84, 121, 225, 0.22) 0%, rgba(84, 121, 225, 0) 70%);
+  pointer-events: none;
 }

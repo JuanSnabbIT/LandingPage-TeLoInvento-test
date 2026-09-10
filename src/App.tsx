@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Leva } from 'leva';
 import './App.css';
 import './styles/tokens.css';
 import { PersistentSceneLayer } from './components/canvas/PersistentSceneLayer';
@@ -28,12 +29,18 @@ import { Footer } from './sections/Footer';
  * particles' local flat->exploded dispersal, scrubbed by hand via a leva
  * debug slider -- no real scroll trigger exists yet, that's later work.
  */
+// The leva slider (useDisplayProgress) is a dev harness, not product UI:
+// only shown when the page is opened with `?debug`.
+const SHOW_DEBUG_PANEL =
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+
 function App() {
   const heroAnchorRef = useRef<HTMLDivElement>(null);
   const { progressRef } = useDisplayProgress();
 
   return (
     <>
+      <Leva hidden={!SHOW_DEBUG_PANEL} />
       <PersistentSceneLayer>
         <HeroCentralSection anchorRef={heroAnchorRef} progressRef={progressRef} />
       </PersistentSceneLayer>
