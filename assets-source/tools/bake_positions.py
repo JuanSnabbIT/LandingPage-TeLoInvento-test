@@ -58,10 +58,32 @@ def hilbert_order(points, bits=8):
     return np.argsort(keys, kind='stable')
 
 # ---------- Blender ----------
-def import_glb(path):
+def import_glb(path, exclude=None):
+    """Importa un GLB y devuelve sus mallas.
+
+    `exclude`: nombres base de objetos a descartar (mismo criterio que
+    `explode`). Se borran ANTES de medir los limites, asi que la pieza excluida
+    no cuenta ni para el encuadre ni para el reparto de particulas por area --
+    que es justo el punto: el `Suelo_Disco` de `riego.glb` es el 82 % de la
+    superficie del modelo y se llevaria 4 de cada 5 particulas del aspersor.
+    """
     before = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=os.path.join(ROOT, path))
-    return [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+    objs = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+    if exclude:
+        names = {o.name.split('.')[0] for o in objs}
+        missing = [k for k in exclude if k not in names]
+        if missing:
+            print('ERROR exclude: mallas sin match', missing, 'en', path, 'disponibles', sorted(names))
+            sys.exit(2)
+        keep = []
+        for o in objs:
+            if o.name.split('.')[0] in exclude:
+                bpy.data.objects.remove(o, do_unlink=True)
+            else:
+                keep.append(o)
+        objs = keep
+    return objs
 
 def object_bounds(objs):
     mn = Vector((1e9,) * 3); mx = Vector((-1e9,) * 3)
@@ -195,15 +217,23 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     all_tris = []; all_areas = []; all_colors = []; first_max = None
     colors = spec.get('colors')  # material name -> hex; solo el logo lo usa hoy
     for src in spec['sources']:
-        objs = import_glb(src['file'])
+        objs = import_glb(src['file'], src.get('exclude'))
         mn, mx = object_bounds(objs)
         max_dim = max(mx - mn)
         if first_max is None: first_max = max_dim
         s = src.get('scale', 1.0) * (first_max / max_dim) if 'scale' in src else 1.0
         yaw = src.get('yaw', 0.0); off = Vector(src.get('offset', [0, 0, 0])) * first_max
+        # `pitch` (giro sobre X, en espacio Blender) endereza las piezas que el
+        # modelador dejo acostadas en el plano XY: sin el, `microchip.glb` -- una
+        # placa plana de 5.89 x 5.89 x 0.88 -- se ve casi de canto bajo la pose
+        # `tresCuartos` (Euler 0.25, 0.5, 0), que solo la inclina 14 grados.
+        # pitch = pi/2 deja su cara mirando a -Y de Blender, o sea hacia la camara.
+        pitch = src.get('pitch', 0.0)
         center = (mn + mx) / 2
         for o in objs:
-            o.matrix_world = Matrix.Translation(off + center) @ Matrix.Rotation(yaw, 4, 'Z') @ Matrix.Scale(s, 4) @ Matrix.Translation(-center) @ o.matrix_world
+            o.matrix_world = (Matrix.Translation(off + center) @ Matrix.Rotation(yaw, 4, 'Z')
+                              @ Matrix.Rotation(pitch, 4, 'X') @ Matrix.Scale(s, 4)
+                              @ Matrix.Translation(-center) @ o.matrix_world)
         explode = spec.get('explode')
         if explode:
             names = {o.name.split('.')[0] for o in objs}

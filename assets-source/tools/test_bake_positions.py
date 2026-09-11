@@ -212,6 +212,62 @@ def test_paired_shapes_share_one_hilbert_order():
         shutil.rmtree(out, ignore_errors=True)
 
 
+# ---------- modelos del dueno del proyecto (fila de Capacidades) ----------
+
+def test_exclude_drops_the_mesh_before_measuring():
+    """`exclude` saca la malla ANTES de medir los limites y de repartir area.
+
+    `riego.glb` trae un disco de tierra (`Suelo_Disco`) que es el 81.7 % de la
+    superficie del modelo: sin excluirlo, 4 de cada 5 particulas del aspersor
+    caen en el suelo y el resto (mastil, brotes, chorros) queda en un puñado de
+    puntos. Ademas el disco es lo mas ancho en Y, asi que tambien deformaba el
+    encuadre de la fila.
+    """
+    src = 'assets-source/models/capacidades/riego.glb'
+    todo = bp.import_glb(src)
+    nombres = {o.name.split('.')[0] for o in todo}
+    assert 'Suelo_Disco' in nombres, 'el modelo cambio: ya no trae Suelo_Disco'
+    _, areas_todo = bp.triangles_world(todo)
+
+    sin_suelo = bp.import_glb(src, ['Suelo_Disco'])
+    assert 'Suelo_Disco' not in {o.name.split('.')[0] for o in sin_suelo}
+    assert len(sin_suelo) == len(todo) - 1
+    _, areas_sin = bp.triangles_world(sin_suelo)
+    assert areas_sin.sum() < areas_todo.sum() * 0.25, 'el suelo seguia pesando en el area'
+
+    # y los limites se miden sobre lo que queda: el disco era lo ancho en Y
+    mn, mx = bp.object_bounds(sin_suelo)
+    assert (mx - mn)[1] < 2.0, f'el encuadre sigue incluyendo el disco: {list(mx - mn)}'
+
+
+def test_pitch_stands_a_flat_plate_upright():
+    """`pitch` endereza una pieza que el modelador dejo acostada en XY.
+
+    `microchip.glb` es una placa de 5.89 x 5.89 x 0.88: acostada, su alto en la
+    escena es 0.88 y bajo la pose `tresCuartos` (que solo inclina 14 grados) se
+    ve casi de canto. Con pitch = pi/2 su cara queda mirando a la camara.
+    """
+    import shutil, tempfile
+    cfg = json.load(open(bp.CFG_PATH, encoding='utf-8'))
+    out = tempfile.mkdtemp(prefix='bake-pitch-')
+    cfg = {**cfg, 'outDir': out}
+    chip = 'assets-source/models/capacidades/microchip.glb'
+    try:
+        for nombre, spec in (('acostado', {'sources': [{'file': chip}]}),
+                             ('parado', {'sources': [{'file': chip, 'pitch': 1.5708}]})):
+            bp.build_shape(nombre, spec, cfg, 'mobile', 32)
+        alto = {}
+        for nombre in ('acostado', 'parado'):
+            meta = json.load(open(os.path.join(out, f'{nombre}-positions-mobile.json'), encoding='utf-8'))
+            mn = np.array(meta['bbox']['min']); mx = np.array(meta['bbox']['max'])
+            alto[nombre] = (mx - mn)[1] / (mx - mn).max()   # alto relativo al lado mayor
+        print('   alto relativo acostado/parado:', {k: round(v, 3) for k, v in alto.items()})
+        assert alto['acostado'] < 0.3, f"la placa acostada deberia ser chata, dio {alto['acostado']:.3f}"
+        assert alto['parado'] > 0.9, f"pitch no la paro: alto relativo {alto['parado']:.3f}"
+    finally:
+        shutil.rmtree(out, ignore_errors=True)
+
+
 if __name__ == '__main__':
     # No cortar en el primer fallo: se corre bajo Blender, una sola vez, y saber
     # cuáles de los siete fallan vale más que abortar.

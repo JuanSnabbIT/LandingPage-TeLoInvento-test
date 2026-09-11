@@ -38,14 +38,15 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   const geometry = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(S * S * 3), 3)); return g; }, [S]);
   const uniforms = useMemo(() => ({
     uShapeA: { value: null as THREE.Texture | null }, uShapeB: { value: null as THREE.Texture | null }, uSize: { value: S },
-    uColorA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 },
+    uColorA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 }, uTintA: { value: 0 },
+    uColorB: { value: null as THREE.Texture | null }, uHasColorB: { value: 0 }, uTintB: { value: 0 },
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uPointSize: { value: cloudTokens.pointSize[lod] }, uPixelRatio: { value: 1 }, uFluye: { value: 0 },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
-    uSurface: { value: 0 }, uLogoTint: { value: 1 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
+    uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, lod, curl]);
   const tmp = useMemo(() => ({ m: new THREE.Matrix4(), fade: { from: '', to: '', start: 0 } }), []);
   const heroAnchorRef = useRef<HTMLElement | null>(null);
@@ -82,8 +83,12 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     if (!texA) { m.visible = false; return; }
     const u = m.uniforms;
     u.uShapeA.value = texA; u.uShapeB.value = texB ?? texA;
-    const colA = shapes.getColor(r.a);
+    // Las dos puntas del morph llevan su propia textura de color. `uColorB` cae
+    // a la de A (y no a null) porque un sampler sin textura en WebGL2 lee negro
+    // y dispara warnings de "no texture bound"; su peso lo anula igual.
+    const colA = shapes.getColor(r.a); const colB = texB ? shapes.getColor(r.b) : null;
     u.uColorA.value = colA ?? texA; u.uHasColorA.value = colA ? 1 : 0;
+    u.uColorB.value = colB ?? colA ?? texA; u.uHasColorB.value = colB ? 1 : 0;
     // `t` efectivo: con la forma B sin cargar la nube espera en A, y TODO lo que
     // depende del progreso (posición, superficie, tinte del logo, alpha del
     // viaje) tiene que usar el mismo valor. Con `r.t` en el color y 0 en la
@@ -96,7 +101,11 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const rectB = r.kind === 'apagado' && rectA ? apagadoRect(rectA) : rectFor(r.slotB);
     rectsRef.current = { a: rectA, b: rectB, t, kind: r.kind };
     u.uSurface.value = THREE.MathUtils.lerp(pa.surface, pb.surface, t);
-    u.uLogoTint.value = r.a === 'logo' ? 1 - t : r.b === 'logo' ? t : 0;
+    // Una forma se pinta con su color horneado si lo tiene; el logo además se
+    // tiñe aunque su .bin falle (cae al degradado por seed). Sin forma B cargada
+    // la punta B copia a la A, así la nube quieta no se destiñe hacia nada.
+    u.uTintA.value = colA || r.a === 'logo' ? 1 : 0;
+    u.uTintB.value = texB ? (colB || r.b === 'logo' ? 1 : 0) : u.uTintA.value;
     u.uFluye.value = r.index === 0 ? 1 : 0;
     u.uPixelRatio.value = gl.getPixelRatio();
     let alpha = r.alpha;

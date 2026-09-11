@@ -1,0 +1,25 @@
+{
+  "shape": "capacidades",
+  "lod": "lod2",
+  "size": 256,
+  "count": 65536,
+  "bbox": {
+    "min": [
+      -5.580881118774414,
+      -0.4286382496356964,
+      -0.37542298436164856
+    ],
+    "max": [
+      5.281554698944092,
+      1.8675920963287354,
+      0.3731468915939331
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/riego.glb",
+    "assets-source/models/capacidades/seguridad.glb",
+    "assets-source/models/capacidades/microchip.glb"
+  ],
+  "generatedAt": "2026-09-11T19:00:58.515740+00:00",
+  "color": "capacidades-color-lod2.bin"
+}

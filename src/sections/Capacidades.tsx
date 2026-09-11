@@ -1,15 +1,24 @@
 import { useRef } from 'react';
 import './Capacidades.css';
 import { useSceneSlot } from '../scene/useSceneSlot';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+
+/** Mismo corte que `.capacidades__stage` en el CSS: 220 px de franja arriba, 160 abajo. */
+const ANCHA = '(min-width: 901px)';
 
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="capacidades" id="capacidades">`. */
 export function Capacidades() {
   const stageRef = useRef<HTMLDivElement>(null);
-  // `fit` es fracción del lado MENOR de la caja (anchoring.ts) y esta caja es una
-  // franja 1137x220: con el 0.72 del resto de los slots la fila de sensores salía
-  // de 158 px de ancho, tres manchitas ilegibles (QA T24). 1.45 la deja en ~285 x
-  // 175 px, o sea ~80% del alto de la franja -- que es el límite real, no el ancho.
-  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: 1.45, pose: 'tresCuartos', surface: 'light' });
+  // `fit` es fracción del lado MENOR de la caja (anchoring.ts) y escala el lado
+  // MAYOR de la forma. Esta caja es una franja (1137x220 en ancho, 350x160 en
+  // teléfono) y la fila de Capacidades es 4.7:1, así que el límite cambia con el
+  // ancho: en escritorio manda el alto de la franja (3.2 x 220 = 704 px de fila,
+  // 149 de alto, ~62% del ancho de la caja) y en teléfono manda el ancho de la
+  // pantalla (2.0 x 160 = 320 px, que entra en los ~350 útiles). Con un solo
+  // valor alto la fila se salía de la pantalla en móvil, y con uno solo bajo
+  // quedaban tres manchitas de 98 px en escritorio.
+  const ancha = useMediaQuery(ANCHA);
+  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: ancha ? 3.2 : 2.0, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="capacidades" id="capacidades">
       <div className="wrap">

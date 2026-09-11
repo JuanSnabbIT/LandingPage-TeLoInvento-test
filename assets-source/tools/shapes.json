@@ -1,5 +1,5 @@
 {
-  "_comment": "offset/explode van en espacio Blender (Z arriba), que es donde el bake mueve las piezas antes de blender_to_yup(): three (x,y,z) -> blender (x, -z, y).",
+  "_comment": "offset/explode van en espacio Blender (Z arriba), que es donde el bake mueve las piezas antes de blender_to_yup(): three (x,y,z) -> blender (x, -z, y). `scale` normaliza la fuente al lado mayor de la PRIMERA fuente; `pitch` la gira sobre X (pi/2 = la para de frente); `exclude` descarta mallas por nombre base antes de medir y muestrear.",
   "seed": 20260911,
   "lods": { "lod2": 256, "mobile": 128 },
   "shell": 0.03,
@@ -35,15 +35,27 @@
         { "file": "assets-source/models/nodo/nodo.glb", "offset": [0.7, -0.15, -0.4], "scale": 0.4, "yaw": -0.5 }
       ]
     },
-    "sensores": {
+    "capacidades": {
+      "_comment": "Una pieza por tarjeta de la seccion, en el mismo orden: Set de Riego, Set de Seguridad Perimetral, Plataforma Central.",
       "sources": [
-        { "file": "assets-source/models/capacidades-glb/sensor_humedad.glb", "offset": [-1.1, 0, 0] },
-        { "file": "assets-source/models/capacidades-glb/valvula_riego.glb", "offset": [0, 0, 0] },
-        { "file": "assets-source/models/capacidades-glb/sensor_perimetral.glb", "offset": [1.1, 0, 0] }
-      ]
+        { "file": "assets-source/models/capacidades/riego.glb", "offset": [-0.277, 0, -0.098], "scale": 0.70, "exclude": ["Suelo_Disco"] },
+        { "file": "assets-source/models/capacidades/seguridad.glb", "offset": [0.204, 0, 0.095], "scale": 0.258 },
+        { "file": "assets-source/models/capacidades/microchip.glb", "offset": [0.464, 0, 0.071], "scale": 0.258, "pitch": 1.5708 }
+      ],
+      "colors": {
+        "Riego_Metal": "#9AA7B8", "Riego_Hoja": "#4FA96A", "Riego_Tallo": "#3C8452", "Riego_Agua": "#5FC8E8",
+        "Baliza_Base": "#5A6472", "Baliza_Rojo": "#E2574C", "Baliza_Rayo": "#FFC83D",
+        "Azul_Escudo": "#5479E1", "Metal_Plata": "#A9B6C6",
+        "Chip_Verde": "#3E9A6E", "Chip_Amarillo": "#E8B84B", "Chip_Cian": "#5FD0E8",
+        "Chip_Oscuro": "#2B3444", "Chip_Pin": "#B0BAC8"
+      }
     },
     "central": {
       "sources": [{ "file": "public/models/hero-central/central-v2.glb" }]
+    },
+    "wifi": {
+      "sources": [{ "file": "assets-source/models/valor/wifi.glb" }],
+      "colors": { "WiFi_Signal": "#809BE9" }
     }
   }
 }

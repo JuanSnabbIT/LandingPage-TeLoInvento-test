@@ -11,7 +11,7 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
 }
 const manifest = {
   shapes,
-  sequence: ['logo', 'nodo', 'set', 'sensores', 'central', 'nodo-explotado', 'nodo'],
+  sequence: ['logo', 'nodo', 'set', 'capacidades', 'central', 'wifi', 'nodo-explotado', 'nodo'],
   tiers: { high: 'lod2', medium: 'lod2', low: 'mobile' },
   generatedAt: new Date().toISOString(),
 };

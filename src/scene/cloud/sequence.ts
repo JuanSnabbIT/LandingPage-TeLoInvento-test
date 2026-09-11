@@ -3,9 +3,10 @@ export interface Tramo { from: { shape: string; slot: string }; to: { shape: str
 export const TRAMOS: Tramo[] = [
   { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['hero', 'bottom bottom'], end: ['problema', 'center center'] } },
   { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['problema', 'center center'], end: ['solucion', 'center center'] } },
-  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'sensores', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['solucion', 'center center'], end: ['capacidades', 'center center'] } },
-  { from: { shape: 'sensores', slot: 'capacidades' }, to: { shape: 'central', slot: 'valor' }, kind: 'viaje', trigger: { start: ['capacidades', 'center center'], end: ['valor', 'center center'] } },
-  { from: { shape: 'central', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['valor', 'center center'], end: ['proceso', 'center 65%'] } },
+  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['solucion', 'center center'], end: ['capacidades', 'center center'] } },
+  { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'central', slot: 'valor' }, kind: 'viaje', trigger: { start: ['capacidades', 'center center'], end: ['valor', 'center center'] } },
+  { from: { shape: 'central', slot: 'valor' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'morphEnSitio', trigger: { start: ['valor', 'center center'], end: ['valor', 'bottom center'] } },
+  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['valor', 'bottom center'], end: ['proceso', 'center 65%'] } },
   { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'center 65%'], end: ['proceso', 'center 45%'] } },
   { from: { shape: 'nodo', slot: 'proceso' }, to: null, kind: 'apagado', trigger: { start: ['proceso', 'center 45%'], end: ['contacto', 'top 60%'] } },
 ];
