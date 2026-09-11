@@ -6,6 +6,7 @@ import { computeAnchorTransform, anchorMatrix } from '../anchoring';
 import { scenePalette } from '../scenePalette';
 import { motion } from '../../motion/tokens';
 import { TRAMOS, resolveTramo } from './sequence';
+import { unionRect } from './scissor';
 import { useShapeTextures } from './useShapeTextures';
 import { cloudVert } from './cloud.vert';
 import { cloudFrag } from './cloud.frag';
@@ -31,6 +32,17 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uSurface: { value: 0 }, uLogoTint: { value: 1 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, lod, curl]);
   const tmp = useMemo(() => ({ m: new THREE.Matrix4(), fade: { from: '', to: '', start: 0 } }), []);
+  const heroAnchorRef = useRef<HTMLElement | null>(null);
+  const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null }>({ a: null, b: null });
+
+  const rectFor = (slot: string): DOMRectReadOnly | null => {
+    if (slot === 'hero-display') {
+      if (!heroAnchorRef.current) heroAnchorRef.current = document.querySelector('.hero__anchor');
+      return heroAnchorRef.current?.getBoundingClientRect() ?? null;
+    }
+    const el = registry.getSlot(slot)?.anchorRef.current;
+    return el ? el.getBoundingClientRect() : null;
+  };
 
   const poseFor = (slot: string, out: THREE.Matrix4): { surface: number; visible: boolean } => {
     const prov = registry.getPoseProvider(slot);
@@ -54,6 +66,11 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uT.value = texB ? r.t : 0;                       // forma B no cargada: esperar en A
     const pa = poseFor(r.slotA, u.uPoseA.value); const pb = poseFor(r.slotB, u.uPoseB.value);
     if (r.kind === 'apagado') { u.uPoseB.value.copy(u.uPoseA.value).multiply(tmp.m.makeTranslation(0, -1.5, 0)).multiply(tmp.m.makeScale(1.6, 1.6, 1.6)); }
+    const rectA = rectFor(r.slotA);
+    const rectB = r.kind === 'apagado' && rectA
+      ? ({ left: rectA.left, right: rectA.right, top: rectA.top, width: rectA.width, bottom: rectA.bottom + 1.5 * rectA.height, height: rectA.height * 2.5 } as DOMRectReadOnly)
+      : rectFor(r.slotB);
+    rectsRef.current = { a: rectA, b: rectB };
     u.uSurface.value = THREE.MathUtils.lerp(pa.surface, pb.surface, r.t);
     u.uLogoTint.value = r.a === 'logo' ? 1 - r.t : r.b === 'logo' ? r.t : 0;
     u.uFluye.value = r.index === 0 ? 1 : 0;
@@ -70,7 +87,16 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   });
 
   return (
-    <points geometry={geometry} frustumCulled={false}>
+    <points
+      geometry={geometry}
+      frustumCulled={false}
+      onBeforeRender={() => {
+        const { a, b } = rectsRef.current;
+        const scissor = unionRect(a, b, 0.2, viewport);
+        if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
+      }}
+      onAfterRender={() => { gl.setScissorTest(false); }}
+    >
       <shaderMaterial ref={mat} glslVersion={THREE.GLSL3} vertexShader={cloudVert} fragmentShader={cloudFrag} uniforms={uniforms}
         transparent depthWrite={false} depthTest blending={THREE.NormalBlending} premultipliedAlpha />
     </points>
