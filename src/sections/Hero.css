@@ -16,9 +16,34 @@
  *    invisible layout marker, not a rendered container -- see App.tsx and
  *    docs/architecture/3d-web-standard.md §2/§7 for why it's not boxed.
  */
+/*
+ * Alto por pantalla, no por contenido: cada una de las dos partes del Hero
+ * mide exactamente un viewport. El padding vertical global de `section`
+ * (tokens.css) se anula acá -- si no, cada parte mediria una pantalla MAS
+ * hasta 96px por lado. El padding horizontal se mueve a las partes, que
+ * ahora son las que tocan el borde. `svh` y no `vh` a proposito: en movil
+ * la barra del navegador aparece/desaparece y `vh` haria saltar el alto en
+ * pleno scroll (misma unidad que ya usaba `.hero__anchor`).
+ *
+ * `.hero__anchor` NO se estira a esa pantalla: conserva su proporcion 21:10
+ * y queda centrado dentro de la segunda pantalla. La escala del modelo sale
+ * del lado menor de esa caja (computeAnchorTransform, HERO_FIT), asi que
+ * dejarla crecer con el viewport agrandaba la Central ~1.6x.
+ */
 .hero {
   color: var(--dark-ink);
   text-align: center;
+  padding: 0;
+}
+
+.hero__text,
+.hero__stage {
+  box-sizing: border-box;
+  min-height: 100svh;
+  padding-inline: clamp(20px, 6vw, 64px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .hero h1 {
   font-weight: 800;
@@ -46,9 +71,10 @@
  * presentation reads as its own distinct part of the Hero, not a tail end
  * of the copy block.
  */
-.hero__stage {
-  margin-top: clamp(40px, 7vw, 64px);
-}
+/*
+ * Sin margin-top: la separacion entre las dos partes ya no es un margen,
+ * es que cada una ocupa su propia pantalla completa.
+ */
 
 /*
  * Product-shot stage, proportioned like the approved reference (a wide

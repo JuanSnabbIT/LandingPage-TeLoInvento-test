@@ -18,7 +18,7 @@
 }
 /* Slot for the 3D stage (T20/T21) -- hidden unless the scene is live; the transparent/floor-glow treatment lives in src/styles/scene.css. */
 .capacidades__stage {
-  height: 220px;
+  height: 320px;
   margin: 8px 0 24px;
   border: 1px solid var(--line);
   border-radius: 14px;
