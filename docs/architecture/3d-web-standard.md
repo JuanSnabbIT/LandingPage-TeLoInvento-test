@@ -180,25 +180,85 @@ entre frames. Todo el estado vive en un número: el progreso del tramo.
 
 ### 5.1 Cada partícula es una malla, no un punto
 
+> **Origen de esta sección:** ingeniería inversa del bundle de producción de
+> dala.craftedbygc.com (clon local en `C:/proyectos/Dala/dala-clone`), cuyos
+> shaders GLSL sobreviven como literales de string en `scripts/theme.js`. Lo
+> que sigue distingue lo que Dala hace de lo que nosotros adoptamos: no es una
+> copia, varias cosas suyas son incompatibles con una nube que convive con
+> texto en cajas de 360 px.
+>
+> | Tema | Dala | Nosotros |
+> |---|---|---|
+> | Destino de cada partícula | atlas 2x2 de 4 formas en un EXR de 200x200 (10 000 partículas por forma) | un `.bin` por forma, 16 384 partículas |
+> | Movimiento | simulación con estado: resorte + fricción integrados en FBOs ping-pong | respuesta analítica del mismo resorte, evaluada por partícula: mismo sobrepaso, sin estado ni pasadas extra |
+> | Disparo | el scroll es un OBJETIVO; la transición es un tween con duración propia | igual (`motion.tramoModo`) |
+> | Tamaño por partícula | textura horneada (`sc-33.png`), un escalar por partícula y por forma | canal A de la textura de parámetros, horneado por cercanía a arista viva |
+> | Orientación | escritorio: giro por ruido sobre eje fijo; mobile: billboard | billboard (ver más abajo por qué) |
+> | Iluminación | material estándar de three parcheado con `onBeforeCompile` | sombreado plano propio en el fragment |
+> | Profundidad | pasada real de bokeh | atenuación de las partículas traseras |
+
 La nube se dibuja con `InstancedMesh`: una malla chica de 48 caras
 (`public/particles/py-*.glb`, entregadas por el dueño del proyecto) por
 partícula, con sombreado plano por cara. El índice de partícula sale de
 `gl_InstanceID` y la malla se recentra al cargarla.
 
-Tres reglas de tamaño y opacidad, todas derivadas de la POSICIÓN (no hay
-normales horneadas), midiendo la profundidad de cada partícula contra el centro
-del modelo en espacio de vista, en unidades de su semi-tamaño (`dz`):
+**El tamaño de cada partícula se hornea, no se calcula en vivo.** Es la
+decisión que más cambia cómo se ve la malla volumétrica, y es la que toma el
+sitio de referencia: en su textura de escala, el mapa de continentes de su
+forma "Tierra" está dibujado con el TAMAÑO de las partículas, no con el color.
+O sea que ese canal no es un jitter: es el canal de detalle de la silueta.
 
-- `dz ≈ 0` es la **silueta**: partículas chicas y juntas, así el contorno queda
-  nítido.
-- `dz < 0` es la cara que **mira a la cámara**: partículas grandes y separadas,
-  el interior respira.
-- `dz > 0` es la cara de **atrás**: más chicas y al 30 % de opacidad, para que
-  no compita con la de adelante.
+Nuestro equivalente, horneado en `bake_positions.py`, es la **cercanía a arista
+viva**. Una arista es viva si la comparten dos caras con normales que difieren
+más de 28 grados, o si sólo la usa una cara. De ahí salen dos cosas:
+
+- el muestreo se **sesga** hacia los triángulos que tocan una arista viva
+  (`edgeBoost`), así que ahí caen más partículas y quedan **juntas**;
+- el canal A de la textura de parámetros guarda la distancia normalizada a esa
+  arista, y el shader la convierte en tamaño: **chica** pegada al borde,
+  **grande** en el centro de una cara abierta (`edgeScale` / `faceScale`).
+
+Se hornea el factor y no el tamaño final, así el rango se ajusta desde los
+tokens sin volver a hornear.
+
+A eso se suma la profundidad, medida contra el centro del modelo en espacio de
+vista: las partículas de **atrás** se achican y se van al 30 % de opacidad para
+que no compitan con la cara de adelante.
 
 El tamaño base va atado a la escala de la pose activa, no fijo en unidades de
 mundo: así la nube tiene el mismo grano en la franja chica de Capacidades y en
 la caja grande de Valor.
+
+**Orientación.** Cada pirámide encara a la cámara (`lookAtRoll`, el equivalente
+del `calcLookAtMatrix` que usa Dala en su modo mobile) con un giro propio sobre
+ese eje. Su modo de escritorio -- giro por ruido sobre el eje fijo (0,1,1) --
+está implementado y se elige con `cloudTokens.billboard: false`, pero no es el
+que usamos: en Dala cada partícula es diminuta frente a un modelo a pantalla
+completa, así que las caras de canto se leen como textura fina; en una caja de
+360 px las mismas caras se ven como púas.
+
+### 5.2 La transición: disparada, en onda, con resorte
+
+El sitio de referencia **no scrubbea**: no hay un solo `ScrollTrigger` sobre su
+escena 3D. El scroll es un objetivo al que el sistema se acerca, y el progreso
+de cada transición lo mueve un tween con duración propia. Adoptamos ese modelo
+(`motion.tramoModo: 'disparo'`); el scrub anterior sigue disponible en el mismo
+token. Tres piezas, en orden de impacto:
+
+1. **Disparo, no scrub.** Cruzar el rango del tramo arranca el tween; parar de
+   scrollear a mitad ya no congela la nube a mitad de morph. Como los tramos son
+   una cadena, al arrancar uno los anteriores se dan por completos y los
+   posteriores por no empezados (`onSnap`), porque `resolveTramo` elige el
+   último tramo con progreso > 0.
+2. **Onda, no bloque.** El desfase por partícula sube a 0.82 del recorrido: cada
+   partícula cruza rápido, pero el conjunto tarda todo el tramo. Dala llega al
+   mismo efecto con un desfase que cubre ~95 % del recorrido.
+3. **Resorte por partícula.** En vez de interpolar en línea recta, cada
+   partícula sigue la respuesta analítica de un oscilador amortiguado: sobrepasa
+   su destino y se asienta. Dala integra el resorte de verdad en FBOs
+   (`v = (v + (destino - actual) * k) * fricción`); la forma cerrada da el mismo
+   sobrepaso sin estado, sin pasadas extra de GPU y -- lo que importa acá --
+   sigue siendo reversible: scrollear hacia atrás deshace el movimiento exacto.
 
 Por qué 16 384 y no las 150k–250k que sugería el estándar semilla: esta nube
 **convive con texto** en cajas de ~360 px y con una Central sólida, no ocupa un

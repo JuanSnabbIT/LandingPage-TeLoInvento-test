@@ -63,14 +63,16 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   const viewport = useThree((s) => s.size); const gl = useThree((s) => s.gl);
   const uniforms = useMemo(() => ({
     uShapeA: { value: null as THREE.Texture | null }, uShapeB: { value: null as THREE.Texture | null }, uSize: { value: S },
-    uColorA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 }, uTintA: { value: 0 },
-    uColorB: { value: null as THREE.Texture | null }, uHasColorB: { value: 0 }, uTintB: { value: 0 },
+    uParamsA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 }, uTintA: { value: 0 },
+    uParamsB: { value: null as THREE.Texture | null }, uHasColorB: { value: 0 }, uTintB: { value: 0 },
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
-    uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
+    uT: { value: 0 }, uStagger: { value: cloudTokens.stagger },
+    uSpringOmega: { value: cloudTokens.spring.omega }, uSpringZeta: { value: cloudTokens.spring.zeta }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uParticleScale: { value: 0 }, uFluye: { value: 0 },
     uCenter: { value: new THREE.Vector3() }, uSpan: { value: 1 },
-    uEdgeScale: { value: cloudTokens.edgeScale }, uCenterScale: { value: cloudTokens.centerScale },
-    uBackAlpha: { value: cloudTokens.backAlpha },
+    uEdgeScale: { value: cloudTokens.edgeScale }, uFaceScale: { value: cloudTokens.faceScale },
+    uBackAlpha: { value: cloudTokens.backAlpha }, uSpin: { value: cloudTokens.spin },
+    uOrientNoise: { value: cloudTokens.orientNoise }, uBillboard: { value: cloudTokens.billboard ? 1 : 0 },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
@@ -112,12 +114,16 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     if (!texA) { m.visible = false; return; }
     const u = m.uniforms;
     u.uShapeA.value = texA; u.uShapeB.value = texB ?? texA;
-    // Las dos puntas del morph llevan su propia textura de color. `uColorB` cae
-    // a la de A (y no a null) porque un sampler sin textura en WebGL2 lee negro
-    // y dispara warnings de "no texture bound"; su peso lo anula igual.
-    const colA = shapes.getColor(r.a); const colB = texB ? shapes.getColor(r.b) : null;
-    u.uColorA.value = colA ?? texA; u.uHasColorA.value = colA ? 1 : 0;
-    u.uColorB.value = colB ?? colA ?? texA; u.uHasColorB.value = colB ? 1 : 0;
+    // Las dos puntas del morph llevan su propia textura de parámetros (color +
+    // cercanía a arista). Cae a la de A (y no a null) porque un sampler sin
+    // textura en WebGL2 lee negro y dispara warnings de "no texture bound".
+    // `hasColor` sale del manifest: TODA forma trae params, pero sólo algunas
+    // traen color de verdad en el RGB.
+    const prA = shapes.getParams(r.a); const prB = texB ? shapes.getParams(r.b) : null;
+    u.uParamsA.value = prA ?? texA;
+    u.uParamsB.value = prB ?? prA ?? texA;
+    u.uHasColorA.value = prA && manifest.shapes[r.a]?.[lod]?.hasColor ? 1 : 0;
+    u.uHasColorB.value = prB && manifest.shapes[r.b]?.[lod]?.hasColor ? 1 : 0;
     // `t` efectivo: con la forma B sin cargar la nube espera en A, y TODO lo que
     // depende del progreso (posición, superficie, tinte del logo, alpha del
     // viaje) tiene que usar el mismo valor. Con `r.t` en el color y 0 en la
@@ -133,8 +139,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     // Una forma se pinta con su color horneado si lo tiene; el logo además se
     // tiñe aunque su .bin falle (cae al degradado por seed). Sin forma B cargada
     // la punta B copia a la A, así la nube quieta no se destiñe hacia nada.
-    u.uTintA.value = colA || r.a === 'logo' ? 1 : 0;
-    u.uTintB.value = texB ? (colB || r.b === 'logo' ? 1 : 0) : u.uTintA.value;
+    u.uTintA.value = u.uHasColorA.value || r.a === 'logo' ? 1 : 0;
+    u.uTintB.value = texB ? (u.uHasColorB.value || r.b === 'logo' ? 1 : 0) : u.uTintA.value;
     // Tamaño de partícula atado a la escala de la pose activa: la nube se ve
     // con el mismo grano en la franja chica de Capacidades y en la caja grande
     // de Valor, en vez de granulada en una y sólida en la otra.

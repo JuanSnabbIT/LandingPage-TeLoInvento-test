@@ -5,61 +5,105 @@ import { curlGlsl } from './curl.glsl';
 // there's no `#version` line and no `precision` declaration here: three
 // prepends its own precision/modelViewMatrix/projectionMatrix prefix for
 // GLSL3 ShaderMaterial, and a second `precision` line here would duplicate
-// (and can fail to compile against) that prefix. See task-16 brief for the
-// deliberate deviation from the brief's literal snippet.
+// (and can fail to compile against) that prefix.
 //
 // La nube se dibuja con `InstancedMesh`: una malla chica (public/particles/
 // py-*.glb, la que entregó el dueño del proyecto) por partícula, en vez de un
 // GL_POINT plano. Por eso el índice de partícula sale de `gl_InstanceID` y no
 // de `gl_VertexID`, y `position`/`normal` son los del vértice de esa malla --
 // three declara ambos atributos en su prefijo de ShaderMaterial.
+//
+// Dos técnicas tomadas del sitio Dala (ingeniería inversa de su bundle, ver
+// docs/architecture/3d-web-standard.md §5.1):
+//   1. el TAMAÑO de cada partícula sale horneado de la geometría, no calculado
+//      en vivo: chico pegado a una arista viva, grande en el centro de una cara;
+//   2. cada partícula MIRA A LA CÁMARA (matriz look-at por instancia) con un
+//      giro propio sobre ese eje, en vez de una rotación fija al azar.
 export const cloudVert = /* glsl */ `
   uniform sampler2D uShapeA; uniform sampler2D uShapeB; uniform int uSize;
-  // Color por partícula (RGBA8, mismo índice de píxel que las posiciones). Lo
-  // traen las formas horneadas con colors: el logo (rayos amarillos, ampolleta
-  // cian, base navy, llama ámbar) y la fila de Capacidades (aspersor, baliza con
-  // escudo, microchip). Las DOS puntas del morph tienen su textura y su peso:
-  // con solo la punta A, entrar a una forma de color la dejaba teñida del azul
-  // de producto hasta que el tramo cambiaba, y ahí el color aparecía de golpe.
-  // uHasColorX = 0 → esa punta cae al degradado por seed (uColorLogoA/B), que
-  // es también la red de seguridad si el .bin de color no carga.
-  // uTintX = 1 → esa punta se pinta con su color horneado; 0 → color de producto.
-  uniform sampler2D uColorA; uniform sampler2D uColorB;
+  // Parámetros por partícula (RGBA8, mismo índice de píxel que las posiciones):
+  // RGB = color horneado de la pieza, A = cercanía a arista viva (0 = pegada a
+  // una arista, 1 = centro de una cara abierta). Las DOS puntas del morph
+  // tienen su textura: con solo la punta A, entrar a una forma de color la
+  // dejaba teñida del azul de producto hasta que cambiaba el tramo, y ahí el
+  // color aparecía de golpe. uHasColorX = 0 -> esa punta cae al degradado por
+  // seed (uColorLogoA/B), que es la red de seguridad si el .bin no carga.
+  uniform sampler2D uParamsA; uniform sampler2D uParamsB;
   uniform float uHasColorA; uniform float uHasColorB;
   uniform float uTintA; uniform float uTintB;
   uniform vec3 uColorLogoA; uniform vec3 uColorLogoB;
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
   uniform float uParticleScale; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
-  // Centro del modelo (mundo) y su semi-tamaño: con esos dos se saca, por
-  // partícula, qué tan cerca está de la SILUETA y qué tan atrás está.
+  // Centro del modelo (mundo) y su semi-tamaño: con esos dos se sabe qué
+  // partículas quedan detrás, para bajarles la opacidad.
   uniform vec3 uCenter; uniform float uSpan;
-  uniform float uEdgeScale; uniform float uCenterScale; uniform float uBackAlpha;
+  // Rango de tamaño: el horneado guarda el FACTOR (la cercanía a arista) y acá
+  // se convierte en tamaño, así se re-encuadra sin volver a hornear.
+  uniform float uEdgeScale; uniform float uFaceScale; uniform float uBackAlpha;
+  uniform float uSpin; uniform float uOrientNoise; uniform float uBillboard;
+  // Resorte amortiguado: cada partícula no interpola en línea recta hacia su
+  // destino, lo sobrepasa un poco y se asienta. Es la respuesta analítica del
+  // oscilador, no una simulación: la escena sigue siendo función pura del
+  // scroll, así que scrollear hacia atrás deshace el movimiento exacto.
+  uniform float uSpringOmega; uniform float uSpringZeta;
   uniform float uSwirl; uniform float uSwirlRadius; uniform float uSwirlTurns;
   out float vSeed; out float vTl; out vec3 vColor; out float vTint; out float vShade; out float vFade;
   ${curlGlsl}
 
-  /** Giro propio de cada partícula, derivado de su semilla: dos rotaciones
-      baratas (Y y X) para que las caras no queden todas mirando igual. */
-  mat3 spin(float seed) {
-    float a1 = seed * 6.2831853, a2 = seed * 11.7 + 1.3;
-    float c1 = cos(a1), s1 = sin(a1), c2 = cos(a2), s2 = sin(a2);
-    mat3 ry = mat3(c1, 0., -s1, 0., 1., 0., s1, 0., c1);
-    mat3 rx = mat3(1., 0., 0., 0., c2, s2, 0., -s2, c2);
-    return ry * rx;
+  /**
+   * Respuesta de un resorte amortiguado a un escalón, normalizada a [0,1] en el
+   * recorrido: arranca en 0, sobrepasa 1 según el amortiguamiento y termina en 1.
+   * zeta < 1 da sobrepaso; omega es cuán rápido se asienta.
+   */
+  float springEase(float x, float omega, float zeta) {
+    float c = clamp(x, 0., 1.);
+    float wd = omega * sqrt(max(1. - zeta * zeta, 1e-4));
+    float e = exp(-zeta * omega * c);
+    return 1. - e * (cos(wd * c) + (zeta * omega / wd) * sin(wd * c));
+  }
+
+  /**
+   * Base ortonormal que mira de origin a target, con un giro roll alrededor de
+   * ese eje: el equivalente del calcLookAtMatrix de Dala, que en su versión
+   * mobile hace que cada pirámide encare a la cámara.
+   */
+  mat3 lookAtRoll(vec3 origin, vec3 target, float roll) {
+    vec3 z = normalize(target - origin);
+    vec3 h = abs(z.y) > 0.95 ? vec3(1., 0., 0.) : vec3(0., 1., 0.);
+    vec3 x = normalize(cross(h, z));
+    vec3 y = cross(z, x);
+    float c = cos(roll), s = sin(roll);
+    return mat3(x * c + y * s, y * c - x * s, z);
+  }
+
+  /** Rotación de angle alrededor de un eje unitario (Rodrigues). */
+  mat3 axisAngle(vec3 axis, float angle) {
+    float s = sin(angle), c = cos(angle), t = 1. - c;
+    return mat3(
+      t * axis.x * axis.x + c,          t * axis.x * axis.y + s * axis.z, t * axis.x * axis.z - s * axis.y,
+      t * axis.x * axis.y - s * axis.z, t * axis.y * axis.y + c,          t * axis.y * axis.z + s * axis.x,
+      t * axis.x * axis.z + s * axis.y, t * axis.y * axis.z - s * axis.x, t * axis.z * axis.z + c);
   }
 
   void main() {
     int id = gl_InstanceID;
     ivec2 ij = ivec2(id % uSize, id / uSize);
     vec4 a = texelFetch(uShapeA, ij, 0); vec4 b = texelFetch(uShapeB, ij, 0);
+    vec4 prA = texelFetch(uParamsA, ij, 0); vec4 prB = texelFetch(uParamsB, ij, 0);
     vec3 pA = (uPoseA * vec4(a.xyz, 1.)).xyz; vec3 pB = (uPoseB * vec4(b.xyz, 1.)).xyz;
-    float tl = smoothstep(0., 1., clamp((uT - a.w * uStagger) / (1. - uStagger), 0., 1.));
+    // Progreso propio de la partícula. uStagger alto (0.8+) convierte el
+    // tramo en una ONDA que barre la nube -- cada partícula cruza rápido, pero
+    // el conjunto tarda todo el tramo -- en vez de mover el bloque entero a la
+    // vez, que es lo que se veía antes.
+    float tRaw = clamp((uT - a.w * uStagger) / (1. - uStagger), 0., 1.);
+    float tl = springEase(tRaw, uSpringOmega, uSpringZeta);   // puede pasar de 1: es el sobrepaso
+    float tc = clamp(tl, 0., 1.);                             // para mezclar color y tamaño
     vec3 p = mix(pA, pB, tl);
-    float wing = sin(3.14159265 * tl);
+    // La envolvente del vuelo (curl, giro, achique) sigue al progreso CRUDO: con
+    // el del resorte, el sobrepaso la haría negativa justo al final.
+    float wing = sin(3.14159265 * tRaw);
     // Tramo 0 "Fluye": caída + curl extra durante el viaje (uFluye = 1 solo en el tramo 0).
-    // Ambos términos salen de cloudTokens.fluye (spec §5: "parametrizado por cloudTokens");
-    // antes la caída estaba fijada a 0.25 en el shader y los tokens no se usaban.
     // wing = sin(PI*tl): en reposo (tl = 0 o 1) el término de curl vale
     // exactamente 0, así que saltear la evaluación del ruido ahí es un no-op
     // visual que ahorra los 12 samples de curl() por vértice en los dos
@@ -70,56 +114,56 @@ export const cloudVert = /* glsl */ `
     // destino, con la fase sacada de su semilla y el radio modulado por wing
     // (0 en los dos extremos). Así el enjambre sale en espiral, se abre a mitad
     // de camino y aterriza EXACTO sobre el destino, sin desvío residual.
-    // uSwirl lo enciende sólo en los tramos de viaje: en un morph en sitio el
-    // eje sería el desplazamiento minúsculo de cada pieza y el giro no leería.
     if (uSwirl > 0.5 && wing > 0.001) {
       vec3 d = pB - pA;
       float len = length(d);
       if (len > 1e-4) {
         vec3 ax = d / len;
-        // Base perpendicular estable: el vector auxiliar se elige lejos del eje
-        // para que el producto cruz no degenere cuando el viaje es vertical.
         vec3 h = abs(ax.y) > 0.9 ? vec3(1., 0., 0.) : vec3(0., 1., 0.);
         vec3 ru = normalize(cross(ax, h));
         vec3 rv = cross(ax, ru);
-        float ang = a.w * 6.2831853 + tl * 6.2831853 * uSwirlTurns;
+        float ang = a.w * 6.2831853 + tRaw * 6.2831853 * uSwirlTurns;
         float rad = uSwirlRadius * wing * (0.35 + 0.65 * a.w);
         p += (ru * cos(ang) + rv * sin(ang)) * rad;
       }
     }
-    vSeed = a.w; vTl = tl;
+    vSeed = a.w; vTl = tc;
     // El color viaja con la MISMA rampa escalonada que la posición (tl, no uT):
     // cada partícula toma el color de su destino cuando ella llega, no cuando
     // llega el promedio de la nube.
     vec3 fb = mix(uColorLogoA, uColorLogoB, a.w);
-    vec3 cA = uHasColorA > 0.5 ? texelFetch(uColorA, ij, 0).rgb : fb;
-    vec3 cB = uHasColorB > 0.5 ? texelFetch(uColorB, ij, 0).rgb : fb;
-    vColor = mix(cA, cB, tl);
-    vTint = mix(uTintA, uTintB, tl);
-    // Profundidad de la partícula respecto del centro del modelo, en unidades
-    // de su semi-tamaño: dz < 0 = adelante (hacia la cámara), dz > 0 = atrás.
-    // En un sólido convexo la silueta es justo el anillo donde dz ~ 0, y los
-    // dos "polos" (la cara de adelante y la de atrás) son |dz| ~ 1. De ahí
-    // salen las dos cosas que pidió el dueño del proyecto sin hornear normales:
-    //   borde  (dz ~ 0)  -> partículas chicas y juntas: la silueta queda nítida;
-    //   centro (dz < 0)  -> partículas grandes y separadas: el interior respira;
-    //   atrás  (dz > 0)  -> más chicas y mucho más tenues, para que la cara de
-    //                       atrás no compita con la de adelante.
+    vec3 cA = uHasColorA > 0.5 ? prA.rgb : fb;
+    vec3 cB = uHasColorB > 0.5 ? prB.rgb : fb;
+    vColor = mix(cA, cB, tc);
+    vTint = mix(uTintA, uTintB, tc);
+    // Tamaño horneado: el canal A trae la cercanía a arista viva de ESTA forma,
+    // y viaja entre las dos puntas igual que el color. En el borde la partícula
+    // es chica (y el horneado además puso más partículas ahí, así que quedan
+    // juntas y la silueta se lee nítida); en el centro de una cara es grande y
+    // el interior respira.
+    float edgeK = mix(prA.a, prB.a, tc);
+    float sc = uParticleScale * mix(uEdgeScale, uFaceScale, edgeK);
+    // Las de atrás: más chicas y, en el fragment, más tenues.
     vec4 mvCenter = modelViewMatrix * vec4(p, 1.);
     float centerZ = (modelViewMatrix * vec4(uCenter, 1.)).z;
-    float dz = clamp((centerZ - mvCenter.z) / max(uSpan, 1e-4), -1., 1.);
-    float edge = 1. - abs(dz);
-    float back = max(dz, 0.);
+    float back = clamp((centerZ - mvCenter.z) / max(uSpan, 1e-4), 0., 1.);
     vFade = mix(1., uBackAlpha, back);
-    // La malla de la partícula, girada sobre sí misma y encogida a su tamaño,
-    // colgando del punto que calculó el morph. En vuelo se achica un poco
-    // (wing) para que el enjambre disperso no se vea más pesado que la forma.
-    mat3 rot = spin(a.w);
-    float sc = uParticleScale * mix(uCenterScale, uEdgeScale, edge) * mix(1., 0.75, back) * (1. - 0.25 * wing);
+    sc *= mix(1., 0.8, back) * (1. - 0.25 * wing);
+    // Orientación de la pirámide. Dala usa dos modos y en ESCRITORIO elige el de
+    // ruido: giro alrededor del eje fijo (0,1,1) con el ángulo sacado de un
+    // simplex de la posición, lo que da siluetas variadas y textura cristalina.
+    // (En el original el ángulo además avanza con el tiempo; acá no, porque la
+    // escena sólo dibuja cuando algo cambia y una rotación continua obligaría a
+    // dibujar siempre.) El billboard --su modo mobile-- queda disponible por
+    // token: todas las caras miran a la cámara y la nube se lee más pareja.
+    float nOrient = snoise(a.xyz * uOrientNoise) * 3.1415926 + a.w * 6.2831853 * uSpin;
+    mat3 rot = uBillboard > 0.5
+      ? lookAtRoll(p, cameraPosition, nOrient)
+      : axisAngle(normalize(vec3(0., 1., 1.)), nOrient);
     vec3 world = p + rot * position * sc;
-    // Sombreado plano por cara: sin esto las partículas se ven como manchas
-    // planas y la nube pierde el volumen que justifica usar una malla.
+    // Sombreado plano por cara: aunque la pirámide encare a la cámara, sus
+    // caras laterales caen a distinto ángulo, así que la luz sigue dando relieve.
     vec3 nw = normalize(rot * normal);
-    vShade = 0.45 + 0.55 * max(dot(nw, normalize(vec3(0.3, 0.85, 0.45))), 0.);
+    vShade = 0.42 + 0.58 * max(dot(nw, normalize(vec3(0.35, 0.8, 0.55))), 0.);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(world, 1.);
   }`;

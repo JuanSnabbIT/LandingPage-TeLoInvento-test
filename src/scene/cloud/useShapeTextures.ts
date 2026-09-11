@@ -2,16 +2,16 @@ import { useMemo } from 'react';
 import { suspend } from 'suspend-react';   // drei ya la trae como dependencia; agregar a package.json: npm i suspend-react
 import type * as THREE from 'three';
 import { registry } from '../registry';
-import { loadShape, loadShapeColor, type Manifest } from './shapeLoader';
+import { loadShape, loadShapeParams, type Manifest } from './shapeLoader';
 
 export interface ShapeCache {
   get(name: string): THREE.DataTexture | undefined;
   /** Per-particle RGBA8 colour texture, only for shapes baked with `colors` (today: the logo). */
-  getColor(name: string): THREE.DataTexture | undefined;
+  getParams(name: string): THREE.DataTexture | undefined;
   ensure(name: string): Promise<void>;
   ready(name: string): boolean;
 }
-const cache = new Map<string, THREE.DataTexture>(); const colorCache = new Map<string, THREE.DataTexture>();
+const cache = new Map<string, THREE.DataTexture>(); const paramsCache = new Map<string, THREE.DataTexture>();
 const pending = new Map<string, Promise<void>>();
 // Enfriamiento tras un fallo de red: `ensure()` se llama desde `useFrame`, o
 // sea hasta 60 veces por segundo. Sin esto, una forma que devuelve 404 dispara
@@ -48,9 +48,9 @@ export function ensureShape(manifest: Manifest, lod: 'lod2' | 'mobile', name: st
   if (failed !== undefined && Date.now() - failed < RETRY_COOLDOWN_MS) return Promise.resolve();
   let p = pending.get(k);
   if (!p) {
-    p = Promise.all([loadShape(entry, fetchImpl), loadShapeColor(entry, fetchImpl)])
+    p = Promise.all([loadShape(entry, fetchImpl), loadShapeParams(entry, fetchImpl)])
       .then(([t, c]) => {
-        cache.set(k, t); if (c) colorCache.set(k, c);
+        cache.set(k, t); if (c) paramsCache.set(k, c);
         pending.delete(k); failedAt.delete(k);
         // Fuente dirty: la forma recién cargada cambia lo que se dibuja.
         registry.markDirty();
@@ -74,5 +74,5 @@ export function useShapeTextures(manifest: Manifest, lod: 'lod2' | 'mobile', ini
   // Suspende solo la carga inicial (formas del tramo 0)
   suspend(() => Promise.all(initialNames.map(ensure)), ['shapes-initial', lod, ...initialNames]);
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- `ensure` cierra sobre `manifest`, que se carga una sola vez por sesión; recrear el cache en cada render invalidaría el `ready()` que consulta `useFrame`
-  return useMemo(() => ({ get: (n) => cache.get(key(n, lod)), getColor: (n) => colorCache.get(key(n, lod)), ensure, ready: (n) => isShapeReady(n, lod) }), [lod]);
+  return useMemo(() => ({ get: (n) => cache.get(key(n, lod)), getParams: (n) => paramsCache.get(key(n, lod)), ensure, ready: (n) => isShapeReady(n, lod) }), [lod]);
 }

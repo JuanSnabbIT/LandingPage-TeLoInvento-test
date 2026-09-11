@@ -3,7 +3,7 @@
   "seed": 20260911,
   "_lods": "Lado de la textura de posiciones: lod2 128 = 16 384 partículas, mobile 80 = 6 400. Bajó de 256/128 al pasar de puntos planos a mallas instanciadas de 48 caras: menos partículas y más grandes, que es lo que pidió el dueño del proyecto, y menos saturación.",
   "lods": { "lod2": 128, "mobile": 80 },
-  "shell": 0.03,
+  "shell": 0.018,
   "outDir": "public/textures/particulas",
   "shapes": {
     "logo": {

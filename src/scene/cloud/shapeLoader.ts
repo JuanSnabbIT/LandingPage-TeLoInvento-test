@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-export interface ShapeEntry { file: string; size: number; count: number; bbox: { min: number[]; max: number[] }; color?: string }
+export interface ShapeEntry { file: string; size: number; count: number; bbox: { min: number[]; max: number[] }; params?: string; hasColor?: boolean }
 export interface LoadedShape { positions: THREE.DataTexture; color?: THREE.DataTexture }
 export interface Manifest { shapes: Record<string, Record<'lod2' | 'mobile', ShapeEntry>>; sequence: string[]; tiers: Record<'high' | 'medium' | 'low', 'lod2' | 'mobile'> }
 
@@ -12,7 +12,7 @@ export async function loadManifest(url = '/scene-manifest.json'): Promise<Manife
   const r = await fetch(url); if (!r.ok) throw new Error(`[scene] manifest ${r.status}`); return r.json();
 }
 /** RGBA8 per-particle colour (same pixel index as the positions). */
-export function bufferToColorTexture(buf: ArrayBuffer, size: number): THREE.DataTexture {
+export function bufferToParamsTexture(buf: ArrayBuffer, size: number): THREE.DataTexture {
   const tex = new THREE.DataTexture(new Uint8Array(buf), size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
   tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false;
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -25,10 +25,10 @@ export async function loadShape(entry: ShapeEntry, fetchImpl: typeof fetch = fet
   performance.mark(`shape:${entry.file}`);
   return bufferToTexture(buf, entry.size);
 }
-export async function loadShapeColor(entry: ShapeEntry, fetchImpl: typeof fetch = fetch): Promise<THREE.DataTexture | undefined> {
-  if (!entry.color) return undefined;
-  const r = await fetchImpl(entry.color); if (!r.ok) throw new Error(`[scene] shape colour ${entry.color} ${r.status}`);
+export async function loadShapeParams(entry: ShapeEntry, fetchImpl: typeof fetch = fetch): Promise<THREE.DataTexture | undefined> {
+  if (!entry.params) return undefined;
+  const r = await fetchImpl(entry.params); if (!r.ok) throw new Error(`[scene] shape colour ${entry.params} ${r.status}`);
   const buf = await r.arrayBuffer();
-  if (buf.byteLength !== entry.size * entry.size * 4) throw new Error(`[scene] shape colour ${entry.color}: unexpected size ${buf.byteLength}`);
-  return bufferToColorTexture(buf, entry.size);
+  if (buf.byteLength !== entry.size * entry.size * 4) throw new Error(`[scene] shape colour ${entry.params}: unexpected size ${buf.byteLength}`);
+  return bufferToParamsTexture(buf, entry.size);
 }

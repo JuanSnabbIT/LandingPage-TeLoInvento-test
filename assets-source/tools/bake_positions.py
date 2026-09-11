@@ -134,6 +134,93 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None):
         return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8)
     return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64)
 
+def sharp_edges(tris, max_dim, angle_deg=28.0, per_edge=6):
+    """Aristas VIVAS del modelo: las que comparten dos caras con normales que
+    difieren más de `angle_deg`, más los bordes abiertos (una sola cara).
+
+    Devuelve `(puntos, caras_tocadas)`:
+      - `puntos` (N,3): muestras repartidas a lo largo de esas aristas;
+      - `caras_tocadas` (bool por triángulo): qué triángulos las tocan.
+
+    De acá salen las dos mitades de lo que pidió el dueño del proyecto: las
+    caras tocadas reciben MÁS partículas (quedan más juntas) y la distancia a
+    estos puntos decide el TAMAÑO de cada una (chicas en el borde).
+
+    Los vértices se sueldan redondeando a 1e-4 del tamaño del modelo: en una
+    sopa de triángulos el mismo vértice llega repetido por cada cara.
+    """
+    n_tris = len(tris)
+    if n_tris == 0:
+        return np.zeros((0, 3), dtype=np.float32), np.zeros(0, dtype=bool)
+    q = np.round(tris / (max_dim * 1e-4)).astype(np.int64)
+    nrm = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    nrm /= (np.linalg.norm(nrm, axis=1)[:, None] + 1e-12)
+
+    edges = {}
+    for t in range(n_tris):
+        for a, b in ((0, 1), (1, 2), (2, 0)):
+            ka, kb = tuple(q[t, a]), tuple(q[t, b])
+            key = (ka, kb) if ka <= kb else (kb, ka)
+            edges.setdefault(key, []).append((t, a, b))
+
+    cos_lim = math.cos(math.radians(angle_deg))
+    touched = np.zeros(n_tris, dtype=bool)
+    segs = []
+    for uses in edges.values():
+        if len(uses) == 1:
+            sharp = True
+        else:
+            sharp = float(np.dot(nrm[uses[0][0]], nrm[uses[1][0]])) < cos_lim
+        if not sharp:
+            continue
+        for t, _, _ in uses:
+            touched[t] = True
+        t, a, b = uses[0]
+        segs.append((tris[t, a], tris[t, b]))
+
+    if not segs:
+        return np.zeros((0, 3), dtype=np.float32), touched
+    A = np.array([x for x, _ in segs], dtype=np.float32)
+    B = np.array([y for _, y in segs], dtype=np.float32)
+    ts = np.linspace(0.0, 1.0, per_edge, dtype=np.float32)[None, :, None]
+    pts = (A[:, None, :] * (1 - ts) + B[:, None, :] * ts).reshape(-1, 3)
+    return pts.astype(np.float32), touched
+
+
+def edge_distance(points, edge_pts, radius):
+    """Distancia de cada punto a la arista viva más cercana, saturada en `radius`.
+
+    Hash espacial con celda = `radius`: evita el producto N x M (16 384 x ~40 000
+    sería medio minuto por forma) sin depender de scipy, que Blender no trae.
+    Saturar en el radio es deseable: más allá, "lejos es lejos".
+    """
+    out = np.full(len(points), radius, dtype=np.float32)
+    if len(edge_pts) == 0 or len(points) == 0:
+        return out
+    keys = np.floor(edge_pts / radius).astype(np.int64)
+    grid = {}
+    for i, k in enumerate(map(tuple, keys)):
+        grid.setdefault(k, []).append(i)
+    pk = np.floor(points / radius).astype(np.int64)
+    r2 = radius * radius
+    for i in range(len(points)):
+        best = r2
+        cx, cy, cz = pk[i]
+        p = points[i]
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dz in (-1, 0, 1):
+                    bucket = grid.get((cx + dx, cy + dy, cz + dz))
+                    if not bucket:
+                        continue
+                    d = edge_pts[bucket] - p
+                    m = float((d * d).sum(axis=1).min())
+                    if m < best:
+                        best = m
+        out[i] = math.sqrt(best)
+    return out
+
+
 def sample_surface(tris, areas, count, rng, shell, return_idx=False):
     """Muestreo uniforme por área + cáscara hacia adentro (a lo largo de -normal).
     Con `return_idx` devuelve además el índice de triángulo de cada muestra
@@ -247,8 +334,21 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
             tris, areas = triangles_world(objs, explode, first_max)
         all_tris.append(tris); all_areas.append(areas)
     tris = np.concatenate(all_tris); areas = np.concatenate(all_areas)
-    pts, tri_idx = sample_surface(tris, areas, count, rng, spec.get('shell', cfg['shell']), return_idx=True)
+    # Aristas vivas sobre la MISMA sopa de triángulos que se muestrea, así el
+    # sesgo de densidad y el tamaño por partícula miran la geometría real.
+    edge_pts, edge_tris = sharp_edges(tris, first_max, cfg.get('sharpAngle', 28.0))
+    boost = spec.get('edgeBoost', cfg.get('edgeBoost', 1.8))
+    weights = areas * (1.0 + boost * edge_tris) if boost > 0 else areas
+    pts, tri_idx = sample_surface(tris, weights, count, rng, spec.get('shell', cfg['shell']), return_idx=True)
     sample_rgb = np.concatenate(all_colors)[tri_idx] if colors is not None else None
+    # `edgeK` en [0,1]: 0 pegada a una arista viva, 1 en el centro de una cara
+    # abierta. Se hornea el FACTOR, no el tamaño final: así el rango de tamaños
+    # se ajusta desde los tokens del front sin volver a hornear.
+    radius = first_max * cfg.get('edgeFalloff', 0.09)
+    edge_k = np.clip(edge_distance(pts, edge_pts, radius) / radius, 0.0, 1.0)
+    edge_k = edge_k * edge_k * (3 - 2 * edge_k)
+    print('   aristas vivas:', len(edge_pts), 'puntos |', int(edge_tris.sum()), 'de', len(tris),
+          'triángulos tocados | edgeK medio', round(float(edge_k.mean()), 3))
     # `flatten_to_plane` ya emite (u, v, 0) en espacio de pantalla; el resto de
     # las formas sale en espacio Blender y hay que devolverlas a Y-up.
     pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
@@ -264,6 +364,7 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     if order is None:
         order = hilbert_order(pts, bits=6 if size <= 128 else 8)
     pts = pts[order]
+    edge_k = edge_k[order]
     if sample_rgb is not None:
         sample_rgb = sample_rgb[order]
     if not write:
@@ -275,12 +376,17 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     data.astype(np.float16).tofile(base + '.bin')
     meta = {'shape': name, 'lod': lod, 'size': size, 'count': count, 'bbox': {'min': mn, 'max': mx},
             'sources': [s['file'] for s in spec['sources']], 'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    # Textura de parámetros por partícula (RGBA8, mismo índice de píxel que las
+    # posiciones): RGB = color horneado, A = `edgeK`. Van juntas en una sola
+    # textura porque TODA forma necesita el tamaño, y sólo algunas el color: dos
+    # texturas separadas serían una descarga más por forma para nada.
+    rgba = np.full((count, 4), 255, dtype=np.uint8)
     if sample_rgb is not None:
-        # Textura de color por partícula (RGBA8, mismo índice de píxel que las
-        # posiciones): el shader la lee mientras la nube ES esta forma.
-        rgba = np.full((count, 4), 255, dtype=np.uint8); rgba[:, :3] = sample_rgb
-        rgba.tofile(os.path.join(out_dir, f'{name}-color-{lod}.bin'))
-        meta['color'] = f'{name}-color-{lod}.bin'
+        rgba[:, :3] = sample_rgb
+    rgba[:, 3] = np.clip(edge_k * 255.0 + 0.5, 0, 255).astype(np.uint8)
+    rgba.tofile(os.path.join(out_dir, f'{name}-params-{lod}.bin'))
+    meta['params'] = f'{name}-params-{lod}.bin'
+    meta['hasColor'] = sample_rgb is not None
     with open(base + '.json', 'w', encoding='utf-8') as f:
         json.dump(meta, f, indent=2)
     print('BAKED', name, lod, count, os.path.getsize(base + '.bin'))

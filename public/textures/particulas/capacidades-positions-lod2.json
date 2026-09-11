@@ -5,14 +5,14 @@
   "count": 16384,
   "bbox": {
     "min": [
-      -5.562479019165039,
-      -0.4212479293346405,
-      -0.3765905797481537
+      -5.571201801300049,
+      -0.4304438531398773,
+      -0.37359413504600525
     ],
     "max": [
-      5.280395030975342,
-      1.8699994087219238,
-      0.371372252702713
+      5.2759623527526855,
+      1.8660005331039429,
+      0.3758823573589325
     ]
   },
   "sources": [
@@ -20,6 +20,7 @@
     "assets-source/models/capacidades/seguridad.glb",
     "assets-source/models/capacidades/microchip.glb"
   ],
-  "generatedAt": "2026-09-11T20:12:39.625704+00:00",
-  "color": "capacidades-color-lod2.bin"
+  "generatedAt": "2026-09-11T20:53:44.251152+00:00",
+  "params": "capacidades-params-lod2.bin",
+  "hasColor": true
 }

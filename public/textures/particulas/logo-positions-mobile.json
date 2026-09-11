@@ -5,19 +5,20 @@
   "count": 6400,
   "bbox": {
     "min": [
-      -1.2031747102737427,
-      -3.068809747695923,
+      -1.1799434423446655,
+      -2.992172956466675,
       0.0
     ],
     "max": [
-      1.1848021745681763,
-      2.1076700687408447,
+      1.2129725217819214,
+      2.116253614425659,
       0.0
     ]
   },
   "sources": [
     "assets-source/models/hero-central/logo-lod1.glb"
   ],
-  "generatedAt": "2026-09-11T20:12:41.918303+00:00",
-  "color": "logo-color-mobile.bin"
+  "generatedAt": "2026-09-11T20:53:53.267668+00:00",
+  "params": "logo-params-mobile.bin",
+  "hasColor": true
 }

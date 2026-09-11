@@ -31,17 +31,20 @@ test('?debug&budget=1 degrades to poster within the frame budget', async ({ page
   await page.waitForTimeout(500);
 
   const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
-  const base = max * 0.5;
 
-  // Nudge scroll every 100ms, oscillating around `base`, to keep the scene
-  // dirty (headless rAF can be throttled below the 8fps/0.3s-delta
-  // contiguity cutoff at coarser intervals -- see task-25-report.md).
+  // Salta entre dos puntos MUY separados de la página cada 250 ms. Antes
+  // alcanzaba con mover el scroll 40 px, porque los tramos eran scrub y
+  // cualquier micro-movimiento cambiaba el progreso; desde que la transición se
+  // DISPARA al cruzar un rango y corre con su propio tiempo
+  // (`motion.tramoModo`), moverse dentro de un rango no cambia nada y la escena
+  // -- que sólo dibuja cuando algo cambió -- se queda quieta. Cruzar rangos
+  // enteros es lo que ahora mantiene la escena dibujando, que es la condición
+  // para que el guardián de presupuesto pueda medir.
   let toggled = false;
   const nudge = setInterval(() => {
     toggled = !toggled;
-    const to = toggled ? base + 40 : base;
-    void page.evaluate((y) => window.scrollTo(0, y), to);
-  }, 100);
+    void page.evaluate((y) => window.scrollTo(0, y), toggled ? max * 0.75 : max * 0.25);
+  }, 250);
 
   try {
     await expect(page.locator('html')).toHaveClass(/scene-poster/, { timeout: 25_000 });

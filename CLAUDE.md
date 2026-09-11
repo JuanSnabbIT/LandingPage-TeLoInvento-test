@@ -41,10 +41,18 @@ descripción referencia explícitamente este mismo patrón de vault.
 - **La escena v2 ("la nube") es la única escena.** Una sola nube de
   partículas recorre la página transformándose en seis formas a lo largo de
   siete tramos (logo → nodo → set → capacidades → wifi → nodo explotado →
-  nodo) como **función pura del scroll**: morph sin estado en el vertex shader entre dos texturas de
+  nodo): morph sin estado en el vertex shader entre dos texturas de
   posiciones horneadas, más curl noise solo en vuelo. Sin GPGPU, sin flag de
   migración, sin escena v1. Detalle completo en
   `docs/architecture/3d-web-standard.md`.
+- **El scroll DISPARA la transición, no la scrubbea** (`motion.tramoModo`,
+  2026-09-11). Cruzar el rango de un tramo arranca un tween con su propia
+  duración; si el visitante para a mitad, la nube igual termina de acomodarse.
+  Es el modelo del sitio de referencia (Dala) y reemplaza al scrub, que dejaba
+  la nube exactamente donde decía el scroll y se sentía como un deslizador.
+  Dentro del tramo, cada partícula tiene su propio desfase (`stagger` 0.82) y
+  su propio resorte amortiguado, así que la transformación es una ONDA que
+  barre el enjambre y cada partícula sobrepasa y se asienta.
 - Módulos:
   - `src/scene/` — `PersistentSceneLayer` (capa fija z 5) · `PageSceneHost`
     (poster vs canvas, degradación con TTL) · `PageSceneCanvas`

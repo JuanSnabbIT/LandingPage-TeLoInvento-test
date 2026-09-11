@@ -6,7 +6,9 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
   const j = JSON.parse(readFileSync(join(dir, f), 'utf8'));
   (shapes[j.shape] ??= {})[j.lod] = {
     file: `/textures/particulas/${j.shape}-positions-${j.lod}.bin`, size: j.size, count: j.count, bbox: j.bbox,
-    ...(j.color ? { color: `/textures/particulas/${j.color}` } : {}),
+    // `params` lo tiene TODA forma (RGB = color horneado, A = cercanía a arista);
+    // `hasColor` dice si el RGB es un color de verdad o blanco de relleno.
+    ...(j.params ? { params: `/textures/particulas/${j.params}`, hasColor: !!j.hasColor } : {}),
   };
 }
 const manifest = {

@@ -7,7 +7,26 @@ export const motion = {
   // transforma un tercio, se queda quieta, y sigue. `meseta` = fracción del
   // tramo que dura cada pausa intermedia (hay `pasos - 1`). Con pasos: 1 el
   // tramo vuelve a ser un único movimiento continuo.
-  tramo: { reposoCola: 0.2, reposoCabeza: 0.2, pasos: 3, meseta: 0.17 },
+  // `pasos: 1` = una sola onda continua por tramo, como el sitio de referencia.
+  // El escalonado en 3 etapas (pedido antes) sigue implementado en
+  // `staircase()`: subir `pasos` a 3 lo devuelve sin tocar más nada.
+  tramo: { reposoCola: 0.15, reposoCabeza: 0.15, pasos: 1, meseta: 0.17 },
   scrub: 0.4,
+  /**
+   * Cómo avanza un tramo de la nube.
+   *
+   * `disparo` (por defecto): el scroll DISPARA la transición y esta corre con su
+   * propio tiempo, como el sitio de referencia -- que no ata la nube al scroll:
+   * el scroll es un objetivo al que el sistema se acerca, no la línea de tiempo.
+   * Es lo que hace que la transformación se lea como un movimiento y no como un
+   * deslizador: si el visitante para de scrollear a mitad, la nube igual termina
+   * de acomodarse.
+   *
+   * `scrub`: el comportamiento anterior, la nube exactamente donde dice el
+   * scroll. Sigue disponible por si se quiere volver.
+   */
+  tramoModo: 'disparo' as 'disparo' | 'scrub',
+  /** Duración de la transición disparada, y su curva. */
+  tramoTween: { duration: 1.4, ease: 'none' },
   reveal: { distance: 22 },
 } as const;
