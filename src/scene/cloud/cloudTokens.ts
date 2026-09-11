@@ -1,16 +1,34 @@
 // Numeric tuning knobs for the cloud shaders (T16), values per the task brief.
 export const cloudTokens = {
-  pointSize: { lod2: 1.9, mobile: 2.6 },
+  // Punto chico y opaco en vez de grande y transparente: con 1.9 px y el perfil
+  // difuso, una forma densa como el nodo (65 536 puntos en ~230 x 130 px, o sea
+  // ~2 por píxel) se leía como una mancha pastel. Achicando el punto la misma
+  // densidad se lee como grano, y cada partícula conserva su color.
+  pointSize: { lod2: 1.5, mobile: 2.2 },
   stagger: 0.2,
-  curl: 0.28,
+  // Amplitud del curl en vuelo. Subió de 0.28 a 0.42 para que el enjambre se
+  // abra más "por el aire" mientras cruza, en vez de viajar como un bloque.
+  curl: 0.48,
   curlFreq: 0.9,
-  alphaLight: 0.7,
+  // Sobre fondo claro la nube va algo más transparente que sobre oscuro, pero
+  // 0.7 con el perfil de sprite viejo dejaba el color en un pastel indistinto
+  // (ver cloud.frag.ts). 0.85 + núcleo lleno = las piezas se leen por su color.
+  alphaLight: 0.78,
   alphaDark: 1.0,
   // Fracción de alpha que se resta a mitad de un tramo 'viaje' (× sin(PI·t),
   // 0 en los extremos) para que la nube se adelgace mientras cruza entre
   // secciones, en vez de mantenerse a alpha plena sobre el texto que corre
-  // por debajo del corredor del scissor.
-  travelDip: 0.35,
+  // por debajo del corredor del scissor. Subió de 0.35 a 0.5 al agregar el giro
+  // en vuelo: el enjambre disperso cubre mucha más área que antes y, con el
+  // sprite de núcleo lleno, a mitad del cruce entre Capacidades y Valor tapaba
+  // el texto de las tarjetas. Aun con el 0.5 la nube en vuelo se ve bastante
+  // más que con el sprite viejo sin dip.
+  travelDip: 0.5,
+  // Giro en vuelo (ver cloud.vert.ts): `radius` es el radio máximo de la órbita
+  // a mitad de camino, en las mismas unidades de mundo que `curl` y
+  // `fluye.drop`; `turns` son las vueltas completas que da cada partícula
+  // alrededor del eje del viaje entre origen y destino.
+  swirl: { radius: 0.85, turns: 1.35 },
   // `drop` = caída extra (unidades de mundo) a mitad del tramo 0; `curl` = curl extra
   // sumado a `curl` durante ese mismo tramo. Ambos modulados por sin(PI*t): 0 en reposo.
   fluye: { drop: 0.25, curl: 0.15 },

@@ -25,6 +25,7 @@ export const cloudVert = /* glsl */ `
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
   uniform float uPointSize; uniform float uPixelRatio; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
+  uniform float uSwirl; uniform float uSwirlRadius; uniform float uSwirlTurns;
   out float vSeed; out float vTl; out vec3 vColor; out float vTint;
   ${curlGlsl}
   void main() {
@@ -43,6 +44,27 @@ export const cloudVert = /* glsl */ `
     // extremos de cada tramo, que es donde la nube pasa la mayor parte del tiempo.
     if (uCurlOn > 0.5 && wing > 0.001) p += curl(pA * uCurlFreq + a.w * 7.) * (uCurl + uFluye * uFluyeCurl) * wing;
     p.y -= uFluye * uFluyeDrop * wing * (0.6 + 0.4 * a.w);
+    // Giro en vuelo: cada partícula orbita el eje que une su origen con su
+    // destino, con la fase sacada de su semilla y el radio modulado por wing
+    // (0 en los dos extremos). Así el enjambre sale en espiral, se abre a mitad
+    // de camino y aterriza EXACTO sobre el destino, sin desvío residual.
+    // uSwirl lo enciende sólo en los tramos de viaje: en un morph en sitio el
+    // eje sería el desplazamiento minúsculo de cada pieza y el giro no leería.
+    if (uSwirl > 0.5 && wing > 0.001) {
+      vec3 d = pB - pA;
+      float len = length(d);
+      if (len > 1e-4) {
+        vec3 ax = d / len;
+        // Base perpendicular estable: el vector auxiliar se elige lejos del eje
+        // para que el producto cruz no degenere cuando el viaje es vertical.
+        vec3 h = abs(ax.y) > 0.9 ? vec3(1., 0., 0.) : vec3(0., 1., 0.);
+        vec3 ru = normalize(cross(ax, h));
+        vec3 rv = cross(ax, ru);
+        float ang = a.w * 6.2831853 + tl * 6.2831853 * uSwirlTurns;
+        float rad = uSwirlRadius * wing * (0.35 + 0.65 * a.w);
+        p += (ru * cos(ang) + rv * sin(ang)) * rad;
+      }
+    }
     vSeed = a.w; vTl = tl;
     // El color viaja con la MISMA rampa escalonada que la posición (tl, no uT):
     // cada partícula toma el color de su destino cuando ella llega, no cuando

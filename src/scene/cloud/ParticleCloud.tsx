@@ -44,6 +44,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uPointSize: { value: cloudTokens.pointSize[lod] }, uPixelRatio: { value: 1 }, uFluye: { value: 0 },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
+    uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
@@ -107,6 +108,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uTintA.value = colA || r.a === 'logo' ? 1 : 0;
     u.uTintB.value = texB ? (colB || r.b === 'logo' ? 1 : 0) : u.uTintA.value;
     u.uFluye.value = r.index === 0 ? 1 : 0;
+    u.uSwirl.value = r.kind === 'viaje' ? 1 : 0;
     u.uPixelRatio.value = gl.getPixelRatio();
     let alpha = r.alpha;
     if (r.crossfade) { // reduced: fundido de alpha de 200 ms al cambiar la forma efectiva
@@ -127,7 +129,10 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       frustumCulled={false}
       onBeforeRender={() => {
         const { a, b, t, kind } = rectsRef.current;
-        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, 0.2, viewport);
+        // El margen del corredor tiene que cubrir lo que el enjambre se aparta del
+        // eje en vuelo (curl + giro): con 0.2 el giro nuevo llegaba al borde del
+        // recorte y las partículas de afuera se cortaban en una línea recta.
+        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, kind === 'viaje' ? 0.32 : 0.2, viewport);
         if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
       }}
       onAfterRender={() => { gl.setScissorTest(false); }}
