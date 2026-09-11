@@ -88,7 +88,7 @@ src/
     deviceTier.ts / webglSupport.ts / frameBudget.ts / FrameBudgetGuard.tsx
     SlotErrorBoundary.tsx / debug.ts
     cloud/                   # la nube
-      ParticleCloud.tsx        # un <points> con matriz identidad; poses en uniforms
+      ParticleCloud.tsx        # un <instancedMesh> con matriz identidad; poses en uniforms
       sequence.ts              # TRAMOS (datos) + resolveTramo (pura) + quantize
       useShapeTextures.ts      # carga/caché/reintento de las texturas horneadas
       shapeLoader.ts           # manifest + .bin → DataTexture RGBA16F
@@ -155,7 +155,7 @@ La variante elegida (ADR del 2026-09-11 en el vault):
    modulada por `sin(π·tl)` — vale 0 en ambos extremos — y con rama por uniform
    (`uCurlOn`), así en reposo cuesta 0 ALU. El tramo 0 suma el término "Fluye"
    (caída + curl extra, `cloudTokens.fluye`).
-5. **Las poses van en uniforms, no en el grafo**: el `<points>` queda con
+5. **Las poses van en uniforms, no en el grafo**: el `<instancedMesh>` queda con
    matriz identidad; `uPoseA`/`uPoseB` son las matrices de anclaje de las dos
    cajas. Elimina por construcción la clase de bugs de "matriz de mundo
    desactualizada un frame".
@@ -173,17 +173,41 @@ entre frames. Todo el estado vive en un número: el progreso del tramo.
 
 | Tier (`scene/deviceTier.ts`) | Condición | LOD | `S` | Partículas | dpr máx | Curl |
 |---|---|---|---|---|---|---|
-| high | ancho ≥1024 y ≥8 cores | `lod2` | 256 | 65 536 | 2 | sí |
-| medium | ancho ≥768 y ≥4 cores | `lod2` | 256 | 65 536 | 1.5 | sí |
-| low | resto (mobile) | `mobile` | 128 | 16 384 | 1 | no |
+| high | ancho ≥1024 y ≥8 cores | `lod2` | 128 | 16 384 | 2 | sí |
+| medium | ancho ≥768 y ≥4 cores | `lod2` | 128 | 16 384 | 1.5 | sí |
+| low | resto (mobile) | `mobile` | 80 | 6 400 | 1 | no |
 | sin WebGL2 / degradado | — | — | — | 0 (poster) | — | — |
 
-Por qué 65 536 y no las 150k–250k que sugería el estándar semilla: esta nube
-**convive con texto** en cajas de ~320 px y con una Central sólida, no ocupa un
-hero a pantalla completa. Más puntos saturan la caja y ensucian el papel claro.
-Además fija el presupuesto de red: 512 KB por forma en desktop (S=256 × 4
-canales half-float) y 128 KB en mobile, con solo dos formas cargadas al inicio
-(tramo 0) y una más por anticipado por tramo.
+### 5.1 Cada partícula es una malla, no un punto
+
+La nube se dibuja con `InstancedMesh`: una malla chica de 48 caras
+(`public/particles/py-*.glb`, entregadas por el dueño del proyecto) por
+partícula, con sombreado plano por cara. El índice de partícula sale de
+`gl_InstanceID` y la malla se recentra al cargarla.
+
+Tres reglas de tamaño y opacidad, todas derivadas de la POSICIÓN (no hay
+normales horneadas), midiendo la profundidad de cada partícula contra el centro
+del modelo en espacio de vista, en unidades de su semi-tamaño (`dz`):
+
+- `dz ≈ 0` es la **silueta**: partículas chicas y juntas, así el contorno queda
+  nítido.
+- `dz < 0` es la cara que **mira a la cámara**: partículas grandes y separadas,
+  el interior respira.
+- `dz > 0` es la cara de **atrás**: más chicas y al 30 % de opacidad, para que
+  no compita con la de adelante.
+
+El tamaño base va atado a la escala de la pose activa, no fijo en unidades de
+mundo: así la nube tiene el mismo grano en la franja chica de Capacidades y en
+la caja grande de Valor.
+
+Por qué 16 384 y no las 150k–250k que sugería el estándar semilla: esta nube
+**convive con texto** en cajas de ~360 px y con una Central sólida, no ocupa un
+hero a pantalla completa. Y cada partícula ya no es un punto de 2 px sino un
+sólido de 48 caras: 16 384 partículas son ~786 k triángulos por frame, que es
+lo que aguanta el presupuesto. Menos partículas y más grandes fue además pedido
+explícito del dueño del proyecto. La red baja de paso: 128 KB por forma en
+desktop (S=128 × 4 canales half-float) y 50 KB en mobile, con solo dos formas
+cargadas al inicio (tramo 0) y una más por anticipado por tramo.
 
 ## 6. Pipeline de assets
 
