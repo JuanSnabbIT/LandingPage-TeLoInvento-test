@@ -7,7 +7,14 @@
   "shapes": {
     "logo": {
       "sources": [{ "file": "assets-source/models/hero-central/logo-lod1.glb" }],
-      "flatten": true, "shell": 0.0
+      "flatten": true, "shell": 0.0,
+      "colors": {
+        "TLI_Yellow": "#FFC83D",
+        "TLI_Teal": "#2B95C3",
+        "TLI_Navy": "#2C6DA8",
+        "TLI_Flame_Core": "#FFE08A",
+        "TLI_Flame_Outer": "#F5A623"
+      }
     },
     "nodo": {
       "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }]

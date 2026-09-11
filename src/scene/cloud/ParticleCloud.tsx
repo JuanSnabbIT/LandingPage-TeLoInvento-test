@@ -38,6 +38,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   const geometry = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(S * S * 3), 3)); return g; }, [S]);
   const uniforms = useMemo(() => ({
     uShapeA: { value: null as THREE.Texture | null }, uShapeB: { value: null as THREE.Texture | null }, uSize: { value: S },
+    uColorA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 },
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uPointSize: { value: cloudTokens.pointSize[lod] }, uPixelRatio: { value: 1 }, uFluye: { value: 0 },
@@ -81,6 +82,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     if (!texA) { m.visible = false; return; }
     const u = m.uniforms;
     u.uShapeA.value = texA; u.uShapeB.value = texB ?? texA;
+    const colA = shapes.getColor(r.a);
+    u.uColorA.value = colA ?? texA; u.uHasColorA.value = colA ? 1 : 0;
     // `t` efectivo: con la forma B sin cargar la nube espera en A, y TODO lo que
     // depende del progreso (posición, superficie, tinte del logo, alpha del
     // viaje) tiene que usar el mismo valor. Con `r.t` en el color y 0 en la

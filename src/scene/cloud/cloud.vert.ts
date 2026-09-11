@@ -9,10 +9,15 @@ import { curlGlsl } from './curl.glsl';
 // deliberate deviation from the brief's literal snippet.
 export const cloudVert = /* glsl */ `
   uniform sampler2D uShapeA; uniform sampler2D uShapeB; uniform int uSize;
+  // Color por partícula de la forma A (RGBA8, mismo índice de píxel). Solo las
+  // formas horneadas con colors lo traen (hoy el logo: rayos amarillos,
+  // ampolleta cian, base/filamento navy, llama ámbar). uHasColorA = 0 → se usa
+  // el tinte por seed de siempre.
+  uniform sampler2D uColorA; uniform float uHasColorA;
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
   uniform float uPointSize; uniform float uPixelRatio; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
-  out float vSeed; out float vTl;
+  out float vSeed; out float vTl; out vec3 vColor; out float vHasColor;
   ${curlGlsl}
   void main() {
     ivec2 ij = ivec2(gl_VertexID % uSize, gl_VertexID / uSize);
@@ -31,6 +36,8 @@ export const cloudVert = /* glsl */ `
     if (uCurlOn > 0.5 && wing > 0.001) p += curl(pA * uCurlFreq + a.w * 7.) * (uCurl + uFluye * uFluyeCurl) * wing;
     p.y -= uFluye * uFluyeDrop * wing * (0.6 + 0.4 * a.w);
     vSeed = a.w; vTl = tl;
+    vColor = uHasColorA > 0.5 ? texelFetch(uColorA, ij, 0).rgb : vec3(1.);
+    vHasColor = uHasColorA;
     vec4 mv = modelViewMatrix * vec4(p, 1.);
     gl_PointSize = uPointSize * uPixelRatio * (1. - 0.5 * wing);
     gl_Position = projectionMatrix * mv;

@@ -29,6 +29,13 @@ const LOGO_FIT = 1.05;
  * Ver `public/textures/particulas/logo-positions-lod2.json` (bbox).
  */
 const LOGO_HALF_WIDTH = 0.4563;
+/**
+ * La carcasa de central-v2.glb trae un material texturizado casi negro que
+ * sobre el fondo oscuro del Hero no se distingue. Se reemplaza por un gris
+ * mate (pedido del dueño del proyecto, 2026-09-11); la pantalla y los
+ * botones conservan sus materiales.
+ */
+const CASING_MATERIAL = { color: '#8a9099', roughness: 0.62, metalness: 0.12 } as const;
 
 export function HeroCentral({
   anchorRef,
@@ -52,7 +59,9 @@ export function HeroCentral({
 
     let screenMesh: THREE.Mesh | null = null;
     clone.traverse((o) => {
-      if (o instanceof THREE.Mesh && /screen/i.test(o.name)) screenMesh = o;
+      if (!(o instanceof THREE.Mesh)) return;
+      if (/screen/i.test(o.name)) screenMesh = o;
+      if (/casing/i.test(o.name)) o.material = new THREE.MeshStandardMaterial(CASING_MATERIAL);
     });
     if (!screenMesh) throw new Error('[hero] central-v2.glb: no Screen mesh');
     // TS can't narrow `screenMesh` past the guard above through the

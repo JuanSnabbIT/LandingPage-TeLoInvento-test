@@ -52,7 +52,8 @@
             2.1306042671203613,
             0
           ]
-        }
+        },
+        "color": "/textures/particulas/logo-color-lod2.bin"
       },
       "mobile": {
         "file": "/textures/particulas/logo-positions-mobile.bin",
@@ -69,7 +70,8 @@
             2.121086835861206,
             0
           ]
-        }
+        },
+        "color": "/textures/particulas/logo-color-mobile.bin"
       }
     },
     "nodo-explotado": {
@@ -231,5 +233,5 @@
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-11T18:03:03.926Z"
+  "generatedAt": "2026-09-11T18:35:44.932Z"
 }

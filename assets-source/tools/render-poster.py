@@ -5,6 +5,18 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 before = set(bpy.data.objects)
 bpy.ops.import_scene.gltf(filepath=os.path.join(ROOT, 'public/models/hero-central/central-v2.glb'))
 imported = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+# La carcasa se dibuja en la web con un gris mate (HeroCentral.tsx, CASING_MATERIAL);
+# el poster de respaldo tiene que verse igual, así que se reemplaza el material
+# texturizado casi negro del GLB por el mismo gris.
+for m in bpy.data.materials:
+    if m.name.startswith('Mat_Casing') and m.use_nodes:
+        bsdf = m.node_tree.nodes.get('Principled BSDF')
+        if bsdf:
+            for l in list(bsdf.inputs['Base Color'].links):
+                m.node_tree.links.remove(l)
+            bsdf.inputs['Base Color'].default_value = (0.253, 0.278, 0.318, 1.0)  # #8a9099 lineal aprox.
+            bsdf.inputs['Roughness'].default_value = 0.62
+            bsdf.inputs['Metallic'].default_value = 0.12
 sc = bpy.context.scene
 cam = bpy.data.objects.new('Cam', bpy.data.cameras.new('Cam')); sc.collection.objects.link(cam)
 # Aim the camera at the model's world bounding-box center so it's reliably

@@ -18,5 +18,6 @@
   "sources": [
     "assets-source/models/hero-central/logo-lod1.glb"
   ],
-  "generatedAt": "2026-09-11T16:20:54.311317+00:00"
+  "generatedAt": "2026-09-11T18:35:42.747665+00:00",
+  "color": "logo-color-lod2.bin"
 }

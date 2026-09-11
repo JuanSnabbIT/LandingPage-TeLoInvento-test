@@ -71,9 +71,14 @@ def object_bounds(objs):
             mn = Vector(map(min, mn, w)); mx = Vector(map(max, mx, w))
     return mn, mx
 
-def triangles_world(objs, explode=None, max_dim=1.0):
-    """Lista de (tri 3x3 float32, área) en mundo, aplicando explode por nombre de objeto."""
-    tris = []; areas = []
+def hex_to_rgb8(h):
+    h = h.lstrip('#'); return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+
+def triangles_world(objs, explode=None, max_dim=1.0, colors=None):
+    """Lista de (tri 3x3 float32, área) en mundo, aplicando explode por nombre de objeto.
+    Si `colors` (material base name -> hex) está definido, devuelve también un
+    color RGB8 por triángulo según el material de la cara (blanco si no hay match)."""
+    tris = []; areas = []; tri_colors = []
     for o in objs:
         dep = bpy.context.evaluated_depsgraph_get()
         me = o.evaluated_get(dep).to_mesh()
@@ -83,9 +88,18 @@ def triangles_world(objs, explode=None, max_dim=1.0):
             base = o.name.split('.')[0]
             if base in explode:
                 off = Vector(explode[base]) * max_dim
+        mat_rgb = None
+        if colors is not None:
+            mat_rgb = []
+            for slot in o.material_slots:
+                mname = slot.material.name.split('.')[0] if slot.material else ''
+                mat_rgb.append(hex_to_rgb8(colors.get(mname, '#ffffff')))
+            if not mat_rgb: mat_rgb = [[255, 255, 255]]
         for f in bm.faces:
             v = [(o.matrix_world @ vv.co) + off for vv in f.verts]
             tris.append([[p.x, p.y, p.z] for p in v])
+            if mat_rgb is not None:
+                tri_colors.append(mat_rgb[min(f.material_index, len(mat_rgb) - 1)])
             # Área EN MUNDO, no `f.calc_area()`: esa es el área en espacio local
             # de la malla e ignora la escala de `o.matrix_world`. Con objetos de
             # escala muy distinta (en nodo.glb, `Chassis_ClipTab` es un cubo
@@ -94,10 +108,14 @@ def triangles_world(objs, explode=None, max_dim=1.0):
             # grumo denso + nube difusa del T22.
             areas.append((v[1] - v[0]).cross(v[2] - v[0]).length * 0.5)
         bm.free(); o.evaluated_get(dep).to_mesh_clear()
+    if colors is not None:
+        return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8)
     return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64)
 
-def sample_surface(tris, areas, count, rng, shell):
-    """Muestreo uniforme por área + cáscara hacia adentro (a lo largo de -normal)."""
+def sample_surface(tris, areas, count, rng, shell, return_idx=False):
+    """Muestreo uniforme por área + cáscara hacia adentro (a lo largo de -normal).
+    Con `return_idx` devuelve además el índice de triángulo de cada muestra
+    (para heredar atributos por cara, p. ej. el color del material)."""
     p = areas / areas.sum()
     idx = rng.choice(len(tris), size=count, p=p)
     r1 = np.sqrt(rng.random(count)); r2 = rng.random(count)
@@ -106,6 +124,8 @@ def sample_surface(tris, areas, count, rng, shell):
     if shell > 0:
         n = np.cross(b - a, c - a); n /= (np.linalg.norm(n, axis=1)[:, None] + 1e-9)
         pts -= n * (rng.random(count) * shell)[:, None]
+    if return_idx:
+        return pts.astype(np.float32), idx
     return pts.astype(np.float32)
 
 # Convención de espacio: el importador glTF de Blender convierte Y-up -> Z-up
@@ -172,7 +192,8 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     # formas es la MISMA partícula. Eso es lo que hace que el morph par sea
     # rígido por pieza en vez de una reasignacion global.
     rng = np.random.RandomState(cfg['seed'] + _name_seed(spec.get('pairWith', name)))
-    all_tris = []; all_areas = []; first_max = None
+    all_tris = []; all_areas = []; all_colors = []; first_max = None
+    colors = spec.get('colors')  # material name -> hex; solo el logo lo usa hoy
     for src in spec['sources']:
         objs = import_glb(src['file'])
         mn, mx = object_bounds(objs)
@@ -189,10 +210,15 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
             missing = [k for k in explode if k not in names]
             if missing:
                 print('ERROR explode: mallas sin match', missing, 'disponibles', sorted(names)); sys.exit(2)
-        tris, areas = triangles_world(objs, explode, first_max)
+        if colors is not None:
+            tris, areas, tcol = triangles_world(objs, explode, first_max, colors)
+            all_colors.append(tcol)
+        else:
+            tris, areas = triangles_world(objs, explode, first_max)
         all_tris.append(tris); all_areas.append(areas)
     tris = np.concatenate(all_tris); areas = np.concatenate(all_areas)
-    pts = sample_surface(tris, areas, count, rng, spec.get('shell', cfg['shell']))
+    pts, tri_idx = sample_surface(tris, areas, count, rng, spec.get('shell', cfg['shell']), return_idx=True)
+    sample_rgb = np.concatenate(all_colors)[tri_idx] if colors is not None else None
     # `flatten_to_plane` ya emite (u, v, 0) en espacio de pantalla; el resto de
     # las formas sale en espacio Blender y hay que devolverlas a Y-up.
     pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
@@ -208,6 +234,8 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     if order is None:
         order = hilbert_order(pts, bits=6 if size <= 128 else 8)
     pts = pts[order]
+    if sample_rgb is not None:
+        sample_rgb = sample_rgb[order]
     if not write:
         return order
     sd = seeds(count, cfg['seed'])
@@ -215,9 +243,16 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     out_dir = os.path.join(ROOT, cfg['outDir']); os.makedirs(out_dir, exist_ok=True)
     base = os.path.join(out_dir, f'{name}-positions-{lod}')
     data.astype(np.float16).tofile(base + '.bin')
+    meta = {'shape': name, 'lod': lod, 'size': size, 'count': count, 'bbox': {'min': mn, 'max': mx},
+            'sources': [s['file'] for s in spec['sources']], 'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    if sample_rgb is not None:
+        # Textura de color por partícula (RGBA8, mismo índice de píxel que las
+        # posiciones): el shader la lee mientras la nube ES esta forma.
+        rgba = np.full((count, 4), 255, dtype=np.uint8); rgba[:, :3] = sample_rgb
+        rgba.tofile(os.path.join(out_dir, f'{name}-color-{lod}.bin'))
+        meta['color'] = f'{name}-color-{lod}.bin'
     with open(base + '.json', 'w', encoding='utf-8') as f:
-        json.dump({'shape': name, 'lod': lod, 'size': size, 'count': count, 'bbox': {'min': mn, 'max': mx},
-                   'sources': [s['file'] for s in spec['sources']], 'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}, f, indent=2)
+        json.dump(meta, f, indent=2)
     print('BAKED', name, lod, count, os.path.getsize(base + '.bin'))
     return order
 
