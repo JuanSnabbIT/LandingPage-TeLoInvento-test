@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { registry } from '../registry';
 import { computeAnchorTransform, anchorMatrix } from '../anchoring';
@@ -30,25 +31,41 @@ function apagadoRect(a: DOMRectReadOnly): DOMRectReadOnly {
   return { left, right: left + width, width, top: a.top, bottom: a.bottom + 1.5 * a.height, height: a.height * 2.5 } as DOMRectReadOnly;
 }
 
+/** Escala uniforme de una matriz de pose (todas se componen con escala uniforme). */
+function poseScale(m: THREE.Matrix4): number {
+  const e = m.elements;
+  return Math.hypot(e[0], e[1], e[2]);
+}
+
+useGLTF.preload(cloudTokens.particleMesh.lod2);
+
 export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
-  const S = size ?? (lod === 'lod2' ? 256 : 128);
+  // El lado de la textura sale del manifest y no de una constante: si se
+  // re-hornea con otro LOD, el runtime lo sigue sin que haya que tocar código.
+  const S = size ?? manifest.shapes[manifest.sequence[0]]?.[lod]?.size ?? 96;
+  const { scene: particleScene } = useGLTF(cloudTokens.particleMesh[lod]);
+  const particleGeometry = useMemo(() => {
+    let g: THREE.BufferGeometry | null = null;
+    particleScene.traverse((o) => { if (!g && o instanceof THREE.Mesh) g = o.geometry; });
+    if (!g) throw new Error('[cloud] la malla de partícula no trae geometría');
+    return g as THREE.BufferGeometry;
+  }, [particleScene]);
   const shapes = useShapeTextures(manifest, lod, [TRAMOS[0].from.shape, TRAMOS[0].to!.shape]);
   const mat = useRef<THREE.ShaderMaterial>(null);
   const viewport = useThree((s) => s.size); const gl = useThree((s) => s.gl);
-  const geometry = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(S * S * 3), 3)); return g; }, [S]);
   const uniforms = useMemo(() => ({
     uShapeA: { value: null as THREE.Texture | null }, uShapeB: { value: null as THREE.Texture | null }, uSize: { value: S },
     uColorA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 }, uTintA: { value: 0 },
     uColorB: { value: null as THREE.Texture | null }, uHasColorB: { value: 0 }, uTintB: { value: 0 },
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
-    uPointSize: { value: cloudTokens.pointSize[lod] }, uPixelRatio: { value: 1 }, uFluye: { value: 0 },
+    uParticleScale: { value: 0 }, uFluye: { value: 0 },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
-  }), [S, lod, curl]);
+  }), [S, curl]);
   const tmp = useMemo(() => ({ m: new THREE.Matrix4(), fade: { from: '', to: '', start: 0 } }), []);
   const heroAnchorRef = useRef<HTMLElement | null>(null);
   const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null; t: number; kind: TramoKind }>({ a: null, b: null, t: 1, kind: 'apagado' });
@@ -107,9 +124,13 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     // la punta B copia a la A, así la nube quieta no se destiñe hacia nada.
     u.uTintA.value = colA || r.a === 'logo' ? 1 : 0;
     u.uTintB.value = texB ? (colB || r.b === 'logo' ? 1 : 0) : u.uTintA.value;
+    // Tamaño de partícula atado a la escala de la pose activa: la nube se ve
+    // con el mismo grano en la franja chica de Capacidades y en la caja grande
+    // de Valor, en vez de granulada en una y sólida en la otra.
+    u.uParticleScale.value =
+      THREE.MathUtils.lerp(poseScale(u.uPoseA.value), poseScale(u.uPoseB.value), t) * cloudTokens.particleScale;
     u.uFluye.value = r.index === 0 ? 1 : 0;
     u.uSwirl.value = r.kind === 'viaje' ? 1 : 0;
-    u.uPixelRatio.value = gl.getPixelRatio();
     let alpha = r.alpha;
     if (r.crossfade) { // reduced: fundido de alpha de 200 ms al cambiar la forma efectiva
       const eff = t >= 1 ? r.b : r.a;
@@ -124,8 +145,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   });
 
   return (
-    <points
-      geometry={geometry}
+    <instancedMesh
+      args={[undefined, undefined, S * S]}
       frustumCulled={false}
       onBeforeRender={() => {
         const { a, b, t, kind } = rectsRef.current;
@@ -137,8 +158,9 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       }}
       onAfterRender={() => { gl.setScissorTest(false); }}
     >
+      <primitive object={particleGeometry} attach="geometry" />
       <shaderMaterial ref={mat} glslVersion={THREE.GLSL3} vertexShader={cloudVert} fragmentShader={cloudFrag} uniforms={uniforms}
-        transparent depthWrite={false} depthTest blending={THREE.NormalBlending} premultipliedAlpha />
-    </points>
+        transparent depthWrite={false} depthTest blending={THREE.NormalBlending} premultipliedAlpha side={THREE.DoubleSide} />
+    </instancedMesh>
   );
 }

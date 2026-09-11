@@ -1,10 +1,16 @@
 // Numeric tuning knobs for the cloud shaders (T16), values per the task brief.
 export const cloudTokens = {
-  // Punto chico y opaco en vez de grande y transparente: con 1.9 px y el perfil
-  // difuso, una forma densa como el nodo (65 536 puntos en ~230 x 130 px, o sea
-  // ~2 por píxel) se leía como una mancha pastel. Achicando el punto la misma
-  // densidad se lee como grano, y cada partícula conserva su color.
-  pointSize: { lod2: 1.5, mobile: 2.2 },
+  // Malla de partícula (public/particles/, entregadas por el dueño del
+  // proyecto): un sólido de 48 caras por partícula, instanciado. `lod2` para
+  // escritorio y `mobile` para teléfono -- la versión mobile tiene menos
+  // vértices para la misma silueta.
+  particleMesh: { lod2: '/particles/py-lod1.glb', mobile: '/particles/py-lod7.glb' },
+  // Tamaño de cada partícula como fracción del SEMI-tamaño del modelo (la
+  // escala de la pose). El modelo mide 2 de esos, así que 0.022 deja cada
+  // partícula en ~1 % del modelo: en una forma de 450 px son ~10 px de arista.
+  // Va atado a la pose y no fijo en unidades de mundo para que la partícula se
+  // vea igual de grande en una sección con la caja chica que en una grande.
+  particleScale: 0.022,
   stagger: 0.2,
   // Amplitud del curl en vuelo. Subió de 0.28 a 0.42 para que el enjambre se
   // abra más "por el aire" mientras cruza, en vez de viajar como un bloque.
@@ -13,8 +19,10 @@ export const cloudTokens = {
   // Sobre fondo claro la nube va algo más transparente que sobre oscuro, pero
   // 0.7 con el perfil de sprite viejo dejaba el color en un pastel indistinto
   // (ver cloud.frag.ts). 0.85 + núcleo lleno = las piezas se leen por su color.
-  alphaLight: 0.78,
-  alphaDark: 1.0,
+  // Con partículas sólidas que se superponen, la misma alpha de los puntos
+  // planos saturaba la forma entera: acá manda el volumen, no la acumulación.
+  alphaLight: 0.62,
+  alphaDark: 0.82,
   // Fracción de alpha que se resta a mitad de un tramo 'viaje' (× sin(PI·t),
   // 0 en los extremos) para que la nube se adelgace mientras cruza entre
   // secciones, en vez de mantenerse a alpha plena sobre el texto que corre
