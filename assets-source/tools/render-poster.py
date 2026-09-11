@@ -32,8 +32,16 @@ direction = Vector((0.32, -0.55, 0.28))
 cam.location = center + direction
 cam.rotation_euler = (-direction).to_track_quat('-Z', 'Y').to_euler()
 sc.camera = cam
-key = bpy.data.objects.new('Key', bpy.data.lights.new('Key', 'AREA')); key.data.energy = 60; key.location = (0.4, -0.4, 0.6); sc.collection.objects.link(key)
-rim = bpy.data.objects.new('Rim', bpy.data.lights.new('Rim', 'AREA')); rim.data.energy = 30; rim.data.color = (0.5, 0.61, 0.91); rim.location = (-0.5, 0.3, 0.4); sc.collection.objects.link(rim)
+key = bpy.data.objects.new('Key', bpy.data.lights.new('Key', 'AREA')); key.data.energy = 220; key.location = (0.4, -0.4, 0.6); sc.collection.objects.link(key)
+rim = bpy.data.objects.new('Rim', bpy.data.lights.new('Rim', 'AREA')); rim.data.energy = 60; rim.data.color = (0.5, 0.61, 0.91); rim.location = (-0.5, 0.3, 0.4); sc.collection.objects.link(rim)
+# Luz ambiente neutra: sin mundo iluminado la carcasa gris salía casi negra
+# aunque el material ya fuera gris (solo la tocaba el key light lateral).
+world = bpy.data.worlds.new('PosterWorld') if not sc.world else sc.world
+sc.world = world; world.use_nodes = True
+bg = world.node_tree.nodes.get('Background')
+if bg:
+    bg.inputs['Color'].default_value = (0.62, 0.64, 0.68, 1.0)
+    bg.inputs['Strength'].default_value = 0.9
 sc.render.engine = 'BLENDER_EEVEE'; sc.render.film_transparent = True
 sc.render.resolution_x = 1200; sc.render.resolution_y = 900
 sc.render.image_settings.file_format = 'WEBP'; sc.render.image_settings.quality = 85
