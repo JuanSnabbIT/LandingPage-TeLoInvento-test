@@ -9,12 +9,12 @@
 export const cloudFrag = /* glsl */ `
   uniform vec3 uColorProdLight; uniform vec3 uColorProdDark;
   uniform float uSurface; uniform float uAlpha; uniform float uAlphaLight; uniform float uAlphaDark;
-  in vec3 vColor; in float vTint; in float vShade; out vec4 fragColor;
+  in vec3 vColor; in float vTint; in float vShade; in float vFade; out vec4 fragColor;
   void main() {
     // vColor y vTint ya vienen mezclados A→B por partícula desde el vertex:
     // acá solo se decide entre el azul de producto y el color horneado.
     vec3 prod = mix(uColorProdDark, uColorProdLight, uSurface);
     vec3 c = mix(prod, vColor, vTint) * vShade;
-    float alpha = uAlpha * mix(uAlphaDark, uAlphaLight, uSurface);
+    float alpha = uAlpha * mix(uAlphaDark, uAlphaLight, uSurface) * vFade;
     fragColor = vec4(c * alpha, alpha);   // premultiplicado
   }`;

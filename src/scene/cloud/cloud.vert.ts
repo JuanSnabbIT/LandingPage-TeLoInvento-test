@@ -31,8 +31,12 @@ export const cloudVert = /* glsl */ `
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
   uniform float uParticleScale; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
+  // Centro del modelo (mundo) y su semi-tamaño: con esos dos se saca, por
+  // partícula, qué tan cerca está de la SILUETA y qué tan atrás está.
+  uniform vec3 uCenter; uniform float uSpan;
+  uniform float uEdgeScale; uniform float uCenterScale; uniform float uBackAlpha;
   uniform float uSwirl; uniform float uSwirlRadius; uniform float uSwirlTurns;
-  out float vSeed; out float vTl; out vec3 vColor; out float vTint; out float vShade;
+  out float vSeed; out float vTl; out vec3 vColor; out float vTint; out float vShade; out float vFade;
   ${curlGlsl}
 
   /** Giro propio de cada partícula, derivado de su semilla: dos rotaciones
@@ -92,11 +96,26 @@ export const cloudVert = /* glsl */ `
     vec3 cB = uHasColorB > 0.5 ? texelFetch(uColorB, ij, 0).rgb : fb;
     vColor = mix(cA, cB, tl);
     vTint = mix(uTintA, uTintB, tl);
+    // Profundidad de la partícula respecto del centro del modelo, en unidades
+    // de su semi-tamaño: dz < 0 = adelante (hacia la cámara), dz > 0 = atrás.
+    // En un sólido convexo la silueta es justo el anillo donde dz ~ 0, y los
+    // dos "polos" (la cara de adelante y la de atrás) son |dz| ~ 1. De ahí
+    // salen las dos cosas que pidió el dueño del proyecto sin hornear normales:
+    //   borde  (dz ~ 0)  -> partículas chicas y juntas: la silueta queda nítida;
+    //   centro (dz < 0)  -> partículas grandes y separadas: el interior respira;
+    //   atrás  (dz > 0)  -> más chicas y mucho más tenues, para que la cara de
+    //                       atrás no compita con la de adelante.
+    vec4 mvCenter = modelViewMatrix * vec4(p, 1.);
+    float centerZ = (modelViewMatrix * vec4(uCenter, 1.)).z;
+    float dz = clamp((centerZ - mvCenter.z) / max(uSpan, 1e-4), -1., 1.);
+    float edge = 1. - abs(dz);
+    float back = max(dz, 0.);
+    vFade = mix(1., uBackAlpha, back);
     // La malla de la partícula, girada sobre sí misma y encogida a su tamaño,
     // colgando del punto que calculó el morph. En vuelo se achica un poco
     // (wing) para que el enjambre disperso no se vea más pesado que la forma.
     mat3 rot = spin(a.w);
-    float sc = uParticleScale * (1. - 0.25 * wing);
+    float sc = uParticleScale * mix(uCenterScale, uEdgeScale, edge) * mix(1., 0.75, back) * (1. - 0.25 * wing);
     vec3 world = p + rot * position * sc;
     // Sombreado plano por cara: sin esto las partículas se ven como manchas
     // planas y la nube pierde el volumen que justifica usar una malla.

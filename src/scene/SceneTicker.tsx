@@ -23,7 +23,15 @@ export function SceneTicker({ graceMs = 1000 }: { graceMs?: number }) {
   useEffect(() => {
     const tick = (time: number) => {
       const now = performance.now();
-      if (shouldRender(now, registry.lastDirtyAt(), registry.consumeDirty(), graceMs)) advance(time);
+      if (shouldRender(now, registry.lastDirtyAt(), registry.consumeDirty(), graceMs)) {
+        // `advance()` corre los useFrame y dibuja, sincrónico: cronometrarlo da
+        // el COSTO del frame, que es lo que mira el guardián de rendimiento --
+        // el hueco entre frames no sirve, porque acá se dibuja sólo cuando algo
+        // cambió y un hueco largo es reposo (ver frameBudget.ts).
+        const t0 = performance.now();
+        advance(time);
+        registry.setFrameCost((performance.now() - t0) / 1000);
+      }
     };
     gsap.ticker.add(tick);
     return () => { gsap.ticker.remove(tick); };

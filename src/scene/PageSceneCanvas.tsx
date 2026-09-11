@@ -23,7 +23,11 @@ function forcedBudgetOptions(): { minFps: number; warmup: number } | undefined {
   if (!isSceneDebug()) return undefined;
   if (typeof window === 'undefined') return undefined;
   if (new URLSearchParams(window.location.search).get('budget') !== '1') return undefined;
-  return { minFps: 1000, warmup: 0 };
+  // 1e6 fps = un frame de 1 µs: imposible. Antes era 1000, que alcanzaba
+  // cuando el guardián medía el hueco entre frames, pero desde que mide el
+  // COSTO del frame (~1 ms en un equipo sano) 1000 fps es justo el umbral y la
+  // degradación forzada dejaba de dispararse.
+  return { minFps: 1e6, warmup: 0 };
 }
 
 export default function PageSceneCanvas({

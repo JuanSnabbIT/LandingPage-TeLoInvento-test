@@ -10,7 +10,8 @@ const slots = new Map<string, SlotSpec>();
 const providers = new Map<string, PoseProvider>();
 const progress: number[] = [];
 const listeners = new Set<() => void>();
-let dirty = false; let dirtyAt = 0;
+let dirty = false; let frameCost = 0;
+let dirtyAt = 0;
 const emit = () => { for (const l of listeners) l(); };
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -22,6 +23,9 @@ export const registry = {
   setProgress(tramo: number, p: number) { progress[tramo] = p; dirty = true; dirtyAt = now(); },
   getProgress: (tramo: number) => progress[tramo] ?? 0,
   markDirty() { dirty = true; dirtyAt = now(); },
+  /** Segundos que tardó el último `advance()` -- lo escribe SceneTicker y lo lee FrameBudgetGuard. */
+  setFrameCost(seconds: number) { frameCost = seconds; },
+  frameCost() { return frameCost; },
   consumeDirty() { const d = dirty; dirty = false; return d; },
   lastDirtyAt: () => dirtyAt,
   subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; },

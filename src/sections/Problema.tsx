@@ -8,7 +8,7 @@ export function Problema() {
   // it and reads its live rect every frame (spec 13 §3.3).
   const ref = useRef<HTMLDivElement>(null);
   // Encuadre: el nodo llena ~1.05 del alto de la caja (548x280): su lado mayor es la profundidad, que bajo la pose se reparte entre alto y ancho.
-  useSceneSlot({ id: 'problema', anchorRef: ref, fit: 1.15, pose: 'tresCuartos', surface: 'light' });
+  useSceneSlot({ id: 'problema', anchorRef: ref, fit: 1.04, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="problema">
       <div className="wrap grid">

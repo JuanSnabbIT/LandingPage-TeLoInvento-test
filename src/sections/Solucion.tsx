@@ -7,7 +7,7 @@ export function Solucion() {
   // Scene stage box for "el set" (Central + nodos) -- see spec 13 §3.3.
   const ref = useRef<HTMLDivElement>(null);
   // Encuadre: el set (Central + dos nodos) es ancho; 1.2 lo deja en ~385 px de alto dentro de la caja de 522x320.
-  useSceneSlot({ id: 'solucion', anchorRef: ref, fit: 1.2, pose: 'tresCuartos', surface: 'light' });
+  useSceneSlot({ id: 'solucion', anchorRef: ref, fit: 1.0, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="solucion" id="solucion">
       <div className="wrap grid">

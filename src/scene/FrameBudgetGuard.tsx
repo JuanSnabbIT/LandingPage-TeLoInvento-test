@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { registry } from './registry';
 import { FrameBudget, type BudgetStep } from './frameBudget';
 
 export function FrameBudgetGuard({
@@ -15,7 +16,10 @@ export function FrameBudgetGuard({
   const fb = useRef(new FrameBudget(options));
   useFrame((_, delta) => {
     if (!active()) return;
-    const s = fb.current.push(delta);
+    // `registry.frameCost()` es el costo del frame ANTERIOR: los useFrame corren
+    // antes de dibujar, así que el de este frame todavía no existe. Un frame de
+    // atraso no cambia nada: el guardián necesita segundos de muestras.
+    const s = fb.current.push(registry.frameCost(), delta);
     if (s) onStep(s);
   });
   return null;

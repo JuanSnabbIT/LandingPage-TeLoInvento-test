@@ -7,7 +7,7 @@ export function Valor() {
   // Scene stage box for the Central -- see spec 13 §3.3.
   const ref = useRef<HTMLDivElement>(null);
   // Encuadre: el WiFi es plano y ancho: puede crecer más que los demás sin salirse del alto de la caja.
-  useSceneSlot({ id: 'valor', anchorRef: ref, fit: 1.35, pose: 'tresCuartos', surface: 'dark' });
+  useSceneSlot({ id: 'valor', anchorRef: ref, fit: 1.26, pose: 'tresCuartos', surface: 'dark' });
   return (
     <section className="valor" id="valor">
       <div className="wrap grid">

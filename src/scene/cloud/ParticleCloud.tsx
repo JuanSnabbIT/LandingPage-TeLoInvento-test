@@ -48,7 +48,15 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     let g: THREE.BufferGeometry | null = null;
     particleScene.traverse((o) => { if (!g && o instanceof THREE.Mesh) g = o.geometry; });
     if (!g) throw new Error('[cloud] la malla de partícula no trae geometría');
-    return g as THREE.BufferGeometry;
+    // La malla viene descentrada en su propio espacio (bbox de py-lod1:
+    // x -0.71..0.36, y -0.27..0.80): sin recentrar, cada partícula queda
+    // corrida de la posición que le tocó en el horneado, y la forma entera
+    // sale desplazada respecto de su caja.
+    const geo = (g as THREE.BufferGeometry).clone();
+    geo.computeBoundingBox();
+    const c = geo.boundingBox!.getCenter(new THREE.Vector3());
+    geo.translate(-c.x, -c.y, -c.z);
+    return geo;
   }, [particleScene]);
   const shapes = useShapeTextures(manifest, lod, [TRAMOS[0].from.shape, TRAMOS[0].to!.shape]);
   const mat = useRef<THREE.ShaderMaterial>(null);
@@ -60,13 +68,16 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uParticleScale: { value: 0 }, uFluye: { value: 0 },
+    uCenter: { value: new THREE.Vector3() }, uSpan: { value: 1 },
+    uEdgeScale: { value: cloudTokens.edgeScale }, uCenterScale: { value: cloudTokens.centerScale },
+    uBackAlpha: { value: cloudTokens.backAlpha },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, curl]);
-  const tmp = useMemo(() => ({ m: new THREE.Matrix4(), fade: { from: '', to: '', start: 0 } }), []);
+  const tmp = useMemo(() => ({ m: new THREE.Matrix4(), v: new THREE.Vector3(), fade: { from: '', to: '', start: 0 } }), []);
   const heroAnchorRef = useRef<HTMLElement | null>(null);
   const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null; t: number; kind: TramoKind }>({ a: null, b: null, t: 1, kind: 'apagado' });
 
@@ -127,8 +138,14 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     // Tamaño de partícula atado a la escala de la pose activa: la nube se ve
     // con el mismo grano en la franja chica de Capacidades y en la caja grande
     // de Valor, en vez de granulada en una y sólida en la otra.
-    u.uParticleScale.value =
-      THREE.MathUtils.lerp(poseScale(u.uPoseA.value), poseScale(u.uPoseB.value), t) * cloudTokens.particleScale;
+    const span = THREE.MathUtils.lerp(poseScale(u.uPoseA.value), poseScale(u.uPoseB.value), t);
+    u.uParticleScale.value = span * cloudTokens.particleScale;
+    u.uSpan.value = span;
+    // Centro del modelo = traslación de la pose activa, interpolada igual que
+    // todo lo demás: es el origen desde el que se mide adelante/atrás.
+    u.uCenter.value
+      .setFromMatrixPosition(u.uPoseA.value)
+      .lerp(tmp.v.setFromMatrixPosition(u.uPoseB.value), t);
     u.uFluye.value = r.index === 0 ? 1 : 0;
     u.uSwirl.value = r.kind === 'viaje' ? 1 : 0;
     let alpha = r.alpha;

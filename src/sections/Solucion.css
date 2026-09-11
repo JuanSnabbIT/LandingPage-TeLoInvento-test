@@ -68,3 +68,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* La caja crece a 360 px sólo cuando la escena 3D está encendida y hay ancho:
+   el modelo de partículas necesita alto para leerse, y con 280 px había que
+   elegir entre llenar el ancho o salirse por arriba y por abajo. Sin 3D
+   (`?no3d`, WebGL caído, póster) la caja se queda como estaba. */
+@media (min-width: 901px) {
+  html.scene-3d .solucion .photo-ph {
+    height: 400px;
+  }
+}

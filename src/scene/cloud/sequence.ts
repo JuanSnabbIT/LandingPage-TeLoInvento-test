@@ -1,7 +1,13 @@
 export type TramoKind = 'viaje' | 'morphEnSitio' | 'apagado';
 export interface Tramo { from: { shape: string; slot: string }; to: { shape: string; slot: string } | null; kind: TramoKind; trigger: { start: [string, string]; end: [string, string] } }
+/**
+ * Tramo 0 arranca en `hero bottom center`, no en `bottom bottom`: con el Hero
+ * de dos pantallas, `bottom bottom` cae justo cuando la segunda pantalla (la
+ * Central) recien entra, y el logo salia volando antes de que se alcance a
+ * ver. `bottom center` le da media pantalla de reposo primero.
+ */
 export const TRAMOS: Tramo[] = [
-  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['hero', 'bottom bottom'], end: ['problema', 'center center'] } },
+  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['hero', 'bottom center'], end: ['problema', 'center center'] } },
   { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['problema', 'center center'], end: ['solucion', 'center center'] } },
   { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['solucion', 'center center'], end: ['capacidades', 'center center'] } },
   { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['capacidades', 'center center'], end: ['valor', 'center center'] } },

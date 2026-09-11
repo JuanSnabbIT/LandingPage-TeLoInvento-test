@@ -10,7 +10,14 @@ export const cloudTokens = {
   // partícula en ~1 % del modelo: en una forma de 450 px son ~10 px de arista.
   // Va atado a la pose y no fijo en unidades de mundo para que la partícula se
   // vea igual de grande en una sección con la caja chica que en una grande.
-  particleScale: 0.022,
+  particleScale: 0.055,
+  // Tamaño relativo según dónde cae la partícula en la profundidad del modelo
+  // (ver cloud.vert.ts): chico y junto en la silueta, grande y separado en la
+  // cara que mira a la cámara. `backAlpha` es cuánto queda de opacidad en la
+  // cara de atrás, para que no compita con la de adelante.
+  edgeScale: 0.40,
+  centerScale: 1.35,
+  backAlpha: 0.3,
   stagger: 0.2,
   // Amplitud del curl en vuelo. Subió de 0.28 a 0.42 para que el enjambre se
   // abra más "por el aire" mientras cruza, en vez de viajar como un bloque.
