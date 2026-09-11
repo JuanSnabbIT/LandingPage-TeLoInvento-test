@@ -1,37 +1,34 @@
 /*
- * Scene v2 stage CSS -- keyed on `html.scene-v2`, NOT `html.scene-3d`.
- * `scene-3d` is set by both the old hero-central-only scene
- * (src/scenes/hero-central/HeroCentralCanvas.tsx) and the new v2 scene
- * (src/scene/PageSceneHost.tsx, which sets both classes together). Keying
- * these rules on `scene-v2` alone keeps the old scene's page rendering
- * unchanged when the v2 flag is off: no Capacidades strip, no transparent
- * stage boxes beyond what each section's own CSS already does for
- * `scene-3d`. The Hero poster's own gate (`scene-poster`, below) is
- * separate -- see Hero.css.
+ * Scene stage CSS -- keyed on `html.scene-3d`, the class `PageSceneHost`
+ * adds once the canvas reports ready (and removes when it decides not to
+ * mount it). Every box the scene draws a cloud into is declared here, so
+ * its DOM placeholder (icon, caption, background) steps aside for the
+ * model while the page still renders correctly with no WebGL. The Hero
+ * poster has its own gate (`scene-poster`, below) -- see Hero.css.
  */
-html.scene-v2 .problema .visual,
-html.scene-v2 .valor .visual,
-html.scene-v2 .proceso .visual,
-html.scene-v2 .solucion .photo-ph,
-html.scene-v2 .capacidades__stage {
+html.scene-3d .problema .visual,
+html.scene-3d .valor .visual,
+html.scene-3d .proceso .visual,
+html.scene-3d .solucion .photo-ph,
+html.scene-3d .capacidades__stage {
   background: transparent;
   background-image: none;
   position: relative;
 }
 
-html.scene-v2 .problema .visual svg,
-html.scene-v2 .valor .visual svg,
-html.scene-v2 .proceso .visual svg,
-html.scene-v2 .solucion .photo-ph .cap {
+html.scene-3d .problema .visual svg,
+html.scene-3d .valor .visual svg,
+html.scene-3d .proceso .visual svg,
+html.scene-3d .solucion .photo-ph .cap {
   display: none;
 }
 
 /* Floor glow under the model in each stage box, same treatment as the Hero anchor's own ::after (see Hero.css). */
-html.scene-v2 .problema .visual::after,
-html.scene-v2 .valor .visual::after,
-html.scene-v2 .proceso .visual::after,
-html.scene-v2 .solucion .photo-ph::after,
-html.scene-v2 .capacidades__stage::after {
+html.scene-3d .problema .visual::after,
+html.scene-3d .valor .visual::after,
+html.scene-3d .proceso .visual::after,
+html.scene-3d .solucion .photo-ph::after,
+html.scene-3d .capacidades__stage::after {
   content: '';
   position: absolute;
   left: 8%;
@@ -43,7 +40,7 @@ html.scene-v2 .capacidades__stage::after {
   pointer-events: none;
 }
 
-/* Gate inverted (fix round 1): `.hero__poster` is `display:none` by default in Hero.css; PageSceneHost adds `scene-poster` only when it decides not to mount the v2 canvas (no WebGL2, or degraded). Nothing in the old scene ever sets this class. */
+/* Gate inverted (fix round 1): `.hero__poster` is `display:none` by default in Hero.css; PageSceneHost adds `scene-poster` only when it decides not to mount the canvas (no WebGL2, or degraded), so the poster never flashes before the canvas is ready. */
 html.scene-poster .hero__poster {
   display: block;
 }

@@ -61,10 +61,6 @@
   align-items: center;
   justify-content: center;
 }
-/* With the 3D scene live, the Nodo particle cloud lands in this box (Capa 2) -- the static icon would sit under it. */
-html.scene-3d .problema .visual svg {
-  display: none;
-}
 .problema .visual svg {
   width: 72px;
   height: 72px;

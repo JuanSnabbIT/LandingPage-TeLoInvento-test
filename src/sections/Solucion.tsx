@@ -1,16 +1,11 @@
-import { useRef, type RefObject } from 'react';
+import { useRef } from 'react';
 import './Solucion.css';
 import { useSceneSlot } from '../scene/useSceneSlot';
 
-interface SolucionProps {
-  /** T11: the Central (kiosk concept) is rendered into this box by the persistent canvas (see App.tsx). */
-  visualRef?: RefObject<HTMLDivElement | null>;
-}
-
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="solucion" id="solucion">`. */
-export function Solucion({ visualRef }: SolucionProps) {
-  const ownRef = useRef<HTMLDivElement>(null);
-  const ref = visualRef ?? ownRef;
+export function Solucion() {
+  // Scene stage box for "el set" (Central + nodos) -- see spec 13 §3.3.
+  const ref = useRef<HTMLDivElement>(null);
   useSceneSlot({ id: 'solucion', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="solucion" id="solucion">

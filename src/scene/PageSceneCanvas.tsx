@@ -16,7 +16,7 @@ import type { BudgetStep } from './frameBudget';
 /**
  * `?debug&budget=1`: forces the guard's `minFps` sky-high so it degrades
  * within a couple of frames instead of waiting for a real slow device --
- * used by `e2e/scene-v2-budget.spec.ts` (T25). Requires `?debug` too so it
+ * used by `e2e/scene-budget.spec.ts` (T25). Requires `?debug` too so it
  * can't be triggered by accident in a shared link.
  */
 function forcedBudgetOptions(): { minFps: number; warmup: number } | undefined {

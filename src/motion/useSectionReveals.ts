@@ -2,7 +2,8 @@ import type { RefObject } from 'react';
 import { useGSAP } from '@gsap/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { usePrefersReducedMotion } from './usePrefersReducedMotion';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { motion } from './tokens';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,11 +14,14 @@ gsap.registerPlugin(ScrollTrigger);
  * card by card instead of popping in as one block.
  */
 const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', ':scope > .band > *', '.card', '.stat'].join(', ');
-const SKIP = '.card-grid, .stat-grid, .grid, .form-grid, form, .visual';
-
-const DISTANCE_PX = 22;
-const DURATION_S = 0.7;
-const STAGGER_S = 0.07;
+/**
+ * Never revealed: grid containers (targeted through their children instead)
+ * and every box the 3D scene draws into -- `.visual`, `.photo-ph` and
+ * `.capacidades__stage`. A reveal tween on a stage box would fade/translate
+ * the DOM anchor the scene reads its rect from every frame, so the model
+ * would drift away from its box on entry (spec 13 §11).
+ */
+const SKIP = '.card-grid, .stat-grid, .grid, .form-grid, form, .visual, .photo-ph, .capacidades__stage';
 
 /**
  * T12: subtle fade-up reveal for every content section as it scrolls into
@@ -30,8 +34,8 @@ const STAGGER_S = 0.07;
  * array containing `undefined` and threw ("reading '_gsap'") -- leaving
  * everything stuck at opacity 0. A per-section trigger has no such race.
  *
- * Deliberately restrained: the Hero's 3D dissolve is the page's one
- * "moment"; everything after it should feel settled, not animated for
+ * Deliberately restrained: the scene's scroll choreography is the page's
+ * one "moment"; everything after it should feel settled, not animated for
  * its own sake (06-direccion-visual.md).
  */
 export function useSectionReveals(scopeRef: RefObject<HTMLElement | null>) {
@@ -54,10 +58,10 @@ export function useSectionReveals(scopeRef: RefObject<HTMLElement | null>) {
 
         gsap.from(elements, {
           opacity: 0,
-          y: DISTANCE_PX,
-          duration: DURATION_S,
-          ease: 'power2.out',
-          stagger: STAGGER_S,
+          y: motion.reveal.distance,
+          duration: motion.duration.reveal,
+          ease: motion.ease.out,
+          stagger: motion.stagger.grid,
           scrollTrigger: { trigger: section, start: 'top 82%', once: true },
         });
       }

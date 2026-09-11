@@ -25,8 +25,8 @@ test('?debug&budget=1 degrades to poster within the frame budget', async ({ page
   const messages: string[] = [];
   page.on('console', (msg) => messages.push(msg.text()));
 
-  await page.goto('/?v2&debug&budget=1');
-  await page.waitForFunction(() => document.documentElement.classList.contains('scene-v2'));
+  await page.goto('/?debug&budget=1');
+  await page.waitForFunction(() => document.documentElement.classList.contains('scene-3d'));
   await page.waitForFunction(() => !!window.__scene);
   await page.waitForTimeout(500);
 
@@ -46,7 +46,7 @@ test('?debug&budget=1 degrades to poster within the frame budget', async ({ page
   try {
     await expect(page.locator('html')).toHaveClass(/scene-poster/, { timeout: 25_000 });
     await expect(page.locator('canvas')).toHaveCount(0, { timeout: 5_000 });
-    const degraded = await page.evaluate(() => sessionStorage.getItem('teloinvento:scene-v2-degraded'));
+    const degraded = await page.evaluate(() => sessionStorage.getItem('teloinvento:scene-degraded'));
     expect(degraded).not.toBeNull();
     expect(Number(degraded)).not.toBeNaN();
   } finally {

@@ -19,10 +19,6 @@
   overflow: hidden;
   background-image: repeating-linear-gradient(45deg, rgba(29, 29, 31, 0.05) 0 2px, transparent 2px 14px);
 }
-/* With the 3D scene live, the Central model sits in this box (T11) -- the "foto pendiente" caption would sit under it. */
-html.scene-3d .solucion .photo-ph .cap {
-  display: none;
-}
 .solucion .photo-ph .cap {
   background: rgba(29, 29, 31, 0.85);
   color: #fff;

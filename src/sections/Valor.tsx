@@ -1,16 +1,11 @@
-import { useRef, type RefObject } from 'react';
+import { useRef } from 'react';
 import './Valor.css';
 import { useSceneSlot } from '../scene/useSceneSlot';
 
-interface ValorProps {
-  /** T11: the Central (stand concept) is rendered into this box by the persistent canvas (see App.tsx). */
-  visualRef?: RefObject<HTMLDivElement | null>;
-}
-
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="valor" id="valor">`. */
-export function Valor({ visualRef }: ValorProps) {
-  const ownRef = useRef<HTMLDivElement>(null);
-  const ref = visualRef ?? ownRef;
+export function Valor() {
+  // Scene stage box for the Central -- see spec 13 §3.3.
+  const ref = useRef<HTMLDivElement>(null);
   useSceneSlot({ id: 'valor', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'dark' });
   return (
     <section className="valor" id="valor">

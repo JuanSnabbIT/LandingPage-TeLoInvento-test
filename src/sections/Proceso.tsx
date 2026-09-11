@@ -1,23 +1,14 @@
-import { useRef, type RefObject } from 'react';
+import { useRef } from 'react';
 import './Proceso.css';
 import { useSceneSlot } from '../scene/useSceneSlot';
 
-interface ProcesoProps {
-  /** App.tsx scrubs this section's scroll into the Nodo's exploded view (useSectionScrub). */
-  sectionRef?: RefObject<HTMLElement | null>;
-  /** T11: the Nodo assembles itself inside this box (ExplodedModel, see App.tsx). */
-  visualRef?: RefObject<HTMLDivElement | null>;
-}
-
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="proceso" id="proceso">`. */
-export function Proceso({ sectionRef, visualRef }: ProcesoProps) {
-  const ownSectionRef = useRef<HTMLElement>(null);
-  const ownVisualRef = useRef<HTMLDivElement>(null);
-  const secRef = sectionRef ?? ownSectionRef;
-  const ref = visualRef ?? ownVisualRef;
+export function Proceso() {
+  // Scene stage box where the Nodo assembles itself -- see spec 13 §3.3.
+  const ref = useRef<HTMLDivElement>(null);
   useSceneSlot({ id: 'proceso', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
   return (
-    <section ref={secRef} className="proceso" id="proceso">
+    <section className="proceso" id="proceso">
       <div className="wrap grid">
         <div ref={ref} className="visual">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">

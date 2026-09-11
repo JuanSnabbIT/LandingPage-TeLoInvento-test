@@ -3,7 +3,7 @@
  * (docs/architecture/3d-web-standard.md §2/§7 -- one canvas/camera for the
  * whole page, sections don't get their own boxed camera). Generic on
  * purpose: any scene mounted in PersistentSceneLayer uses these to convert
- * a DOM anchor (see useElementViewportAnchor) into a world-space position.
+ * a DOM anchor (see src/scene/anchoring.ts) into a world-space position.
  */
 
 /** Camera sits on +Z at this distance, looking straight down -Z at the origin. */

@@ -17,9 +17,6 @@
   align-items: center;
   justify-content: center;
 }
-html.scene-3d .proceso .visual svg {
-  display: none;
-}
 .proceso .visual svg {
   width: 72px;
   height: 72px;

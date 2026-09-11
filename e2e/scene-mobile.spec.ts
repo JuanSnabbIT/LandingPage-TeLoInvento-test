@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /**
- * Scene v2 mobile emulation (T25). Same tramo-progression contract as
- * `scene-v2.spec.ts`, but under a real mobile viewport/DPR/touch profile so
+ * Scene mobile emulation (T25). Same tramo-progression contract as
+ * `scene.spec.ts`, but under a real mobile viewport/DPR/touch profile so
  * we also assert the `low` tier, the `.capacidades__stage` mobile height
  * (Capacidades.css `@media (max-width: 900px)`), and that nothing overflows
  * horizontally.
@@ -21,7 +21,7 @@ declare global {
 }
 
 async function waitForScene(page: Page) {
-  await page.waitForFunction(() => document.documentElement.classList.contains('scene-v2'));
+  await page.waitForFunction(() => document.documentElement.classList.contains('scene-3d'));
   await page.waitForFunction(() => !!window.__scene);
   await page.waitForTimeout(500);
 }
@@ -37,7 +37,7 @@ async function scrollAndRead(page: Page, y: number) {
 const positions = [0, 0.15, 0.35, 0.55, 0.75, 0.9, 1.0];
 
 test('mobile: tier low, sin overflow horizontal, franja 160px y tramos avanzan', async ({ page }) => {
-  await page.goto('/?v2&debug');
+  await page.goto('/?debug');
   await waitForScene(page);
 
   const tier = await page.evaluate(() => window.__scene!.tier);

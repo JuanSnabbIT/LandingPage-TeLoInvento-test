@@ -84,13 +84,10 @@
 /*
  * DOM fallback poster for the Central -- hidden by default (this rule),
  * shown only under `html.scene-poster` (src/styles/scene.css), a class
- * PageSceneHost adds when it decides NOT to mount the v2 canvas (no
- * WebGL2, or degraded). Gate inverted on purpose: the old scene
- * (HeroCentralCanvas.tsx) adds `scene-3d` late -- its lazy chunk mounts
- * after first paint -- so hiding the poster under `scene-3d` let it flash
- * visible under the old placeholder icon on every load. Hidden-by-default
- * means it never flashes; nothing in the old scene ever sets
- * `scene-poster`, so the flag-off page is unaffected.
+ * PageSceneHost adds when it decides NOT to mount the canvas (no WebGL2,
+ * or degraded). Gate inverted on purpose: the canvas is a lazy chunk that
+ * mounts after first paint, so hiding the poster under `scene-3d` instead
+ * would let it flash visible on every load.
  */
 .hero__poster {
   display: none;

@@ -4,7 +4,7 @@ import { hasWebgl2 } from './webglSupport';
 import type { BudgetStep } from './frameBudget';
 
 const PageSceneCanvas = lazy(() => import('./PageSceneCanvas'));
-const KEY = 'teloinvento:scene-v2-degraded';
+const KEY = 'teloinvento:scene-degraded';
 const TTL = 60 * 60 * 1000;
 
 function readDegraded(): boolean {
@@ -33,9 +33,9 @@ export function PageSceneHost({
     setDegraded(true);
   }, []);
   const onReady = useCallback(() => {
-    document.documentElement.classList.add('scene-3d', 'scene-v2');
+    document.documentElement.classList.add('scene-3d');
     document.documentElement.classList.remove('scene-poster');
-    // `.scene-v2` is what reveals `.capacidades__stage` (220 px + 24 px of
+    // `.scene-3d` is what reveals `.capacidades__stage` (220 px + 24 px of
     // margin), so adding it pushes Valor/Proceso/Contacto ~244 px down. The
     // tramo ScrollTriggers have already cached their start/end in px by now,
     // so without this re-measure tramos 3-6 fire ~244 px too early for the
@@ -43,14 +43,14 @@ export function PageSceneHost({
     requestAnimationFrame(() => ScrollTrigger.refresh());
   }, []);
   useEffect(
-    () => () => document.documentElement.classList.remove('scene-3d', 'scene-v2', 'scene-poster'),
+    () => () => document.documentElement.classList.remove('scene-3d', 'scene-poster'),
     [],
   );
   useEffect(() => {
     // No canvas is going to mount (or it just degraded away): fall back to
     // the DOM poster instead of leaving `.hero__anchor` empty.
     if (degraded || !webgl) {
-      document.documentElement.classList.remove('scene-3d', 'scene-v2');
+      document.documentElement.classList.remove('scene-3d');
       document.documentElement.classList.add('scene-poster');
       requestAnimationFrame(() => ScrollTrigger.refresh()); // same layout shift, in reverse
     }

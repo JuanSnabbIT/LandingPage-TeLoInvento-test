@@ -2,9 +2,7 @@ import type { RefObject } from 'react';
 import './Hero.css';
 
 interface HeroProps {
-  /** The section element itself -- App.tsx starts the Capa-2 scroll choreography from it (useChoreographyScroll). */
-  sectionRef: RefObject<HTMLElement | null>;
-  /** Forwarded to App.tsx's PersistentSceneLayer/HeroCentralSection -- see Hero.css for why this is an anchor, not a rendered box. */
+  /** Forwarded to App.tsx's PageSceneHost -- see Hero.css for why this is an anchor, not a rendered box. */
   anchorRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -15,14 +13,13 @@ interface HeroProps {
  * (the Central, and only the Central -- it doesn't appear anywhere else on
  * the page). See Hero.css for the "no boxed container" deviation, unchanged.
  *
- * No scroll pin and no ScrollTrigger of its own: the r3f group reads
- * `.hero__anchor`'s live rect every frame (HeroCentralScene.tsx), and the
- * dissolve/travel progress is driven from App.tsx (useChoreographyScroll),
- * which needs both this section and Problema's visual box mounted.
+ * No scroll pin and no ScrollTrigger of its own: the scene reads
+ * `.hero__anchor`'s live rect every frame (see src/scene/anchoring.ts), and
+ * the tramo progress is driven from App.tsx (useTramoScrubs).
  */
-export function Hero({ sectionRef, anchorRef }: HeroProps) {
+export function Hero({ anchorRef }: HeroProps) {
   return (
-    <section ref={sectionRef} className="hero dark">
+    <section className="hero dark">
       <div className="hero__text wrap">
         <div className="eyebrow" style={{ justifyContent: 'center', display: 'flex' }}>
           TELOINVENTO

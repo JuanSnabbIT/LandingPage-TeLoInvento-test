@@ -1,16 +1,12 @@
-import { useRef, type RefObject } from 'react';
+import { useRef } from 'react';
 import './Problema.css';
 import { useSceneSlot } from '../scene/useSceneSlot';
 
-interface ProblemaProps {
-  /** Capa 2 destination: the Nodo particle cloud is fitted into this box (see App.tsx / HeroCentralScene.tsx). */
-  visualRef?: RefObject<HTMLDivElement | null>;
-}
-
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="problema">`. */
-export function Problema({ visualRef }: ProblemaProps) {
-  const ownRef = useRef<HTMLDivElement>(null);
-  const ref = visualRef ?? ownRef;
+export function Problema() {
+  // The scene draws the Nodo cloud into this box; `useSceneSlot` registers
+  // it and reads its live rect every frame (spec 13 §3.3).
+  const ref = useRef<HTMLDivElement>(null);
   useSceneSlot({ id: 'problema', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="problema">

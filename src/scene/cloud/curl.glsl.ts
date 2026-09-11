@@ -1,5 +1,5 @@
 // Simplex 3D noise, Ian McEwan / Ashima Arts (webgl-noise, MIT license).
-// Copied verbatim from src/scenes/hero-central/particle.vert.ts -- not an
+// Copied verbatim from the retired hero-central particle shader -- not an
 // asset, just inlined math, reused here to drive the curl-noise offset
 // applied to the particle cloud while it travels between shapes (T12/T16).
 export const curlGlsl = /* glsl */ `
