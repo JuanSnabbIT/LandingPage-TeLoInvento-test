@@ -12,6 +12,7 @@ import { useShapeTextures } from './useShapeTextures';
 import { cloudVert } from './cloud.vert';
 import { cloudFrag } from './cloud.frag';
 import { cloudTokens } from './cloudTokens';
+import { sweepFrame, normalizedHalfExtents, poseCenter, poseScale, type SweepFrame } from './sweep';
 import type { Manifest } from './shapeLoader';
 
 interface Props { manifest: Manifest; lod: 'lod2' | 'mobile'; size?: number; reduced: boolean; curl: boolean }
@@ -29,12 +30,6 @@ function apagadoRect(a: DOMRectReadOnly): DOMRectReadOnly {
   const cx = a.left + a.width / 2; const width = a.width * 1.6;
   const left = cx - width / 2;
   return { left, right: left + width, width, top: a.top, bottom: a.bottom + 1.5 * a.height, height: a.height * 2.5 } as DOMRectReadOnly;
-}
-
-/** Escala uniforme de una matriz de pose (todas se componen con escala uniforme). */
-function poseScale(m: THREE.Matrix4): number {
-  const e = m.elements;
-  return Math.hypot(e[0], e[1], e[2]);
 }
 
 useGLTF.preload(cloudTokens.particleMesh.lod2);
@@ -69,11 +64,11 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger },
     uSpringOmega: { value: cloudTokens.spring.omega }, uSpringZeta: { value: cloudTokens.spring.zeta }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
     uParticleScale: { value: 0 }, uFluye: { value: 0 },
-    uCenter: { value: new THREE.Vector3() }, uSpan: { value: 1 },
+    uCenterA: { value: new THREE.Vector3() }, uCenterB: { value: new THREE.Vector3() }, uSpan: { value: 1 },
     uEdgeScale: { value: cloudTokens.edgeScale }, uFaceScale: { value: cloudTokens.faceScale },
     uBackAlpha: { value: cloudTokens.backAlpha }, uSpin: { value: cloudTokens.spin },
     uOrientNoise: { value: cloudTokens.orientNoise }, uBillboard: { value: cloudTokens.billboard ? 1 : 0 },
-    uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepJitter: { value: cloudTokens.sweepJitter },
+    uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepScale: { value: 0.5 }, uSweepJitter: { value: cloudTokens.sweepJitter },
     uSpread: { value: 1 }, uSizeJitter: { value: cloudTokens.sizeJitter },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
@@ -81,7 +76,16 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, curl]);
-  const tmp = useMemo(() => ({ m: new THREE.Matrix4(), v: new THREE.Vector3(), fade: { from: '', to: '', start: 0 } }), []);
+  const tmp = useMemo(
+    () => ({
+      m: new THREE.Matrix4(),
+      v: new THREE.Vector3(),
+      half: new THREE.Vector3(1, 1, 1),
+      sweep: { dir: new THREE.Vector3(0, -1, 0), scale: 0.5 } as SweepFrame,
+      fade: { from: '', to: '', start: 0 },
+    }),
+    [],
+  );
   const heroAnchorRef = useRef<HTMLElement | null>(null);
   const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null; t: number; kind: TramoKind }>({ a: null, b: null, t: 1, kind: 'apagado' });
 
@@ -153,13 +157,17 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const spread = 1 + cloudTokens.spread * Math.sin(Math.PI * t);
     u.uSpread.value = spread;
     u.uSpan.value = span * spread;
-    const sw = TRAMOS[r.index].sweep;
-    u.uSweepDir.value.set(sw[0], sw[1], sw[2]).normalize();
-    // Centro del modelo = traslación de la pose activa, interpolada igual que
-    // todo lo demás: es el origen desde el que se mide adelante/atrás.
-    u.uCenter.value
-      .setFromMatrixPosition(u.uPoseA.value)
-      .lerp(tmp.v.setFromMatrixPosition(u.uPoseB.value), t);
+    poseCenter(u.uPoseA.value, u.uCenterA.value);
+    poseCenter(u.uPoseB.value, u.uCenterB.value);
+    // Barrido: dirección en espacio de la forma de ORIGEN y factor que la
+    // normaliza a su ancho real sobre ese eje (ver sweep.ts). Va contra la pose
+    // A y el bbox de la forma A, las dos cosas fijas dentro del tramo, así que
+    // el orden de salida no cambia mientras la transición corre.
+    const bboxA = manifest.shapes[r.a]?.[lod]?.bbox;
+    if (bboxA) normalizedHalfExtents(bboxA, tmp.half); else tmp.half.set(1, 1, 1);
+    sweepFrame(u.uPoseA.value, TRAMOS[r.index].sweep, tmp.half, tmp.sweep);
+    u.uSweepDir.value.copy(tmp.sweep.dir);
+    u.uSweepScale.value = tmp.sweep.scale;
     u.uFluye.value = r.index === 0 ? 1 : 0;
     u.uSwirl.value = r.kind === 'viaje' ? 1 : 0;
     let alpha = r.alpha;
@@ -184,7 +192,10 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
         // El margen del corredor tiene que cubrir lo que el enjambre se aparta del
         // eje en vuelo (curl + giro): con 0.2 el giro nuevo llegaba al borde del
         // recorte y las partículas de afuera se cortaban en una línea recta.
-        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, kind === 'viaje' ? 0.32 : 0.2, viewport);
+        // El margen tiene que cubrir lo que el enjambre se aparta del eje: curl,
+        // giro y respiración. En un morph en sitio o un apagado no hay viaje,
+        // pero la respiración sí infla la nube, así que 0.2 se quedaba corto.
+        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, kind === 'viaje' ? 0.32 : 0.28, viewport);
         if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
       }}
       onAfterRender={() => { gl.setScissorTest(false); }}

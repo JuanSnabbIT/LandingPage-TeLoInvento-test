@@ -35,9 +35,10 @@ export const cloudVert = /* glsl */ `
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
   uniform float uParticleScale; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
-  // Centro del modelo (mundo) y su semi-tamaño: con esos dos se sabe qué
-  // partículas quedan detrás, para bajarles la opacidad.
-  uniform vec3 uCenter; uniform float uSpan;
+  // Centro de cada punta del morph (mundo) y semi-tamaño de la nube. Son DOS y
+  // no uno interpolado a propósito: el centro que le toca a cada partícula
+  // depende de dónde está ELLA en su camino (tl), no del promedio del enjambre.
+  uniform vec3 uCenterA; uniform vec3 uCenterB; uniform float uSpan;
   // Rango de tamaño: el horneado guarda el FACTOR (la cercanía a arista) y acá
   // se convierte en tamaño, así se re-encuadra sin volver a hornear.
   uniform float uEdgeScale; uniform float uFaceScale; uniform float uBackAlpha;
@@ -49,11 +50,15 @@ export const cloudVert = /* glsl */ `
   uniform float uSpringOmega; uniform float uSpringZeta;
   // Barrido: dirección en la que la ola cruza la forma, y cuánto se desordena el
   // frente. El sitio de referencia ORDENA sus partículas en CPU por un eje
-  // distinto en cada transición y guarda el rango de cada una; acá se aproxima
-  // proyectando la posición de origen sobre esa dirección, que para una forma
-  // convexa da la misma curva salvo una no-linealidad suave, y no cuesta ni un
-  // byte de asset.
-  uniform vec3 uSweepDir; uniform float uSweepJitter;
+  // distinto en cada transición y guarda el rango de cada una; acá se proyecta
+  // la posición HORNEADA de la partícula (espacio de objeto, ya normalizada a
+  // [-1,1]) sobre la dirección del tramo traída a ese mismo espacio.
+  //
+  // Tiene que ser en espacio de objeto: proyectar en mundo contra el centro del
+  // modelo hacía que el rango dependiera del progreso -- el centro se mueve
+  // mientras la nube viaja -- y el orden de salida cambiaba en pleno barrido.
+  // uSweepScale corrige que un eje corto de la forma ocupe menos que [-1,1].
+  uniform vec3 uSweepDir; uniform float uSweepScale; uniform float uSweepJitter;
   // Respiración del enjambre a mitad del tramo (su u_factor, +-23 %).
   uniform float uSpread;
   // Ruido de tamaño por partícula: la mitad que le falta a la rampa geométrica.
@@ -110,7 +115,7 @@ export const cloudVert = /* glsl */ `
     // Rango del barrido en [0,1] a lo largo de uSweepDir. Con jitter 0 el frente
     // es un plano perfecto (una guillotina); con 1 vuelve al desorden por semilla,
     // que disolvía la forma en ruido en vez de barrerla.
-    float rank = clamp(0.5 + dot(pA - uCenter, uSweepDir) / (2. * max(uSpan, 1e-4)), 0., 1.);
+    float rank = clamp(0.5 + dot(a.xyz, uSweepDir) * uSweepScale, 0., 1.);
     float order = mix(rank, a.w, uSweepJitter);
     float tRaw = clamp((uT - order * uStagger) / (1. - uStagger), 0., 1.);
     float tl = springEase(tRaw, uSpringOmega, uSpringZeta);   // puede pasar de 1: es el sobrepaso
@@ -121,9 +126,15 @@ export const cloudVert = /* glsl */ `
     float wing = sin(3.14159265 * tRaw);
     // Respiración: el enjambre se abre a mitad del tramo y se cierra EXACTO al
     // llegar, porque uSpread lo calcula el componente con sin(PI*t) y vale 1 en
-    // los dos extremos. Es lo que hace que la transición se lea como
-    // desarmarse y rearmarse, y no como puntos que se deslizan.
-    p = uCenter + (p - uCenter) * uSpread;
+    // los dos extremos. Es lo que hace que la transición se lea como desarmarse
+    // y rearmarse, y no como puntos que se deslizan.
+    //
+    // El centro es el que le toca a ESTA partícula en su propio camino, no el
+    // promedio del enjambre: inflar todo alrededor de un punto intermedio entre
+    // las dos cajas no es una expansión, es un corte -- las partículas que
+    // todavía están en el origen salen despedidas hacia afuera del destino.
+    vec3 cen = mix(uCenterA, uCenterB, tl);
+    p = cen + (p - cen) * uSpread;
     // Tramo 0 "Fluye": caída + curl extra durante el viaje (uFluye = 1 solo en el tramo 0).
     // wing = sin(PI*tl): en reposo (tl = 0 o 1) el término de curl vale
     // exactamente 0, así que saltear la evaluación del ruido ahí es un no-op
@@ -178,7 +189,7 @@ export const cloudVert = /* glsl */ `
     // Conservamos un piso (uBackAlpha) porque no tenemos el bloom que allá vuelve
     // a levantar el frente.
     vec4 mvCenter = modelViewMatrix * vec4(p, 1.);
-    float centerZ = (modelViewMatrix * vec4(uCenter, 1.)).z;
+    float centerZ = (modelViewMatrix * vec4(cen, 1.)).z;
     float dz = clamp((mvCenter.z - centerZ) / max(uSpan, 1e-4), -1.2, 1.2);   // +1 = frente
     float depth = smoothstep(-1.034, 0.920, dz);
     vFade = mix(uBackAlpha, 1., depth);
