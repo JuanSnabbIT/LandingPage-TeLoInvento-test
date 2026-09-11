@@ -44,9 +44,11 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   useFrame((state) => {
     const m = mat.current; if (!m) return;
     const r = resolveTramo((i) => registry.getProgress(i), TRAMOS, { ...motion.tramo, reduced });
+    if (!shapes.ready(r.a)) void shapes.ensure(r.a);
+    if (!shapes.ready(r.b)) void shapes.ensure(r.b);
+    const next = TRAMOS[r.index + 1]?.to?.shape; if (next && !shapes.ready(next)) void shapes.ensure(next);
     const texA = shapes.get(r.a); const texB = shapes.get(r.b);
-    if (!texA) return;
-    const next = TRAMOS[r.index + 1]?.to?.shape; if (next) void shapes.ensure(next);
+    if (!texA) { m.visible = false; return; }
     const u = m.uniforms;
     u.uShapeA.value = texA; u.uShapeB.value = texB ?? texA;
     u.uT.value = texB ? r.t : 0;                       // forma B no cargada: esperar en A
