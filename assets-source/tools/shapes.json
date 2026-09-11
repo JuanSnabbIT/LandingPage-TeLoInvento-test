@@ -1,7 +1,8 @@
 {
   "_comment": "offset/explode van en espacio Blender (Z arriba), que es donde el bake mueve las piezas antes de blender_to_yup(): three (x,y,z) -> blender (x, -z, y). `scale` normaliza la fuente al lado mayor de la PRIMERA fuente; `pitch` la gira sobre X (pi/2 = la para de frente); `exclude` descarta mallas por nombre base antes de medir y muestrear.",
   "seed": 20260911,
-  "lods": { "lod2": 256, "mobile": 128 },
+  "_lods": "Lado de la textura de posiciones: lod2 160 = 25 600 partículas, mobile 96 = 9 216. Bajó de 256/128 al pasar de puntos planos a mallas instanciadas de 48 caras -- menos partículas y más grandes, que es lo que pidió el dueño del proyecto.",
+  "lods": { "lod2": 160, "mobile": 96 },
   "shell": 0.03,
   "outDir": "public/textures/particulas",
   "shapes": {

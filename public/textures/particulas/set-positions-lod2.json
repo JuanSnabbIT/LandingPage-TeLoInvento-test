@@ -1,24 +1,24 @@
 {
   "shape": "set",
   "lod": "lod2",
-  "size": 256,
-  "count": 65536,
+  "size": 160,
+  "count": 25600,
   "bbox": {
     "min": [
-      -0.2420414686203003,
-      -0.08503853529691696,
-      -0.14199841022491455
+      -0.2367209494113922,
+      -0.08463612198829651,
+      -0.14199122786521912
     ],
     "max": [
-      0.20577260851860046,
-      0.2412891536951065,
-      0.12300735712051392
+      0.21195174753665924,
+      0.24118958413600922,
+      0.12003118544816971
     ]
   },
   "sources": [
     "public/models/hero-central/central-v2.glb",
-    "public/models/seccion-1/nodo.glb",
-    "public/models/seccion-1/nodo.glb"
+    "assets-source/models/nodo/nodo.glb",
+    "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-11T16:20:58.388211+00:00"
+  "generatedAt": "2026-09-11T19:39:41.192814+00:00"
 }
