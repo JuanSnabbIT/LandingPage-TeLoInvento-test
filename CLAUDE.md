@@ -39,9 +39,9 @@ descripción referencia explícitamente este mismo patrón de vault.
   (solo lectura, no se modifica). Las 9 secciones están portadas a React en
   `src/sections/` (T10).
 - **La escena v2 ("la nube") es la única escena.** Una sola nube de
-  partículas recorre la página transformándose en seis formas (logo → nodo →
-  set → sensores → central → nodo explotado → nodo) como **función pura del
-  scroll**: morph sin estado en el vertex shader entre dos texturas de
+  partículas recorre la página transformándose en siete formas a lo largo de
+  ocho tramos (logo → nodo → set → capacidades → central → wifi → nodo
+  explotado → nodo) como **función pura del scroll**: morph sin estado en el vertex shader entre dos texturas de
   posiciones horneadas, más curl noise solo en vuelo. Sin GPGPU, sin flag de
   migración, sin escena v1. Detalle completo en
   `docs/architecture/3d-web-standard.md`.

@@ -195,11 +195,19 @@ los vértices, así que la densidad de la malla no determina la distribución.
 
 ### 6.2 Definición declarativa — `assets-source/tools/shapes.json`
 
-Las seis formas (`logo`, `nodo`, `nodo-explotado`, `set`, `sensores`,
-`central`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw` por fuente
-(composición), `explode` (desplazamiento por **nombre exacto de malla**),
-`flatten`, `shell`, `pairWith`. Global: `seed`, `lods` (`lod2`: 256,
+Las siete formas (`logo`, `nodo`, `nodo-explotado`, `set`, `capacidades`,
+`central`, `wifi`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw`/
+`pitch`/`exclude` por fuente, `explode` (desplazamiento por **nombre exacto de
+malla**), `flatten`, `shell`, `pairWith`, `colors` (material → hex, hornea una
+textura de color por partícula). Global: `seed`, `lods` (`lod2`: 256,
 `mobile`: 128), `outDir`.
+
+`pitch` gira la fuente sobre X en espacio Blender: endereza una pieza modelada
+acostada en XY, que bajo la pose `tresCuartos` (14° de inclinación) se vería de
+canto. `exclude` descarta mallas por nombre base **antes** de medir los límites
+y de repartir partículas por área — necesario cuando una pieza decorativa
+domina la superficie (el disco de tierra de `riego.glb` es el 81.7 % de ella).
+Igual que `explode`, un nombre que no matchea **aborta con exit ≠ 0**.
 
 Una regla de `explode` que no matchea ninguna malla **aborta con exit ≠ 0** —
 un re-export que renombre piezas es error de build, no asset silencioso.
