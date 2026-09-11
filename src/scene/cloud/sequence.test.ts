@@ -57,10 +57,17 @@ describe('TRAMOS', () => {
     expect(TRAMOS.at(-1)!.to).toBeNull();
     expect(TRAMOS.filter((t) => t.kind === 'apagado')).toHaveLength(1);
   });
-  it('los rangos de scroll de un tramo empiezan donde termina el anterior', () => {
-    for (let i = 1; i < TRAMOS.length; i++) {
-      expect({ i, t: TRAMOS[i].trigger.start }).toEqual({ i, t: TRAMOS[i - 1].trigger.end });
+  it('cada tramo se dispara sobre la caja de su destino', () => {
+    // Con tramos disparados (no scrubbeados) el rango es una ventana sobre la
+    // caja de DESTINO: es lo que hace que la nube llegue a la sección y se quede
+    // mientras se la lee, en vez de empezar a irse al cruzar su centro.
+    for (const t of TRAMOS) {
+      if (!t.to) continue;
+      expect({ k: t.kind, e: t.trigger.start[0] }).toEqual({ k: t.kind, e: t.to.slot });
+      expect(t.trigger.end[0]).toBe(t.to.slot);
     }
+    // El apagado es el único que se dispara sobre una sección sin slot.
+    expect(TRAMOS.at(-1)!.trigger.start[0]).toBe('contacto');
   });
   it('morphEnSitio no cambia de slot y viaje sí', () => {
     for (const t of TRAMOS) {

@@ -1,19 +1,30 @@
 export type TramoKind = 'viaje' | 'morphEnSitio' | 'apagado';
 export interface Tramo { from: { shape: string; slot: string }; to: { shape: string; slot: string } | null; kind: TramoKind; trigger: { start: [string, string]; end: [string, string] } }
 /**
- * Tramo 0 arranca en `hero bottom center`, no en `bottom bottom`: con el Hero
- * de dos pantallas, `bottom bottom` cae justo cuando la segunda pantalla (la
- * Central) recien entra, y el logo salia volando antes de que se alcance a
- * ver. `bottom center` le da media pantalla de reposo primero.
+ * Los rangos se definen sobre la caja de DESTINO, no entre centros de secciones.
+ *
+ * Con tramos scrubbeados el rango iba del centro de una seccion al centro de la
+ * siguiente, y la nube descansaba en las ventanas de reposo de las dos puntas.
+ * Desde que la transicion se DISPARA al cruzar el arranque
+ * (`motion.tramoModo`), ese reparto dejaba a la nube saliendo de la seccion
+ * justo cuando el visitante llegaba a leerla: cruzar el centro de Capacidades
+ * ES el arranque del tramo que se la lleva a Valor.
+ *
+ * Ahora cada tramo arranca cuando su caja de destino ASOMA por abajo y termina
+ * cuando esa caja sale por arriba: la nube llega a la seccion y se queda ahi
+ * mientras se la lee, que es lo que hace el sitio de referencia. El Hero de dos
+ * pantallas queda cubierto de paso -- el logo ya no sale volando antes de que
+ * se alcance a ver la Central, porque el disparo depende de Problema, no del
+ * final del Hero.
  */
 export const TRAMOS: Tramo[] = [
-  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['hero', 'bottom center'], end: ['problema', 'center center'] } },
-  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['problema', 'center center'], end: ['solucion', 'center center'] } },
-  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['solucion', 'center center'], end: ['capacidades', 'center center'] } },
-  { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['capacidades', 'center center'], end: ['valor', 'center center'] } },
-  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['valor', 'center center'], end: ['proceso', 'center 65%'] } },
-  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'center 65%'], end: ['proceso', 'center 45%'] } },
-  { from: { shape: 'nodo', slot: 'proceso' }, to: null, kind: 'apagado', trigger: { start: ['proceso', 'center 45%'], end: ['contacto', 'top 60%'] } },
+  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 85%'], end: ['problema', 'bottom 25%'] } },
+  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 85%'], end: ['solucion', 'bottom 25%'] } },
+  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 85%'], end: ['capacidades', 'bottom 25%'] } },
+  { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 85%'], end: ['valor', 'bottom 25%'] } },
+  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 85%'], end: ['proceso', 'center center'] } },
+  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'center 55%'], end: ['proceso', 'bottom 20%'] } },
+  { from: { shape: 'nodo', slot: 'proceso' }, to: null, kind: 'apagado', trigger: { start: ['contacto', 'top 75%'], end: ['contacto', 'bottom bottom'] } },
 ];
 export interface Resolved { a: string; b: string; slotA: string; slotB: string; t: number; alpha: number; kind: TramoKind; index: number; crossfade: boolean }
 const smooth = (x: number) => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
