@@ -16,7 +16,7 @@
     ]
   },
   "sources": [
-    "public/models/seccion-1/nodo.glb"
+    "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-11T16:20:55.970295+00:00"
+  "generatedAt": "2026-09-11T18:02:53.345822+00:00"
 }

@@ -158,10 +158,20 @@ def _name_seed(name):
     """crc32(name) % 1000 — determinista entre procesos (hash() de Python está salteado por proceso)."""
     return zlib.crc32(name.encode('utf-8')) % 1000
 
-def build_shape(name, spec, cfg, lod, size):
+def build_shape(name, spec, cfg, lod, size, order=None, write=True):
+    """Hornea una forma. Devuelve la permutación de Hilbert que le aplicó.
+
+    `order`: permutación ya calculada por otra forma (su base de `pairWith`).
+    Se aplica tal cual en vez de calcular una propia -- ver `main()`.
+    `write`: False para construir una forma solo por su `order`, sin tocar disco.
+    """
     bpy.ops.wm.read_factory_settings(use_empty=True)
     count = size * size
-    rng = np.random.RandomState(cfg['seed'] + _name_seed(name) if 'pairWith' not in spec else cfg['seed'] + _name_seed(spec['pairWith']))
+    # Una forma con `pairWith` siembra su RNG con el nombre de su base: mismo
+    # RNG => mismos triángulos y mismas baricéntricas => el índice i de las dos
+    # formas es la MISMA partícula. Eso es lo que hace que el morph par sea
+    # rígido por pieza en vez de una reasignacion global.
+    rng = np.random.RandomState(cfg['seed'] + _name_seed(spec.get('pairWith', name)))
     all_tris = []; all_areas = []; first_max = None
     for src in spec['sources']:
         objs = import_glb(src['file'])
@@ -187,11 +197,19 @@ def build_shape(name, spec, cfg, lod, size):
     # las formas sale en espacio Blender y hay que devolverlas a Y-up.
     pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
     pts, mn, mx = normalize(pts)
-    if 'pairWith' not in spec:
-        pts = pts[hilbert_order(pts, bits=6 if size <= 128 else 8)]
-    # pairWith: mismo rng ⇒ mismos triángulos/barycentrics; el explode ya movió las piezas.
-    # Se conserva el orden del muestreo (idéntico al de la forma pareja) SIN reordenar por Hilbert:
-    # para que coincida, la forma pareja también se genera sin reorden cuando tiene pares.
+    # Orden de Hilbert: identidad de partícula por localidad espacial (§6). Para
+    # un par (`nodo` / `nodo-explotado`) se calcula UNA sola vez, sobre los puntos
+    # de la forma BASE, y se aplica la MISMA permutación a las dos. Las dos
+    # comparten índices de muestreo, así que permutarlas igual conserva el
+    # pareo — y, a diferencia de la versión anterior, ninguna de las dos se
+    # queda sin Hilbert: antes `nodo` salía en orden de muestreo crudo y su
+    # mediana de distancia entre índices consecutivos era ~0.72 (vecinos al azar
+    # en toda la caja), lo que arruina el stagger por seed y el scissor.
+    if order is None:
+        order = hilbert_order(pts, bits=6 if size <= 128 else 8)
+    pts = pts[order]
+    if not write:
+        return order
     sd = seeds(count, cfg['seed'])
     data = np.empty((count, 4), dtype=np.float32); data[:, :3] = pts; data[:, 3] = sd
     out_dir = os.path.join(ROOT, cfg['outDir']); os.makedirs(out_dir, exist_ok=True)
@@ -201,20 +219,31 @@ def build_shape(name, spec, cfg, lod, size):
         json.dump({'shape': name, 'lod': lod, 'size': size, 'count': count, 'bbox': {'min': mn, 'max': mx},
                    'sources': [s['file'] for s in spec['sources']], 'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}, f, indent=2)
     print('BAKED', name, lod, count, os.path.getsize(base + '.bin'))
+    return order
 
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     cfg = json.load(open(CFG_PATH, encoding='utf-8'))
     only_shape = argv[argv.index('--shape') + 1] if '--shape' in argv else None
     only_lod = argv[argv.index('--lod') + 1] if '--lod' in argv else None
-    # Las formas con pareja (pairWith) y sus parejas se generan SIN reorden Hilbert para compartir índice.
-    paired = {s.get('pairWith') for s in cfg['shapes'].values() if 'pairWith' in s}
+    # forma-con-pareja -> su forma base. La base se hornea primero y su
+    # permutación de Hilbert se le pasa a la pareja, que comparte índices de
+    # muestreo: así las dos quedan ordenadas por Hilbert Y siguen pareadas.
+    pairs = {n: sp['pairWith'] for n, sp in cfg['shapes'].items() if 'pairWith' in sp}
     for lod, size in cfg['lods'].items():
         if only_lod and lod != only_lod: continue
-        for name, spec in cfg['shapes'].items():
-            if only_shape and name != only_shape: continue
-            if name in paired: spec = {**spec, 'pairWith': name}  # marca: sin Hilbert, mismo rng que su pareja
-            build_shape(name, spec, cfg, lod, size)
+        wanted = [n for n in cfg['shapes'] if not only_shape or n == only_shape]
+        # Pedir solo la pareja obliga a construir su base para sacarle el orden
+        # (sin escribirla, si no fue pedida): el orden no se puede leer del .bin.
+        need_order = {pairs[n] for n in wanted if n in pairs}
+        orders = {}
+        for name in cfg['shapes']:
+            if name in pairs: continue
+            if name not in wanted and name not in need_order: continue
+            orders[name] = build_shape(name, cfg['shapes'][name], cfg, lod, size, write=name in wanted)
+        for name in wanted:
+            if name not in pairs: continue
+            build_shape(name, cfg['shapes'][name], cfg, lod, size, order=orders[pairs[name]])
 
 if __name__ == '__main__' and bpy.app.background:
     main()

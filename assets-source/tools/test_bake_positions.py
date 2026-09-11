@@ -141,6 +141,77 @@ def test_solid_shapes_come_back_to_gltf_yup():
     basis = bp.blender_to_yup(np.eye(3, dtype=np.float32))
     assert np.isclose(np.linalg.det(basis), 1.0), f'la conversión espeja el modelo, det={np.linalg.det(basis)}'
 
+# ---------- regresiones de la revision de rama (I2) ----------
+
+def _read_bake(out_dir, name, lod='mobile'):
+    """Devuelve (datos normalizados Nx4, puntos deshechos a espacio de mundo).
+
+    El `.json` guarda el bbox previo a `normalize()`, asi que la normalizacion
+    se puede invertir exactamente: eso deja los dos horneados en el MISMO
+    espacio y el delta por indice pasa a ser el desplazamiento de `explode`
+    puro, en vez de estar contaminado por las dos escalas distintas.
+    """
+    base = os.path.join(out_dir, f'{name}-positions-{lod}')
+    data = np.fromfile(base + '.bin', dtype=np.float16).reshape(-1, 4).astype(np.float32)
+    meta = json.load(open(base + '.json', encoding='utf-8'))
+    mn = np.array(meta['bbox']['min'], dtype=np.float64)
+    mx = np.array(meta['bbox']['max'], dtype=np.float64)
+    ext = max((mx - mn).max() / 2, 1e-6)
+    world = data[:, :3].astype(np.float64) * ext + (mn + mx) / 2
+    return data, world, ext
+
+
+def test_paired_shapes_share_one_hilbert_order():
+    """`nodo` y `nodo-explotado` se ordenan por Hilbert con la MISMA permutacion.
+
+    Antes, para conservar el pareo, las dos se horneaban SIN Hilbert: compartian
+    indice pero el orden era el del muestreo crudo, o sea vecinos al azar en toda
+    la caja (mediana de distancia entre indices consecutivos ~0.72 en una forma
+    normalizada a [-1,1]). Eso rompe justo lo que el orden de Hilbert sostiene:
+    el stagger por semilla y el corredor del scissor asumen que indices vecinos
+    son particulas vecinas.
+
+    Ahora el orden se calcula una sola vez sobre la forma BASE y se aplica a las
+    dos. Se verifica lo que importa de las dos propiedades a la vez:
+      (a) el canal de semilla sigue siendo identico indice a indice;
+      (b) el delta por indice, en espacio de mundo, son los pocos desplazamientos
+          rigidos de `explode` (el morph par sigue siendo pieza-a-pieza);
+      (c) la base quedo efectivamente ordenada por Hilbert.
+    """
+    import shutil, tempfile
+    cfg = json.load(open(bp.CFG_PATH, encoding='utf-8'))
+    size = cfg['lods']['mobile']                      # 128 -> 16 384 puntos, ~segundos
+    out = tempfile.mkdtemp(prefix='bake-pair-')
+    cfg = {**cfg, 'outDir': out}                      # nunca escribe en public/
+    try:
+        order = bp.build_shape('nodo', cfg['shapes']['nodo'], cfg, 'mobile', size)
+        bp.build_shape('nodo-explotado', cfg['shapes']['nodo-explotado'], cfg, 'mobile', size, order=order)
+        a, a_world, a_ext = _read_bake(out, 'nodo')
+        b, b_world, _ = _read_bake(out, 'nodo-explotado')
+
+        # (a) misma particula en el mismo indice
+        assert np.array_equal(a[:, 3], b[:, 3]), 'el canal de semilla dejo de coincidir indice a indice'
+
+        # (b) el delta por indice es uno de los pocos offsets rigidos de explode:
+        # los 7 de `explode` + el cero de las piezas que no se mueven. El redondeo
+        # a 2 decimales parte alguno en dos por el half-float, de ahi que se mida
+        # la cobertura de los 8 mas poblados en vez de exigir 8 exactos.
+        n_explode = len(cfg['shapes']['nodo-explotado']['explode'])
+        deltas = np.round((b_world - a_world) / a_ext, 2)
+        uniq, counts = np.unique(deltas, axis=0, return_counts=True)
+        top = np.sort(counts)[::-1][:n_explode + 1].sum() / len(deltas)
+        print('   deltas distintos:', len(uniq), '- cobertura de los', n_explode + 1, 'mayores:', f'{top:.2%}')
+        assert len(uniq) <= 12, f'{len(uniq)} deltas distintos: el pareo por indice se rompio'
+        assert top > 0.99, f'solo {top:.2%} de las particulas cae en un offset rigido de explode'
+
+        # (c) y la base quedo ordenada por Hilbert (antes: ~0.72)
+        med = float(np.median(np.linalg.norm(np.diff(a[:, :3], axis=0), axis=1)))
+        print('   mediana de distancia entre indices consecutivos de nodo:', round(med, 4))
+        assert med < 0.1, f'nodo no quedo ordenado por Hilbert: mediana {med:.3f}'
+    finally:
+        shutil.rmtree(out, ignore_errors=True)
+
+
 if __name__ == '__main__':
     # No cortar en el primer fallo: se corre bajo Blender, una sola vez, y saber
     # cuáles de los siete fallan vale más que abortar.
