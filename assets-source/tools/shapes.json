@@ -1,0 +1,41 @@
+{
+  "seed": 20260911,
+  "lods": { "lod2": 256, "mobile": 128 },
+  "shell": 0.03,
+  "outDir": "public/textures/particulas",
+  "shapes": {
+    "logo": {
+      "sources": [{ "file": "assets-source/models/hero-central/logo-lod1.glb" }],
+      "flatten": true, "shell": 0.0
+    },
+    "nodo": {
+      "sources": [{ "file": "public/models/seccion-1/nodo.glb" }]
+    },
+    "nodo-explotado": {
+      "sources": [{ "file": "public/models/seccion-1/nodo.glb" }],
+      "explode": {
+        "Lid_Screws": [0, 1.1, 0], "Chassis_Lid": [0, 0.6, 0], "Terminal_Cover": [0, 0.25, 0.55],
+        "Terminal_BrassParts": [0, 0.08, 0.3], "Terminal_Block": [0, 0.04, 0.16],
+        "Antenna": [0, 0.45, 0], "Chassis_ClipTab": [-0.35, 0, 0]
+      },
+      "pairWith": "nodo"
+    },
+    "set": {
+      "sources": [
+        { "file": "public/models/hero-central/central-v2.glb" },
+        { "file": "public/models/seccion-1/nodo.glb", "offset": [-0.72, -0.38, 0.25], "scale": 0.42, "yaw": 0.9 },
+        { "file": "public/models/seccion-1/nodo.glb", "offset": [0.7, -0.4, 0.15], "scale": 0.4, "yaw": -0.5 }
+      ]
+    },
+    "sensores": {
+      "sources": [
+        { "file": "public/models/capacidades/sensor_humedad.glb", "offset": [-1.1, 0, 0] },
+        { "file": "public/models/capacidades/valvula_riego.glb", "offset": [0, 0, 0] },
+        { "file": "public/models/capacidades/sensor_perimetral.glb", "offset": [1.1, 0, 0] }
+      ]
+    },
+    "central": {
+      "sources": [{ "file": "public/models/hero-central/central-v2.glb" }]
+    }
+  }
+}
