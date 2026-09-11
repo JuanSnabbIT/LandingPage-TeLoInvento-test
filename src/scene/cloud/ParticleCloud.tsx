@@ -6,7 +6,7 @@ import { computeAnchorTransform, anchorMatrix } from '../anchoring';
 import { scenePalette } from '../scenePalette';
 import { motion } from '../../motion/tokens';
 import { TRAMOS, resolveTramo } from './sequence';
-import { unionRect } from './scissor';
+import { corridorRect } from './scissor';
 import { useShapeTextures } from './useShapeTextures';
 import { cloudVert } from './cloud.vert';
 import { cloudFrag } from './cloud.frag';
@@ -34,7 +34,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   }), [S, lod, curl]);
   const tmp = useMemo(() => ({ m: new THREE.Matrix4(), fade: { from: '', to: '', start: 0 } }), []);
   const heroAnchorRef = useRef<HTMLElement | null>(null);
-  const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null }>({ a: null, b: null });
+  const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null; t: number; kind: string }>({ a: null, b: null, t: 1, kind: 'apagado' });
 
   const rectFor = (slot: string): DOMRectReadOnly | null => {
     if (slot === 'hero-display') {
@@ -71,7 +71,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const rectB = r.kind === 'apagado' && rectA
       ? ({ left: rectA.left, right: rectA.right, top: rectA.top, width: rectA.width, bottom: rectA.bottom + 1.5 * rectA.height, height: rectA.height * 2.5 } as DOMRectReadOnly)
       : rectFor(r.slotB);
-    rectsRef.current = { a: rectA, b: rectB };
+    rectsRef.current = { a: rectA, b: rectB, t: r.t, kind: r.kind };
     u.uSurface.value = THREE.MathUtils.lerp(pa.surface, pb.surface, r.t);
     u.uLogoTint.value = r.a === 'logo' ? 1 - r.t : r.b === 'logo' ? r.t : 0;
     u.uFluye.value = r.index === 0 ? 1 : 0;
@@ -83,6 +83,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       const k = Math.min(1, (state.clock.elapsedTime - tmp.fade.start) / motion.duration.crossfade);
       alpha *= 0.3 + 0.7 * k; if (k < 1) registry.markDirty();
     }
+    if (r.kind === 'viaje') alpha *= 1 - cloudTokens.travelDip * Math.sin(Math.PI * r.t);
     u.uAlpha.value = alpha;
     m.visible = alpha > 0.01 && (pa.visible || pb.visible || r.kind === 'apagado');
   });
@@ -92,8 +93,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       geometry={geometry}
       frustumCulled={false}
       onBeforeRender={() => {
-        const { a, b } = rectsRef.current;
-        const scissor = unionRect(a, b, 0.2, viewport);
+        const { a, b, t, kind } = rectsRef.current;
+        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, 0.2, viewport);
         if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
       }}
       onAfterRender={() => { gl.setScissorTest(false); }}

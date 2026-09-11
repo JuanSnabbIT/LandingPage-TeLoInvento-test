@@ -1,9 +1,12 @@
 export interface ScissorViewport { width: number; height: number }
 export interface ScissorRect { x: number; y: number; w: number; h: number }
+// Structural subset of DOMRectReadOnly — lets lerpRect build plain objects
+// without having to fake the DOM-only members (x, y, toJSON).
+export interface RectLike { left: number; top: number; right: number; bottom: number; width: number; height: number }
 
 interface Bounds { left: number; top: number; right: number; bottom: number }
 
-function boundsOf(a: DOMRectReadOnly | null, b: DOMRectReadOnly | null): Bounds | null {
+function boundsOf(a: RectLike | null, b: RectLike | null): Bounds | null {
   if (!a && !b) return null;
   return {
     left: Math.min(a?.left ?? Infinity, b?.left ?? Infinity),
@@ -22,8 +25,8 @@ function boundsOf(a: DOMRectReadOnly | null, b: DOMRectReadOnly | null): Bounds 
  * clamped box is empty.
  */
 export function unionRect(
-  a: DOMRectReadOnly | null,
-  b: DOMRectReadOnly | null,
+  a: RectLike | null,
+  b: RectLike | null,
   marginFrac: number,
   viewport: ScissorViewport,
 ): ScissorRect | null {
@@ -45,4 +48,41 @@ export function unionRect(
   if (w <= 0 || h <= 0) return null;
 
   return { x: left, y: viewport.height - bottom, w, h };
+}
+
+const smooth = (x: number): number => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
+
+function lerpRect(a: RectLike, b: RectLike, k: number): RectLike {
+  const left = a.left + (b.left - a.left) * k;
+  const top = a.top + (b.top - a.top) * k;
+  const right = a.right + (b.right - a.right) * k;
+  const bottom = a.bottom + (b.bottom - a.bottom) * k;
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
+
+/**
+ * Scissor rect for a swarm travelling from `a` to `b`. `unionRect(a, b, …)`
+ * is the union of the two full boxes — near-fullscreen once A and B sit in
+ * different sections/columns, letting the cloud paint over the text between
+ * them. `corridorRect` instead follows the swarm's own progress bounds —
+ * the same smoothstep-with-stagger used per-particle in the vertex shader
+ * (`tl = smoothstep(clamp((t − seed·stagger)/(1 − stagger)))`) — so the clip
+ * is a corridor segment that starts at A (t=0), tracks the lead and trail of
+ * the particle swarm as it crosses, and lands on B (t=1), instead of always
+ * spanning both boxes at once. With only one rect available it falls back
+ * to `unionRect`'s single-box behaviour.
+ */
+export function corridorRect(
+  a: RectLike | null,
+  b: RectLike | null,
+  t: number,
+  stagger: number,
+  marginFrac: number,
+  viewport: ScissorViewport,
+): ScissorRect | null {
+  if (!a || !b) return unionRect(a, b, marginFrac, viewport);
+  const denom = 1 - stagger;
+  const tMax = smooth(t / denom);
+  const tMin = smooth((t - stagger) / denom);
+  return unionRect(lerpRect(a, b, tMin), lerpRect(a, b, tMax), marginFrac, viewport);
 }
