@@ -109,7 +109,7 @@ assets-source/
   tools/
     bake_positions.py          # Blender headless: GLB → .bin/.json por forma y LOD
     shapes.json                # definición declarativa de las 6 formas
-    test_bake_positions.py     # tests puros del horneado (numpy, sin bpy)
+    test_bake_positions.py     # tests del horneado; se corren BAJO Blender (usan bpy)
     render-poster.py           # Eevee → public/posters/central-v2.webp
   models/<escena>/             # fuentes .blend/.glb (incluye los GLB retirados)
     nodo/nodo.glb              # insumos SOLO de horneado: nunca bajo public/
@@ -371,10 +371,15 @@ Puertas automáticas (todas tienen que pasar):
 - [ ] `npm run e2e` (Playwright, Chromium, dev server en **5199**):
       tramos avanzan con el scroll, reduced-motion cuantiza, `?no3d` muestra
       poster + placeholders, mobile sin desborde horizontal, el guard degrada
-- [ ] Tests del horneado: `python assets-source/tools/test_bake_positions.py`
+- [ ] Tests del horneado:
+      `blender -b --python assets-source/tools/test_bake_positions.py`
       (localidad Hilbert, misma semilla por índice, roundtrip half-float,
       regla del "arriba" del asset en `flatten`, área en espacio de mundo,
-      vuelta a Y-up de las formas sólidas)
+      vuelta a Y-up de las formas sólidas, orden de Hilbert compartido por un
+      par `pairWith` y su base). **Bajo Blender, no bajo `python` a secas**:
+      varios tests importan `bpy` (y el del par hornea de verdad `nodo` /
+      `nodo-explotado`), y `bake_positions.py` lo importa en su primera línea,
+      así que ni siquiera se puede importar el módulo fuera de Blender.
 
 Puertas manuales:
 
