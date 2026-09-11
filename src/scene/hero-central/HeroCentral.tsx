@@ -26,7 +26,7 @@ export function HeroCentral({
   const group = useRef<THREE.Group>(null);
   const rig = useRef<THREE.Group>(null);
   const size = useThree((s) => s.size);
-  const yaw = useRef({ target: 0, current: 0, frozen: false });
+  const yaw = useRef({ target: 0, current: 0 });
 
   const { model, maxDim, screen } = useMemo(() => {
     const clone = scene.clone(true);
@@ -89,25 +89,31 @@ export function HeroCentral({
     };
   }, [animate]);
 
-  useEffect(
-    () =>
-      registry.registerPoseProvider({
-        id: 'hero-display',
-        surface: 'dark',
-        getMatrix: (out) => {
-          const g = group.current;
-          if (!g) return out.identity();
-          g.updateWorldMatrix(true, false);
-          const local = new THREE.Matrix4().compose(
-            screen.center,
-            screen.quaternion,
-            new THREE.Vector3().setScalar((LOGO_FIT * Math.min(screen.size.x, screen.size.y)) / 2),
-          );
-          return out.multiplyMatrices(rig.current!.matrixWorld, local);
-        },
-      }),
-    [screen],
-  );
+  useEffect(() => {
+    // Computed once per `screen` change (not per getMatrix call) -- the
+    // local transform never varies frame to frame, only rig's matrixWorld
+    // does, so there's nothing to gain from reallocating it every call.
+    const local = new THREE.Matrix4().compose(
+      screen.center,
+      screen.quaternion,
+      new THREE.Vector3().setScalar((LOGO_FIT * Math.min(screen.size.x, screen.size.y)) / 2),
+    );
+    return registry.registerPoseProvider({
+      id: 'hero-display',
+      surface: 'dark',
+      getMatrix: (out) => {
+        const g = group.current;
+        if (!g || !rig.current) return out.identity();
+        // Walk up to `group` (and beyond) AND recompute `rig`'s own local
+        // matrix from its current rotation.y, then its matrixWorld --
+        // updating `group` alone (`g.updateWorldMatrix(true, false)`)
+        // would leave `rig.matrixWorld` one frame stale, since it
+        // wouldn't re-derive rig's local matrix from this frame's yaw.
+        rig.current.updateWorldMatrix(true, false);
+        return out.multiplyMatrices(rig.current.matrixWorld, local);
+      },
+    });
+  }, [screen]);
 
   useFrame((_, delta) => {
     const g = group.current;
@@ -132,6 +138,7 @@ export function HeroCentral({
         <mesh
           position={screen.center.clone().addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(screen.quaternion), -maxDim * 0.55)}
           quaternion={screen.quaternion}
+          renderOrder={-1}
         >
           <planeGeometry args={[maxDim * 3.2, maxDim * 3.2]} />
           <shaderMaterial
