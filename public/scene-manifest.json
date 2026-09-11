@@ -1,44 +1,235 @@
 {
-  "hero-central": {
-    "pipeline": "variant-a-runtime",
-    "note": "Vertices are read directly off the loaded GLB at runtime (useGLTF) and driven by a custom ShaderMaterial vertex shader -- no baked position EXR, no GPGPU/TSL compute for this scene. Locked decision for the T9 spike (see docs/architecture/3d-web-standard.md §4, variant A): the logo's source vertex count is well within variant A's validated ~15-20k range once tier-capped.",
-    "assets": {
-      "central": {
-        "file": "models/hero-central/central-lod1.glb",
-        "role": "solid PBR device, rendered as-authored (not converted to particles)",
-        "meshes": ["ScreenPanel", "UnibodyChassis"],
-        "vertices": 984
+  "shapes": {
+    "central": {
+      "lod2": {
+        "file": "/textures/particulas/central-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -0.0832153856754303,
+            -0.023947520181536674,
+            -0.017865510657429695
+          ],
+          "max": [
+            0.08315794169902802,
+            0.1419813334941864,
+            0.241163432598114
+          ]
+        }
       },
-      "logo": {
-        "file": "models/hero-central/logo-lod1.glb",
-        "role": "source geometry for the particle field -- per-tier maxParticles below caps how many are actually drawn",
-        "meshCount": 22,
-        "vertices": 32075
+      "mobile": {
+        "file": "/textures/particulas/central-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.0828806608915329,
+            -0.023592079058289528,
+            -0.008065575733780861
+          ],
+          "max": [
+            0.08271074295043945,
+            0.14198219776153564,
+            0.24096150696277618
+          ]
+        }
       }
     },
-    "tiers": {
-      "high": {
-        "maxParticles": 16000,
-        "dprMax": 2,
-        "condition": "viewport width >= 1024px and navigator.hardwareConcurrency >= 8"
+    "logo": {
+      "lod2": {
+        "file": "/textures/particulas/logo-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -2.130599021911621,
+            -1.2044271230697632,
+            0
+          ],
+          "max": [
+            3.144346237182617,
+            1.2029556035995483,
+            0
+          ]
+        }
       },
-      "medium": {
-        "maxParticles": 9000,
-        "dprMax": 1.5,
-        "condition": "viewport width >= 768px and navigator.hardwareConcurrency >= 4"
-      },
-      "low": {
-        "maxParticles": 4000,
-        "dprMax": 1,
-        "condition": "fallback tier (mobile / low core count)"
-      },
-      "reducedMotionOrNoWebGL": {
-        "maxParticles": 0,
-        "note": "prefers-reduced-motion keeps the real models rendered statically (canvas mounts, frameloop='demand', no uTime updates); absence of WebGL/WebGPU instead shows the static poster (ScenePoster + HeroCentralPoster) -- never a blank stage either way."
+      "mobile": {
+        "file": "/textures/particulas/logo-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -2.121140241622925,
+            -1.2055916786193848,
+            0
+          ],
+          "max": [
+            3.1137654781341553,
+            1.2023032903671265,
+            0
+          ]
+        }
       }
     },
-    "boundingBox": {
-      "note": "Not applicable in the classic sense (no baked position texture) -- the logo point cloud is recentered around its own centroid at runtime in useLogoParticles.ts and fit into the Central's ScreenPanel mesh bounding box, computed live from the loaded GLTF rather than hardcoded."
+    "nodo-explotado": {
+      "lod2": {
+        "file": "/textures/particulas/nodo-explotado-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -0.15253092348575592,
+            -0.09386903792619705,
+            -0.009542757645249367
+          ],
+          "max": [
+            0.07326485961675644,
+            0.18287025392055511,
+            0.16374137997627258
+          ]
+        }
+      },
+      "mobile": {
+        "file": "/textures/particulas/nodo-explotado-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.15252630412578583,
+            -0.09073977917432785,
+            -0.013402439653873444
+          ],
+          "max": [
+            0.06900358200073242,
+            0.1819802224636078,
+            0.16456380486488342
+          ]
+        }
+      }
+    },
+    "nodo": {
+      "lod2": {
+        "file": "/textures/particulas/nodo-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -0.08879727870225906,
+            -0.11336131393909454,
+            -0.017564453184604645
+          ],
+          "max": [
+            0.07326485961675644,
+            0.10092692822217941,
+            0.1254984438419342
+          ]
+        }
+      },
+      "mobile": {
+        "file": "/textures/particulas/nodo-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.08879265189170837,
+            -0.11538304388523102,
+            -0.01571841724216938
+          ],
+          "max": [
+            0.06900358200073242,
+            0.10003697127103806,
+            0.12364298105239868
+          ]
+        }
+      }
+    },
+    "sensores": {
+      "lod2": {
+        "file": "/textures/particulas/sensores-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -0.25753355026245117,
+            -0.053392570465803146,
+            -0.10998641699552536
+          ],
+          "max": [
+            0.25256553292274475,
+            0.06496632844209671,
+            0.10794876515865326
+          ]
+        }
+      },
+      "mobile": {
+        "file": "/textures/particulas/sensores-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.2560740113258362,
+            -0.050697144120931625,
+            -0.10971315205097198
+          ],
+          "max": [
+            0.25245675444602966,
+            0.06096092611551285,
+            0.10608036071062088
+          ]
+        }
+      }
+    },
+    "set": {
+      "lod2": {
+        "file": "/textures/particulas/set-positions-lod2.bin",
+        "size": 256,
+        "count": 65536,
+        "bbox": {
+          "min": [
+            -0.24341461062431335,
+            -0.1603238582611084,
+            -0.005226312205195427
+          ],
+          "max": [
+            0.2027221918106079,
+            0.13888639211654663,
+            0.2327706515789032
+          ]
+        }
+      },
+      "mobile": {
+        "file": "/textures/particulas/set-positions-mobile.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.22427712380886078,
+            -0.15922170877456665,
+            -0.002928988542407751
+          ],
+          "max": [
+            0.20203568041324615,
+            0.1391167789697647,
+            0.22466295957565308
+          ]
+        }
+      }
     }
-  }
+  },
+  "sequence": [
+    "logo",
+    "nodo",
+    "set",
+    "sensores",
+    "central",
+    "nodo-explotado",
+    "nodo"
+  ],
+  "tiers": {
+    "high": "lod2",
+    "medium": "lod2",
+    "low": "mobile"
+  },
+  "generatedAt": "2026-09-11T14:04:21.766Z"
 }
