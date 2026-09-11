@@ -1,0 +1,24 @@
+{
+  "shape": "set",
+  "lod": "mobile",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -0.22427712380886078,
+      -0.15922170877456665,
+      -0.002928988542407751
+    ],
+    "max": [
+      0.20203568041324615,
+      0.1391167789697647,
+      0.22466295957565308
+    ]
+  },
+  "sources": [
+    "public/models/hero-central/central-v2.glb",
+    "public/models/seccion-1/nodo.glb",
+    "public/models/seccion-1/nodo.glb"
+  ],
+  "generatedAt": "2026-09-11T13:59:04.738158+00:00"
+}

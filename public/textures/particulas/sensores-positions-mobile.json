@@ -1,0 +1,24 @@
+{
+  "shape": "sensores",
+  "lod": "mobile",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -0.2560740113258362,
+      -0.050697144120931625,
+      -0.10971315205097198
+    ],
+    "max": [
+      0.25245675444602966,
+      0.06096092611551285,
+      0.10608036071062088
+    ]
+  },
+  "sources": [
+    "public/models/capacidades/sensor_humedad.glb",
+    "public/models/capacidades/valvula_riego.glb",
+    "public/models/capacidades/sensor_perimetral.glb"
+  ],
+  "generatedAt": "2026-09-11T13:59:05.369676+00:00"
+}
