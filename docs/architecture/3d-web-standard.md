@@ -65,6 +65,11 @@ la escena v2, el único GLB que el navegador descarga es
 `public/models/hero-central/central-v2.glb` (la Central sólida del Hero); todo
 lo demás se consume offline al hornear.
 
+Corolario operativo: **un GLB que solo alimenta el horneado nunca vive bajo
+`public/`**. Si está ahí, Vite lo copia a `dist/` y el visitante paga bytes que
+nadie descarga a propósito (eran ~210 kB entre `nodo.glb` y los tres GLB de
+Capacidades). Las fuentes de `shapes.json` apuntan a `assets-source/models/`.
+
 ## 3. Estructura de carpetas (real)
 
 ```
@@ -107,6 +112,8 @@ assets-source/
     test_bake_positions.py     # tests puros del horneado (numpy, sin bpy)
     render-poster.py           # Eevee → public/posters/central-v2.webp
   models/<escena>/             # fuentes .blend/.glb (incluye los GLB retirados)
+    nodo/nodo.glb              # insumos SOLO de horneado: nunca bajo public/
+    capacidades-glb/*.glb
 scripts/
   write-manifest.mjs           # public/scene-manifest.json desde los .json horneados
 public/
