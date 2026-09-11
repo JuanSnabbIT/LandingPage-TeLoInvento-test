@@ -50,9 +50,6 @@
         "Chip_Oscuro": "#2B3444", "Chip_Pin": "#B0BAC8"
       }
     },
-    "central": {
-      "sources": [{ "file": "public/models/hero-central/central-v2.glb" }]
-    },
     "wifi": {
       "sources": [{ "file": "assets-source/models/valor/wifi.glb" }],
       "colors": { "WiFi_Signal": "#809BE9" }

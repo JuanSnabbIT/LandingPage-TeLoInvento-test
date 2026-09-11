@@ -38,42 +38,6 @@
         "color": "/textures/particulas/capacidades-color-mobile.bin"
       }
     },
-    "central": {
-      "lod2": {
-        "file": "/textures/particulas/central-positions-lod2.bin",
-        "size": 256,
-        "count": 65536,
-        "bbox": {
-          "min": [
-            -0.0832153856754303,
-            -0.017865510657429695,
-            -0.1419813334941864
-          ],
-          "max": [
-            0.08315794169902802,
-            0.241163432598114,
-            0.023947520181536674
-          ]
-        }
-      },
-      "mobile": {
-        "file": "/textures/particulas/central-positions-mobile.bin",
-        "size": 128,
-        "count": 16384,
-        "bbox": {
-          "min": [
-            -0.0828806608915329,
-            -0.008065575733780861,
-            -0.14198219776153564
-          ],
-          "max": [
-            0.08271074295043945,
-            0.24096150696277618,
-            0.023592079058289528
-          ]
-        }
-      }
-    },
     "logo": {
       "lod2": {
         "file": "/textures/particulas/logo-positions-lod2.bin",
@@ -264,7 +228,6 @@
     "nodo",
     "set",
     "capacidades",
-    "central",
     "wifi",
     "nodo-explotado",
     "nodo"
@@ -274,5 +237,5 @@
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-11T19:01:33.163Z"
+  "generatedAt": "2026-09-11T19:15:38.128Z"
 }

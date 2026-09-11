@@ -195,8 +195,8 @@ los vértices, así que la densidad de la malla no determina la distribución.
 
 ### 6.2 Definición declarativa — `assets-source/tools/shapes.json`
 
-Las siete formas (`logo`, `nodo`, `nodo-explotado`, `set`, `capacidades`,
-`central`, `wifi`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw`/
+Las seis formas (`logo`, `nodo`, `nodo-explotado`, `set`, `capacidades`,
+`wifi`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw`/
 `pitch`/`exclude` por fuente, `explode` (desplazamiento por **nombre exacto de
 malla**), `flatten`, `shell`, `pairWith`, `colors` (material → hex, hornea una
 textura de color por partícula). Global: `seed`, `lods` (`lod2`: 256,
