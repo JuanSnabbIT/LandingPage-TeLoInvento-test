@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 import './Capacidades.css';
+import { useSceneSlot } from '../scene/useSceneSlot';
 
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="capacidades" id="capacidades">`. */
 export function Capacidades() {
-  // Slot registration (useSceneSlot) comes in a later task -- this ref just
-  // marks where the 3D stage mounts, same pattern as the other anchor refs.
   const stageRef = useRef<HTMLDivElement>(null);
+  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="capacidades" id="capacidades">
       <div className="wrap">

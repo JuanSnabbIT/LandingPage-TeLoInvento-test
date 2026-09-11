@@ -1,8 +1,10 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 import { Leva } from 'leva';
 import './App.css';
 import './styles/tokens.css';
 import { PersistentSceneLayer } from './components/canvas/PersistentSceneLayer';
+import { PersistentSceneLayer as PersistentSceneLayerV2 } from './scene/PersistentSceneLayer';
+import { PageSceneHost } from './scene/PageSceneHost';
 import { HeroCentralSection } from './scenes/hero-central/HeroCentralSection';
 import type { AnchoredModelSpec } from './scenes/anchored-model/AnchoredModel';
 import type { ExplodedModelSpec } from './scenes/anchored-model/ExplodedModel';
@@ -10,6 +12,9 @@ import { useDisplayProgress } from './hooks/useDisplayProgress';
 import { useSectionReveals } from './hooks/useSectionReveals';
 import { useChoreographyScroll } from './hooks/useChoreographyScroll';
 import { useSectionScrub } from './hooks/useSectionScrub';
+import { usePrefersReducedMotion } from './hooks/usePrefersReducedMotion';
+import { useTramoScrubs } from './motion/useTramoScrubs';
+import { isSceneV2 } from './scene/flags';
 import { Header } from './sections/Header';
 import { Hero } from './sections/Hero';
 import { Problema } from './sections/Problema';
@@ -38,6 +43,36 @@ import { Footer } from './sections/Footer';
 // only shown when the page is opened with `?debug`.
 const SHOW_DEBUG_PANEL =
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+
+/**
+ * Task 22: hooks can't be called conditionally, so the two scroll-driver
+ * paths (v1's choreography/scrub pair vs. v2's tramo scrubs) each live in
+ * their own null-rendering component -- App mounts exactly one, after the
+ * sections, so their passive effects run once every section's
+ * `useSceneSlot` effect has already registered its anchor.
+ */
+function ScrollV1({
+  heroSectionRef,
+  problemaVisualRef,
+  setProgress,
+  procesoSectionRef,
+  procesoProgressRef,
+}: {
+  heroSectionRef: RefObject<HTMLElement | null>;
+  problemaVisualRef: RefObject<HTMLDivElement | null>;
+  setProgress: (p: number) => void;
+  procesoSectionRef: RefObject<HTMLElement | null>;
+  procesoProgressRef: RefObject<number>;
+}) {
+  useChoreographyScroll(heroSectionRef, problemaVisualRef, setProgress);
+  useSectionScrub(procesoSectionRef, procesoProgressRef);
+  return null;
+}
+
+function ScrollV2({ reduced }: { reduced: boolean }) {
+  useTramoScrubs(reduced);
+  return null;
+}
 
 function App() {
   const heroSectionRef = useRef<HTMLElement>(null);
@@ -92,22 +127,28 @@ function App() {
   );
   const { progressRef, setProgress } = useDisplayProgress();
   const mainRef = useRef<HTMLElement>(null);
+  const v2 = isSceneV2();
+  const reduced = usePrefersReducedMotion();
   useSectionReveals(mainRef);
-  useChoreographyScroll(heroSectionRef, problemaVisualRef, setProgress);
-  useSectionScrub(procesoSectionRef, procesoProgressRef);
 
   return (
     <>
       <Leva hidden={!SHOW_DEBUG_PANEL} />
-      <PersistentSceneLayer>
-        <HeroCentralSection
-          anchorRef={heroAnchorRef}
-          targetAnchorRef={problemaVisualRef}
-          models={sectionModels}
-          exploded={explodedModels}
-          progressRef={progressRef}
-        />
-      </PersistentSceneLayer>
+      {v2 ? (
+        <PersistentSceneLayerV2>
+          <PageSceneHost heroAnchorRef={heroAnchorRef} reduced={reduced} />
+        </PersistentSceneLayerV2>
+      ) : (
+        <PersistentSceneLayer>
+          <HeroCentralSection
+            anchorRef={heroAnchorRef}
+            targetAnchorRef={problemaVisualRef}
+            models={sectionModels}
+            exploded={explodedModels}
+            progressRef={progressRef}
+          />
+        </PersistentSceneLayer>
+      )}
 
       <Header />
       <main ref={mainRef} className="page-content">
@@ -121,6 +162,17 @@ function App() {
         <Contacto />
       </main>
       <Footer />
+      {v2 ? (
+        <ScrollV2 reduced={reduced} />
+      ) : (
+        <ScrollV1
+          heroSectionRef={heroSectionRef}
+          problemaVisualRef={problemaVisualRef}
+          setProgress={setProgress}
+          procesoSectionRef={procesoSectionRef}
+          procesoProgressRef={procesoProgressRef}
+        />
+      )}
     </>
   );
 }

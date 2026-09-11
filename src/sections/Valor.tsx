@@ -1,13 +1,17 @@
-import type { RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import './Valor.css';
+import { useSceneSlot } from '../scene/useSceneSlot';
 
 interface ValorProps {
   /** T11: the Central (stand concept) is rendered into this box by the persistent canvas (see App.tsx). */
-  visualRef: RefObject<HTMLDivElement | null>;
+  visualRef?: RefObject<HTMLDivElement | null>;
 }
 
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="valor" id="valor">`. */
 export function Valor({ visualRef }: ValorProps) {
+  const ownRef = useRef<HTMLDivElement>(null);
+  const ref = visualRef ?? ownRef;
+  useSceneSlot({ id: 'valor', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'dark' });
   return (
     <section className="valor" id="valor">
       <div className="wrap grid">
@@ -36,7 +40,7 @@ export function Valor({ visualRef }: ValorProps) {
             </div>
           </div>
         </div>
-        <div ref={visualRef} className="visual">
+        <div ref={ref} className="visual">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3.5 2" />

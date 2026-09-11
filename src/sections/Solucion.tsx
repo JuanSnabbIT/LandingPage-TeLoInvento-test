@@ -1,17 +1,21 @@
-import type { RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import './Solucion.css';
+import { useSceneSlot } from '../scene/useSceneSlot';
 
 interface SolucionProps {
   /** T11: the Central (kiosk concept) is rendered into this box by the persistent canvas (see App.tsx). */
-  visualRef: RefObject<HTMLDivElement | null>;
+  visualRef?: RefObject<HTMLDivElement | null>;
 }
 
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="solucion" id="solucion">`. */
 export function Solucion({ visualRef }: SolucionProps) {
+  const ownRef = useRef<HTMLDivElement>(null);
+  const ref = visualRef ?? ownRef;
+  useSceneSlot({ id: 'solucion', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="solucion" id="solucion">
       <div className="wrap grid">
-        <div ref={visualRef} className="photo-ph">
+        <div ref={ref} className="photo-ph">
           <div className="cap">Central instalada en el hogar — foto real pendiente de producir</div>
         </div>
         <div>
