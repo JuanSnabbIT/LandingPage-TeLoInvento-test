@@ -6,8 +6,8 @@
  * these rules on `scene-v2` alone keeps the old scene's page rendering
  * unchanged when the v2 flag is off: no Capacidades strip, no transparent
  * stage boxes beyond what each section's own CSS already does for
- * `scene-3d`, and the Hero poster hidden (the old canvas draws the old
- * Central there instead).
+ * `scene-3d`. The Hero poster's own gate (`scene-poster`, below) is
+ * separate -- see Hero.css.
  */
 html.scene-v2 .problema .visual,
 html.scene-v2 .valor .visual,
@@ -43,7 +43,7 @@ html.scene-v2 .capacidades__stage::after {
   pointer-events: none;
 }
 
-/* Both the old and new scene set `scene-3d`: the DOM poster is only a fallback for when no 3D scene is live at all. */
-html.scene-3d .hero__poster {
-  display: none;
+/* Gate inverted (fix round 1): `.hero__poster` is `display:none` by default in Hero.css; PageSceneHost adds `scene-poster` only when it decides not to mount the v2 canvas (no WebGL2, or degraded). Nothing in the old scene ever sets this class. */
+html.scene-poster .hero__poster {
+  display: block;
 }

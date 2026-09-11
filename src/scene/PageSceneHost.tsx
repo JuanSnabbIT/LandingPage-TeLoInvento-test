@@ -33,10 +33,19 @@ export function PageSceneHost({
   }, []);
   const onReady = useCallback(() => {
     document.documentElement.classList.add('scene-3d', 'scene-v2');
+    document.documentElement.classList.remove('scene-poster');
   }, []);
-  useEffect(() => () => document.documentElement.classList.remove('scene-3d', 'scene-v2'), []);
+  useEffect(
+    () => () => document.documentElement.classList.remove('scene-3d', 'scene-v2', 'scene-poster'),
+    [],
+  );
   useEffect(() => {
-    if (degraded || !webgl) document.documentElement.classList.remove('scene-3d', 'scene-v2');
+    // No canvas is going to mount (or it just degraded away): fall back to
+    // the DOM poster instead of leaving `.hero__anchor` empty.
+    if (degraded || !webgl) {
+      document.documentElement.classList.remove('scene-3d', 'scene-v2');
+      document.documentElement.classList.add('scene-poster');
+    }
   }, [degraded, webgl]);
   if (!webgl || degraded) return null;
   return (
