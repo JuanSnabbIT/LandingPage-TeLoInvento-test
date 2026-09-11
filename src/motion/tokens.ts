@@ -31,11 +31,12 @@ export const motion = {
    */
   tramoModo: 'disparo' as 'disparo' | 'scrub',
   /** Duración de la transición disparada, y su curva. */
-  // La respuesta compuesta del sitio de referencia (su scroll suavizado 0.075 ->
-  // lerp de uniforms 0.1 -> resorte en GPU 0.006/0.892) llega al 50 % a 0.455 T y
-  // al 90 % a 0.769 T. `power2.inOut` acierta el 90 % exacto y va 9 puntos lento
-  // en el medio: es la mejor aproximación entre las curvas estándar. `none` daba
-  // 50 % a la mitad del tiempo, que es lo único que ninguna respuesta física hace.
-  tramoTween: { duration: 1.45, ease: 'power2.inOut' },
+  // La curva del tween es sólo el PRIMER eslabón de tres: lo que la nube ve es
+  // ease(tween) -> `smooth()` de `resolveTramo` -> `springEase()` por partícula.
+  // Los dos últimos ya ponen la S y la salida amortiguada, así que meter una
+  // tercera S acá (se probó `power2.inOut`) deja la transición lenta de arranque
+  // y de llegada. Lineal es lo correcto EN ESTE ESLABÓN: la respuesta compuesta
+  // sigue siendo la del sitio de referencia, que llega al 50 % a 0.455 T.
+  tramoTween: { duration: 1.45, ease: 'none' },
   reveal: { distance: 22 },
 } as const;
