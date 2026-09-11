@@ -116,6 +116,31 @@ def test_face_area_weight_is_world_space():
     share = float((pts[:, 0] > 5.0).mean())
     assert share < 0.05, f'{share:.2%} de las partículas cayeron en el cubo diminuto (máx 5 %)'
 
+# ---------- regresiones de T24 ----------
+
+def test_solid_shapes_come_back_to_gltf_yup():
+    """El muestreo pasa por espacio Blender (Z arriba) y la nube se dibuja en
+    three.js (Y arriba): sin `blender_to_yup` el alto del asset queda en la
+    profundidad de la escena y la Central se ve acostada (bug del QA T24).
+
+    Se verifica contra la convención documentada del importador glTF de Blender,
+    glTF (x, y, z) -> Blender (x, -z, y), o sea que la vuelta es su inversa
+    exacta y que el "arriba" del asset (+Z en Blender) sale en +Y.
+    """
+    gltf = np.array([[1.0, 2.0, 3.0], [-0.5, 0.25, -4.0], [0.0, 0.0, 0.0]], dtype=np.float32)
+    # lo que hace el importador al traerlo a Blender
+    blender = np.stack([gltf[:, 0], -gltf[:, 2], gltf[:, 1]], axis=1).astype(np.float32)
+    out = bp.blender_to_yup(blender)
+    assert np.allclose(out, gltf), f'no es la inversa del importador: {out} != {gltf}'
+
+    up_blender = np.array([[0.0, 0.0, 1.0]], dtype=np.float32)
+    assert np.allclose(bp.blender_to_yup(up_blender), [[0.0, 1.0, 0.0]]), 'el +Z de Blender debe salir en +Y'
+
+    # Y no es un simple swap: tiene que conservar la mano (determinante +1),
+    # si no el modelo saldría espejado.
+    basis = bp.blender_to_yup(np.eye(3, dtype=np.float32))
+    assert np.isclose(np.linalg.det(basis), 1.0), f'la conversión espeja el modelo, det={np.linalg.det(basis)}'
+
 if __name__ == '__main__':
     # No cortar en el primer fallo: se corre bajo Blender, una sola vez, y saber
     # cuáles de los siete fallan vale más que abortar.

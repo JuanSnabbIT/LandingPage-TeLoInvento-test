@@ -1,4 +1,5 @@
 {
+  "_comment": "offset/explode van en espacio Blender (Z arriba), que es donde el bake mueve las piezas antes de blender_to_yup(): three (x,y,z) -> blender (x, -z, y).",
   "seed": 20260911,
   "lods": { "lod2": 256, "mobile": 128 },
   "shell": 0.03,
@@ -14,17 +15,17 @@
     "nodo-explotado": {
       "sources": [{ "file": "public/models/seccion-1/nodo.glb" }],
       "explode": {
-        "Lid_Screws": [0, 1.1, 0], "Chassis_Lid": [0, 0.6, 0], "Terminal_Cover": [0, 0.25, 0.55],
-        "Terminal_BrassParts": [0, 0.08, 0.3], "Terminal_Block": [0, 0.04, 0.16],
-        "Antenna": [0, 0.45, 0], "Chassis_ClipTab": [-0.35, 0, 0]
+        "Lid_Screws": [0, 0, 1.1], "Chassis_Lid": [0, 0, 0.6], "Terminal_Cover": [0, -0.55, 0.25],
+        "Terminal_BrassParts": [0, -0.3, 0.08], "Terminal_Block": [0, -0.16, 0.04],
+        "Antenna": [0, 0, 0.45], "Chassis_ClipTab": [-0.35, 0, 0]
       },
       "pairWith": "nodo"
     },
     "set": {
       "sources": [
         { "file": "public/models/hero-central/central-v2.glb" },
-        { "file": "public/models/seccion-1/nodo.glb", "offset": [-0.72, -0.38, 0.25], "scale": 0.42, "yaw": 0.9 },
-        { "file": "public/models/seccion-1/nodo.glb", "offset": [0.7, -0.4, 0.15], "scale": 0.4, "yaw": -0.5 }
+        { "file": "public/models/seccion-1/nodo.glb", "offset": [-0.72, -0.25, -0.38], "scale": 0.42, "yaw": 0.9 },
+        { "file": "public/models/seccion-1/nodo.glb", "offset": [0.7, -0.15, -0.4], "scale": 0.4, "yaw": -0.5 }
       ]
     },
     "sensores": {

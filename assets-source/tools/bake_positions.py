@@ -114,6 +114,18 @@ def sample_surface(tris, areas, count, rng, shell):
 FLATTEN_UP = np.array([0.0, 0.0, 1.0])
 FLATTEN_FRONT = np.array([0.0, -1.0, 0.0])
 
+def blender_to_yup(pts):
+    """Deshace la conversión Y-up -> Z-up del importador glTF de Blender.
+
+    El muestreo ocurre en espacio Blender (Z arriba), pero la nube se dibuja en
+    three.js, que es Y-up: sin esta vuelta el eje "alto" del asset queda en la
+    profundidad de la escena y la Central se ve acostada en su caja (bug visto
+    en el QA del T24; el logo no lo sufría porque `flatten_to_plane` ya deriva
+    sus ejes del "arriba" del asset). Inversa exacta de glTF (x,y,z) ->
+    Blender (x, -z, y):  Blender (x,y,z) -> glTF (x, z, -y).
+    """
+    return np.stack([pts[:, 0], pts[:, 2], -pts[:, 1]], axis=1).astype(np.float32)
+
 def flatten_to_plane(pts, up=FLATTEN_UP, front=FLATTEN_FRONT):
     """Proyecta al plano de mejor ajuste (PCA) y deja z=0.
 
@@ -171,7 +183,9 @@ def build_shape(name, spec, cfg, lod, size):
         all_tris.append(tris); all_areas.append(areas)
     tris = np.concatenate(all_tris); areas = np.concatenate(all_areas)
     pts = sample_surface(tris, areas, count, rng, spec.get('shell', cfg['shell']))
-    if spec.get('flatten'): pts = flatten_to_plane(pts)
+    # `flatten_to_plane` ya emite (u, v, 0) en espacio de pantalla; el resto de
+    # las formas sale en espacio Blender y hay que devolverlas a Y-up.
+    pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
     pts, mn, mx = normalize(pts)
     if 'pairWith' not in spec:
         pts = pts[hilbert_order(pts, bits=6 if size <= 128 else 8)]

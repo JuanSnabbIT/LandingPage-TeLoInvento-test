@@ -5,7 +5,11 @@ import { useSceneSlot } from '../scene/useSceneSlot';
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="capacidades" id="capacidades">`. */
 export function Capacidades() {
   const stageRef = useRef<HTMLDivElement>(null);
-  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
+  // `fit` es fracción del lado MENOR de la caja (anchoring.ts) y esta caja es una
+  // franja 1137x220: con el 0.72 del resto de los slots la fila de sensores salía
+  // de 158 px de ancho, tres manchitas ilegibles (QA T24). 1.45 la deja en ~285 x
+  // 175 px, o sea ~80% del alto de la franja -- que es el límite real, no el ancho.
+  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: 1.45, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="capacidades" id="capacidades">
       <div className="wrap">
