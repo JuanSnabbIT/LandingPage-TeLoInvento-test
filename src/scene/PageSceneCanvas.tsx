@@ -10,6 +10,7 @@ import { ParticleCloud } from './cloud/ParticleCloud';
 import { loadManifest, type Manifest } from './cloud/shapeLoader';
 import { getDeviceTier } from './deviceTier';
 import { registry } from './registry';
+import { installSceneDebug } from './debug';
 import type { BudgetStep } from './frameBudget';
 
 export default function PageSceneCanvas({
@@ -31,6 +32,7 @@ export default function PageSceneCanvas({
   useEffect(() => {
     loadManifest().then(setManifest).catch((e) => console.error('[scene] manifest', e));
   }, []);
+  useEffect(() => installSceneDebug(tier, reduced || forcedReduced), [tier, reduced, forcedReduced]);
   const step = (s: BudgetStep) => {
     if (s === 'dpr1.5') setDprMax(1.5);
     else if (s === 'dpr1') setDprMax(1);

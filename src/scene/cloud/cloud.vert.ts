@@ -11,7 +11,7 @@ export const cloudVert = /* glsl */ `
   uniform sampler2D uShapeA; uniform sampler2D uShapeB; uniform int uSize;
   uniform mat4 uPoseA; uniform mat4 uPoseB;
   uniform float uT; uniform float uStagger; uniform float uCurl; uniform float uCurlOn; uniform float uCurlFreq;
-  uniform float uPointSize; uniform float uPixelRatio; uniform float uFluye;
+  uniform float uPointSize; uniform float uPixelRatio; uniform float uFluye; uniform float uFluyeDrop; uniform float uFluyeCurl;
   out float vSeed; out float vTl;
   ${curlGlsl}
   void main() {
@@ -21,9 +21,11 @@ export const cloudVert = /* glsl */ `
     float tl = smoothstep(0., 1., clamp((uT - a.w * uStagger) / (1. - uStagger), 0., 1.));
     vec3 p = mix(pA, pB, tl);
     float wing = sin(3.14159265 * tl);
-    if (uCurlOn > 0.5) p += curl(pA * uCurlFreq + a.w * 7.) * uCurl * wing;
-    // Tramo 0 "Fluye": caída extra al inicio del viaje (uFluye = 1 solo en el tramo 0)
-    p.y -= uFluye * wing * (0.6 + 0.4 * a.w) * 0.25;
+    // Tramo 0 "Fluye": caída + curl extra durante el viaje (uFluye = 1 solo en el tramo 0).
+    // Ambos términos salen de cloudTokens.fluye (spec §5: "parametrizado por cloudTokens");
+    // antes la caída estaba fijada a 0.25 en el shader y los tokens no se usaban.
+    if (uCurlOn > 0.5) p += curl(pA * uCurlFreq + a.w * 7.) * (uCurl + uFluye * uFluyeCurl) * wing;
+    p.y -= uFluye * uFluyeDrop * wing * (0.6 + 0.4 * a.w);
     vSeed = a.w; vTl = tl;
     vec4 mv = modelViewMatrix * vec4(p, 1.);
     gl_PointSize = uPointSize * uPixelRatio * (1. - 0.5 * wing);

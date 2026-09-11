@@ -23,6 +23,8 @@ export function createScrub(o: {
   endTrigger: Element;
   end: string;
   scrub?: number;
+  /** `?debug`: dibuja los markers de ScrollTrigger de este tramo. */
+  markers?: boolean;
   onUpdate: (p: number) => void;
 }): () => void {
   setupScrollTrigger();
@@ -36,6 +38,7 @@ export function createScrub(o: {
       endTrigger: o.endTrigger,
       end: o.end,
       scrub: o.scrub ?? motion.scrub,
+      markers: o.markers ?? false,
     },
     onUpdate: () => o.onUpdate(state.p), // el tween avanza suavizado; state.p ES el progreso suavizado
   });

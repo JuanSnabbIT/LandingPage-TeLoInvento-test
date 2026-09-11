@@ -4,6 +4,7 @@ import { TRAMOS } from '../scene/cloud/sequence';
 import { quantize } from '../scene/cloud/sequence';
 import { createScrub } from './scrollTrigger';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { isSceneDebug } from '../scene/debug';
 
 function resolveEl(slot: string): Element | null {
   if (slot === 'hero') return document.querySelector('.hero');
@@ -15,6 +16,7 @@ function resolveEl(slot: string): Element | null {
 export function useTramoScrubs(reduced: boolean) {
   useEffect(() => {
     const kills: Array<() => void> = [];
+    const markers = isSceneDebug();
     const prev: number[] = [];
     TRAMOS.forEach((tr, i) => {
       const trigger = resolveEl(tr.trigger.start[0]);
@@ -29,6 +31,7 @@ export function useTramoScrubs(reduced: boolean) {
           start: tr.trigger.start[1],
           endTrigger,
           end: tr.trigger.end[1],
+          markers,
           onUpdate: (p) => {
             const v = reduced ? (prev[i] = quantize(p, prev[i] ?? 0, 0.05)) : p;
             registry.setProgress(i, v);
