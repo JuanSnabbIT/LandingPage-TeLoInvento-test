@@ -1,7 +1,11 @@
+import { useRef } from 'react';
 import './Capacidades.css';
 
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="capacidades" id="capacidades">`. */
 export function Capacidades() {
+  // Slot registration (useSceneSlot) comes in a later task -- this ref just
+  // marks where the 3D stage mounts, same pattern as the other anchor refs.
+  const stageRef = useRef<HTMLDivElement>(null);
   return (
     <section className="capacidades" id="capacidades">
       <div className="wrap">
@@ -11,6 +15,7 @@ export function Capacidades() {
           Cada set se configura según lo que necesita su operación. Elija el set y lo armamos a su
           medida.
         </p>
+        <div ref={stageRef} className="capacidades__stage" aria-hidden="true" />
         <div className="card-grid">
           <div className="card">
             <div className="icon">

@@ -1,0 +1,49 @@
+/*
+ * Scene v2 stage CSS -- keyed on `html.scene-v2`, NOT `html.scene-3d`.
+ * `scene-3d` is set by both the old hero-central-only scene
+ * (src/scenes/hero-central/HeroCentralCanvas.tsx) and the new v2 scene
+ * (src/scene/PageSceneHost.tsx, which sets both classes together). Keying
+ * these rules on `scene-v2` alone keeps the old scene's page rendering
+ * unchanged when the v2 flag is off: no Capacidades strip, no transparent
+ * stage boxes beyond what each section's own CSS already does for
+ * `scene-3d`, and the Hero poster hidden (the old canvas draws the old
+ * Central there instead).
+ */
+html.scene-v2 .problema .visual,
+html.scene-v2 .valor .visual,
+html.scene-v2 .proceso .visual,
+html.scene-v2 .solucion .photo-ph,
+html.scene-v2 .capacidades__stage {
+  background: transparent;
+  background-image: none;
+  position: relative;
+}
+
+html.scene-v2 .problema .visual svg,
+html.scene-v2 .valor .visual svg,
+html.scene-v2 .proceso .visual svg,
+html.scene-v2 .solucion .photo-ph .cap {
+  display: none;
+}
+
+/* Floor glow under the model in each stage box, same treatment as the Hero anchor's own ::after (see Hero.css). */
+html.scene-v2 .problema .visual::after,
+html.scene-v2 .valor .visual::after,
+html.scene-v2 .proceso .visual::after,
+html.scene-v2 .solucion .photo-ph::after,
+html.scene-v2 .capacidades__stage::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(84, 121, 225, 0.22) 0%, rgba(84, 121, 225, 0) 70%);
+  pointer-events: none;
+}
+
+/* Both the old and new scene set `scene-3d`: the DOM poster is only a fallback for when no 3D scene is live at all. */
+html.scene-3d .hero__poster {
+  display: none;
+}

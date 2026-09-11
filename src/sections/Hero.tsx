@@ -41,7 +41,17 @@ export function Hero({ sectionRef, anchorRef }: HeroProps) {
       </div>
 
       <div className="hero__stage wrap">
-        <div ref={anchorRef} className="hero__anchor" aria-hidden="true" />
+        <div ref={anchorRef} className="hero__anchor" aria-hidden="true">
+          <img
+            className="hero__poster"
+            src="/posters/central-v2.webp"
+            alt=""
+            width={1200}
+            height={900}
+            loading="eager"
+            decoding="async"
+          />
+        </div>
       </div>
     </section>
   );

@@ -16,6 +16,22 @@
   max-width: 52ch;
   margin: 0 0 clamp(32px, 5vw, 52px);
 }
+/* Slot for the 3D stage (scene v2, T20/T21) -- hidden unless scene-v2 is live; the transparent/floor-glow treatment lives in src/styles/scene.css. */
+.capacidades__stage {
+  height: 220px;
+  margin: 8px 0 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: none;
+}
+html.scene-v2 .capacidades__stage {
+  display: block;
+}
+@media (max-width: 900px) {
+  .capacidades__stage {
+    height: 160px;
+  }
+}
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
