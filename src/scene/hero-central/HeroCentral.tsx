@@ -13,7 +13,13 @@ import { motion } from '../../motion/tokens';
 const URL = '/models/hero-central/central-v2.glb';
 useGLTF.preload(URL);
 const HERO_FIT = 0.8;
-const LOGO_FIT = 0.9; // fracción de la pantalla que ocupa el logo plano
+// Fracción del ALTO de la pantalla que ocupa el logo plano. El logo se
+// bakea aplanado y normalizado por su eje mayor (vertical, tras arreglar
+// `flatten_to_plane` en T23), así que su alto ocupa todo el rango [-1, 1] y
+// su ancho ~0.46 de eso -- encaja de sobra a lo ancho. Por eso se ajusta
+// contra `screen.size.y` (extensión vertical de la cara frontal) y no contra
+// `min(size.x, size.y)`, que lo dejaba a menos de la mitad del alto útil.
+const LOGO_FIT = 1.05;
 
 export function HeroCentral({
   anchorRef,
@@ -96,7 +102,7 @@ export function HeroCentral({
     const local = new THREE.Matrix4().compose(
       screen.center,
       screen.quaternion,
-      new THREE.Vector3().setScalar((LOGO_FIT * Math.min(screen.size.x, screen.size.y)) / 2),
+      new THREE.Vector3().setScalar((LOGO_FIT * screen.size.y) / 2),
     );
     return registry.registerPoseProvider({
       id: 'hero-display',

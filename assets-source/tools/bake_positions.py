@@ -85,7 +85,14 @@ def triangles_world(objs, explode=None, max_dim=1.0):
                 off = Vector(explode[base]) * max_dim
         for f in bm.faces:
             v = [(o.matrix_world @ vv.co) + off for vv in f.verts]
-            tris.append([[p.x, p.y, p.z] for p in v]); areas.append(f.calc_area())
+            tris.append([[p.x, p.y, p.z] for p in v])
+            # Área EN MUNDO, no `f.calc_area()`: esa es el área en espacio local
+            # de la malla e ignora la escala de `o.matrix_world`. Con objetos de
+            # escala muy distinta (en nodo.glb, `Chassis_ClipTab` es un cubo
+            # unitario con escala de objeto minúscula) el peso local le daba el
+            # 98% del área total y se llevaba el 98% de las partículas: de ahí el
+            # grumo denso + nube difusa del T22.
+            areas.append((v[1] - v[0]).cross(v[2] - v[0]).length * 0.5)
         bm.free(); o.evaluated_get(dep).to_mesh_clear()
     return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64)
 
@@ -101,11 +108,33 @@ def sample_surface(tris, areas, count, rng, shell):
         pts -= n * (rng.random(count) * shell)[:, None]
     return pts.astype(np.float32)
 
-def flatten_to_plane(pts):
-    """Proyecta al plano de mejor ajuste (PCA) y deja z=0 — logo plano como hoy (bestFitPlane)."""
+# Convención de espacio: el importador glTF de Blender convierte Y-up -> Z-up
+# (glTF (x,y,z) -> Blender (x, -z, y)). Por eso, en espacio Blender, el "arriba"
+# del asset es +Z y el "frente" del asset (glTF +Z, hacia la cámara) es -Y.
+FLATTEN_UP = np.array([0.0, 0.0, 1.0])
+FLATTEN_FRONT = np.array([0.0, -1.0, 0.0])
+
+def flatten_to_plane(pts, up=FLATTEN_UP, front=FLATTEN_FRONT):
+    """Proyecta al plano de mejor ajuste (PCA) y deja z=0.
+
+    El eje 2D se deriva del "arriba" real del asset, NO del orden de varianza
+    del SVD: tomar vt[0]/vt[1] mapeaba el eje LARGO de la forma a X, girando el
+    logo 90 grados dentro de la pantalla (bug visto en T22). Ahora:
+      n (normal) = vt[2] (menor varianza), con signo fijado por `front`;
+      v (-> Y)   = `up` proyectado al plano;
+      u (-> X)   = v x n, de modo que (u, v, n) queda diestra y el resultado se
+                   lee sin espejar desde el frente.
+    Determinista y estable: no depende de cuál eje tenga más varianza.
+    """
     c = pts.mean(axis=0); q = pts - c
     _, _, vt = np.linalg.svd(q, full_matrices=False)
-    u, v = vt[0], vt[1]
+    n = vt[2].astype(np.float64)
+    if np.dot(n, front) < 0: n = -n
+    v = up - n * np.dot(n, up)
+    if np.linalg.norm(v) < 1e-6:                 # plano perpendicular a `up`: cae al eje mayor
+        v = vt[0] - n * np.dot(n, vt[0])
+    v /= np.linalg.norm(v)
+    u = np.cross(v, n); u /= np.linalg.norm(u)
     return np.stack([q @ u, q @ v, np.zeros(len(q), dtype=np.float32)], axis=1).astype(np.float32)
 
 def normalize(pts):
