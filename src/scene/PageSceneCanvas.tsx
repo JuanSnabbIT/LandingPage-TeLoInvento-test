@@ -10,8 +10,21 @@ import { ParticleCloud } from './cloud/ParticleCloud';
 import { loadManifest, type Manifest } from './cloud/shapeLoader';
 import { getDeviceTier } from './deviceTier';
 import { registry } from './registry';
-import { installSceneDebug } from './debug';
+import { installSceneDebug, isSceneDebug } from './debug';
 import type { BudgetStep } from './frameBudget';
+
+/**
+ * `?debug&budget=1`: forces the guard's `minFps` sky-high so it degrades
+ * within a couple of frames instead of waiting for a real slow device --
+ * used by `e2e/scene-v2-budget.spec.ts` (T25). Requires `?debug` too so it
+ * can't be triggered by accident in a shared link.
+ */
+function forcedBudgetOptions(): { minFps: number; warmup: number } | undefined {
+  if (!isSceneDebug()) return undefined;
+  if (typeof window === 'undefined') return undefined;
+  if (new URLSearchParams(window.location.search).get('budget') !== '1') return undefined;
+  return { minFps: 1000, warmup: 0 };
+}
 
 export default function PageSceneCanvas({
   heroAnchorRef,
@@ -34,6 +47,7 @@ export default function PageSceneCanvas({
   }, []);
   useEffect(() => installSceneDebug(tier, reduced || forcedReduced), [tier, reduced, forcedReduced]);
   const step = (s: BudgetStep) => {
+    if (isSceneDebug()) console.info('[scene] budget step', s);
     if (s === 'dpr1.5') setDprMax(1.5);
     else if (s === 'dpr1') setDprMax(1);
     else if (s === 'noCurl') setCurl(false);
@@ -51,7 +65,11 @@ export default function PageSceneCanvas({
       <PageCamera />
       <SceneLights />
       <SceneTicker />
-      <FrameBudgetGuard onStep={step} active={() => performance.now() - registry.lastDirtyAt() < 1000} />
+      <FrameBudgetGuard
+        onStep={step}
+        active={() => performance.now() - registry.lastDirtyAt() < 1000}
+        options={forcedBudgetOptions()}
+      />
       <SlotErrorBoundary name="hero">
         <Suspense fallback={null}>
           <HeroCentral anchorRef={heroAnchorRef} animate={!reduced} />
