@@ -10,14 +10,38 @@ export const cloudTokens = {
   // partícula en ~1 % del modelo: en una forma de 450 px son ~10 px de arista.
   // Va atado a la pose y no fijo en unidades de mundo para que la partícula se
   // vea igual de grande en una sección con la caja chica que en una grande.
-  particleScale: 0.042,
+  // Baja de 0.042 a 0.030 para compensar que el rango de tamaño se abrió
+  // (0.22..1.9 con jitter): la media queda donde estaba y lo que cambia es la
+  // VARIANZA, que es el punto -- sin esto las partículas grandes se volvían
+  // esquirlas.
+  particleScale: 0.032,
   // Tamaño relativo según la CERCANÍA A ARISTA horneada (canal A de la textura
   // de parámetros, ver cloud.vert.ts y bake_positions.py): chico pegado a una
   // arista viva, grande en el centro de una cara abierta. El horneado además
   // pone más partículas cerca de las aristas, así que ahí quedan chicas Y
   // juntas, que es lo que hace legible la silueta.
-  edgeScale: 0.38,
-  faceScale: 1.32,
+  // Rango de tamaño: 0.22..1.9 = 8.6x. El del sitio de referencia es 128x, y no
+  // se puede igualar -- su partícula más chica mide 0.004 unidades de mundo y en
+  // una caja de 300 px sería invisible. Con el jitter por semilla el rango
+  // efectivo llega a ~15x, que es la vía legítima: ampliar el rango, no bajar la
+  // media.
+  edgeScale: 0.34,
+  faceScale: 1.45,
+  // Ruido de tamaño por partícula, encima de la rampa geométrica (ver
+  // cloud.vert.ts). Sin esto el grano queda parejo y la malla se lee como una
+  // costra regular.
+  // 0.35 y no el 0.45 de la spec: nuestra partícula ya es 4-8x más gruesa que la
+  // del sitio de referencia en proporción al modelo (su hero es a pantalla
+  // completa, nuestras cajas miden 300-500 px), así que el mismo rango relativo
+  // acá produce esquirlas en vez de grano. Se conserva la VARIANZA, que es lo que
+  // rompe la costra pareja; se recorta el extremo.
+  sizeJitter: 0.35,
+  // Cuánto se abre el enjambre a mitad del tramo (el u_factor del sitio de
+  // referencia llega a 0.23; 0.18 deja margen para el corredor del scissor).
+  spread: 0.18,
+  // Desorden del frente del barrido: 0 = guillotina perfecta, 1 = el desorden
+  // por semilla de antes. 0.25 rompe apenas la línea recta.
+  sweepJitter: 0.25,
   // Opacidad que queda en la cara de atrás, para que no compita con la de adelante.
   backAlpha: 0.3,
   // Orientación de cada pirámide (ver cloud.vert.ts). `billboard: false` = el
@@ -32,7 +56,9 @@ export const cloudTokens = {
   // distintas, bajo = zonas enteras orientadas parecido.
   orientNoise: 2.4,
   // Giro extra por semilla, encima del ruido (1 = una vuelta repartida).
-  spin: 0.5,
+  // El giro del billboard es lo único que varía la silueta cuando todas las caras
+  // encaran a la cámara: con media vuelta las siluetas se repiten.
+  spin: 1.0,
   // Desfase por partícula dentro de un tramo. 0.2 movía la nube casi en bloque;
   // 0.82 la convierte en una onda que barre el enjambre, que es lo que hace que
   // la transformación se LEA. Sale de la técnica del sitio Dala, donde el
@@ -42,7 +68,11 @@ export const cloudTokens = {
   // Resorte por partícula (ver cloud.vert.ts): omega = rapidez de asentamiento,
   // zeta = amortiguamiento (< 1 sobrepasa). 0.62 da ~9 % de sobrepaso, que se
   // nota como "llegó y se acomodó" en vez de "llegó y frenó en seco".
-  spring: { omega: 8.5, zeta: 0.62 },
+  // zeta derivado del muelle del sitio de referencia (k 0.006, fricción 0.892 a
+  // 60 fps -> omega_n 4.65 rad/s, 2*zeta*omega_n 6.48 -> zeta ~ 0.70), redondeado
+  // hacia arriba porque no tenemos el bloom que allá disimula el rebote. Da ~3.8 %
+  // de sobrepaso; 0.62 daba 8.4 %, que en una caja de 300 px se lee como goma.
+  spring: { omega: 8.5, zeta: 0.72 },
   // Amplitud del curl en vuelo. Subió de 0.28 a 0.42 para que el enjambre se
   // abra más "por el aire" mientras cruza, en vez de viajar como un bloque.
   curl: 0.48,

@@ -47,6 +47,17 @@ export const cloudVert = /* glsl */ `
   // oscilador, no una simulación: la escena sigue siendo función pura del
   // scroll, así que scrollear hacia atrás deshace el movimiento exacto.
   uniform float uSpringOmega; uniform float uSpringZeta;
+  // Barrido: dirección en la que la ola cruza la forma, y cuánto se desordena el
+  // frente. El sitio de referencia ORDENA sus partículas en CPU por un eje
+  // distinto en cada transición y guarda el rango de cada una; acá se aproxima
+  // proyectando la posición de origen sobre esa dirección, que para una forma
+  // convexa da la misma curva salvo una no-linealidad suave, y no cuesta ni un
+  // byte de asset.
+  uniform vec3 uSweepDir; uniform float uSweepJitter;
+  // Respiración del enjambre a mitad del tramo (su u_factor, +-23 %).
+  uniform float uSpread;
+  // Ruido de tamaño por partícula: la mitad que le falta a la rampa geométrica.
+  uniform float uSizeJitter;
   uniform float uSwirl; uniform float uSwirlRadius; uniform float uSwirlTurns;
   out float vSeed; out float vTl; out vec3 vColor; out float vTint; out float vShade; out float vFade;
   ${curlGlsl}
@@ -96,13 +107,23 @@ export const cloudVert = /* glsl */ `
     // tramo en una ONDA que barre la nube -- cada partícula cruza rápido, pero
     // el conjunto tarda todo el tramo -- en vez de mover el bloque entero a la
     // vez, que es lo que se veía antes.
-    float tRaw = clamp((uT - a.w * uStagger) / (1. - uStagger), 0., 1.);
+    // Rango del barrido en [0,1] a lo largo de uSweepDir. Con jitter 0 el frente
+    // es un plano perfecto (una guillotina); con 1 vuelve al desorden por semilla,
+    // que disolvía la forma en ruido en vez de barrerla.
+    float rank = clamp(0.5 + dot(pA - uCenter, uSweepDir) / (2. * max(uSpan, 1e-4)), 0., 1.);
+    float order = mix(rank, a.w, uSweepJitter);
+    float tRaw = clamp((uT - order * uStagger) / (1. - uStagger), 0., 1.);
     float tl = springEase(tRaw, uSpringOmega, uSpringZeta);   // puede pasar de 1: es el sobrepaso
     float tc = clamp(tl, 0., 1.);                             // para mezclar color y tamaño
     vec3 p = mix(pA, pB, tl);
     // La envolvente del vuelo (curl, giro, achique) sigue al progreso CRUDO: con
     // el del resorte, el sobrepaso la haría negativa justo al final.
     float wing = sin(3.14159265 * tRaw);
+    // Respiración: el enjambre se abre a mitad del tramo y se cierra EXACTO al
+    // llegar, porque uSpread lo calcula el componente con sin(PI*t) y vale 1 en
+    // los dos extremos. Es lo que hace que la transición se lea como
+    // desarmarse y rearmarse, y no como puntos que se deslizan.
+    p = uCenter + (p - uCenter) * uSpread;
     // Tramo 0 "Fluye": caída + curl extra durante el viaje (uFluye = 1 solo en el tramo 0).
     // wing = sin(PI*tl): en reposo (tl = 0 o 1) el término de curl vale
     // exactamente 0, así que saltear la evaluación del ruido ahí es un no-op
@@ -141,14 +162,27 @@ export const cloudVert = /* glsl */ `
     // es chica (y el horneado además puso más partículas ahí, así que quedan
     // juntas y la silueta se lee nítida); en el centro de una cara es grande y
     // el interior respira.
+    // El campo de tamaño del sitio de referencia es rampa geométrica POR ruido
+    // por partícula (medido: diferencia media entre texels vecinos 27.7 contra
+    // una sigma global de 25.0). El canal A trae la rampa; el factor por semilla
+    // es la otra mitad. Como la semilla es función del índice de píxel -- el
+    // mismo en las siete formas -- cada partícula conserva su tamaño relativo a
+    // lo largo de toda la página y no parpadea al cambiar de forma.
     float edgeK = mix(prA.a, prB.a, tc);
-    float sc = uParticleScale * mix(uEdgeScale, uFaceScale, edgeK);
-    // Las de atrás: más chicas y, en el fragment, más tenues.
+    float jit = 1. - uSizeJitter + 2. * uSizeJitter * a.w;
+    float sc = uParticleScale * mix(uEdgeScale, uFaceScale, edgeK) * jit;
+    // Volumen por profundidad, sobre TODO el diámetro y no sólo la mitad de
+    // atrás: es de donde el sitio de referencia saca toda su sensación de cuerpo,
+    // sin una sola luz. Su curva es smoothstep(-4.5, 4.0, z) sobre un radio de
+    // 4.35, o sea -1.034 y +0.920 en unidades de radio -- lo que acá es uSpan.
+    // Conservamos un piso (uBackAlpha) porque no tenemos el bloom que allá vuelve
+    // a levantar el frente.
     vec4 mvCenter = modelViewMatrix * vec4(p, 1.);
     float centerZ = (modelViewMatrix * vec4(uCenter, 1.)).z;
-    float back = clamp((centerZ - mvCenter.z) / max(uSpan, 1e-4), 0., 1.);
-    vFade = mix(1., uBackAlpha, back);
-    sc *= mix(1., 0.8, back) * (1. - 0.25 * wing);
+    float dz = clamp((mvCenter.z - centerZ) / max(uSpan, 1e-4), -1.2, 1.2);   // +1 = frente
+    float depth = smoothstep(-1.034, 0.920, dz);
+    vFade = mix(uBackAlpha, 1., depth);
+    sc *= mix(0.8, 1., depth) * (1. - 0.25 * wing);
     // Orientación de la pirámide. Dala usa dos modos y en ESCRITORIO elige el de
     // ruido: giro alrededor del eje fijo (0,1,1) con el ángulo sacado de un
     // simplex de la posición, lo que da siluetas variadas y textura cristalina.

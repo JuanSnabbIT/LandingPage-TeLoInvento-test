@@ -73,6 +73,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uEdgeScale: { value: cloudTokens.edgeScale }, uFaceScale: { value: cloudTokens.faceScale },
     uBackAlpha: { value: cloudTokens.backAlpha }, uSpin: { value: cloudTokens.spin },
     uOrientNoise: { value: cloudTokens.orientNoise }, uBillboard: { value: cloudTokens.billboard ? 1 : 0 },
+    uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepJitter: { value: cloudTokens.sweepJitter },
+    uSpread: { value: 1 }, uSizeJitter: { value: cloudTokens.sizeJitter },
     uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
@@ -146,7 +148,13 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     // de Valor, en vez de granulada en una y sólida en la otra.
     const span = THREE.MathUtils.lerp(poseScale(u.uPoseA.value), poseScale(u.uPoseB.value), t);
     u.uParticleScale.value = span * cloudTokens.particleScale;
-    u.uSpan.value = span;
+    // El enjambre respira: se abre a mitad del tramo y se cierra exacto al llegar.
+    // El fade de profundidad se mide sobre la nube ABIERTA, no sobre la horneada.
+    const spread = 1 + cloudTokens.spread * Math.sin(Math.PI * t);
+    u.uSpread.value = spread;
+    u.uSpan.value = span * spread;
+    const sw = TRAMOS[r.index].sweep;
+    u.uSweepDir.value.set(sw[0], sw[1], sw[2]).normalize();
     // Centro del modelo = traslación de la pose activa, interpolada igual que
     // todo lo demás: es el origen desde el que se mide adelante/atrás.
     u.uCenter.value
