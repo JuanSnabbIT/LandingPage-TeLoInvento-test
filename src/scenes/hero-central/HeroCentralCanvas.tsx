@@ -7,6 +7,7 @@ import { HeroCentralScene } from './HeroCentralScene';
 import { getDeviceTier } from './deviceTier';
 import { FrameBudgetGuard } from '../../components/canvas/FrameBudgetGuard';
 import { AnchoredModel, type AnchoredModelSpec } from '../anchored-model/AnchoredModel';
+import { ExplodedModel, type ExplodedModelSpec } from '../anchored-model/ExplodedModel';
 import type { ViewportAnchor } from '../../hooks/useElementViewportAnchor';
 
 const LOGO_URL = '/models/hero-central/logo-lod1.glb';
@@ -23,6 +24,8 @@ interface HeroCentralCanvasProps {
   targetAnchorRef: RefObject<HTMLElement | null>;
   /** T11: extra solid GLBs fitted into other sections' boxes. */
   models?: AnchoredModelSpec[];
+  /** T11: scroll-assembled exploded views. */
+  exploded?: ExplodedModelSpec[];
   /** 0..1 scroll-driven progress, read every frame regardless of `animate`. */
   progressRef: RefObject<number>;
   /** T16: the device can't sustain the scene -- host swaps to the static poster. */
@@ -41,6 +44,7 @@ export default function HeroCentralCanvas({
   anchorRef,
   targetAnchorRef,
   models = [],
+  exploded = [],
   progressRef,
   onDegrade,
 }: HeroCentralCanvasProps) {
@@ -94,6 +98,9 @@ export default function HeroCentralCanvas({
         />
         {models.map((spec) => (
           <AnchoredModel key={spec.url} {...spec} animate={animate} />
+        ))}
+        {exploded.map((spec) => (
+          <ExplodedModel key={`exploded-${spec.url}`} {...spec} animate={animate} />
         ))}
       </SceneCanvas>
 

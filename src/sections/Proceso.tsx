@@ -1,11 +1,19 @@
+import type { RefObject } from 'react';
 import './Proceso.css';
 
+interface ProcesoProps {
+  /** App.tsx scrubs this section's scroll into the Nodo's exploded view (useSectionScrub). */
+  sectionRef: RefObject<HTMLElement | null>;
+  /** T11: the Nodo assembles itself inside this box (ExplodedModel, see App.tsx). */
+  visualRef: RefObject<HTMLDivElement | null>;
+}
+
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="proceso" id="proceso">`. */
-export function Proceso() {
+export function Proceso({ sectionRef, visualRef }: ProcesoProps) {
   return (
-    <section className="proceso" id="proceso">
+    <section ref={sectionRef} className="proceso" id="proceso">
       <div className="wrap grid">
-        <div className="visual">
+        <div ref={visualRef} className="visual">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
             <path d="M4 12h16M4 12l5-5M4 12l5 5" />
           </svg>

@@ -5,6 +5,7 @@ import { hasWebglSupport } from '../../components/canvas/webglSupport';
 import { CanvasErrorBoundary } from '../../components/canvas/CanvasErrorBoundary';
 import { AnchoredPoster } from './AnchoredPoster';
 import type { AnchoredModelSpec } from '../anchored-model/AnchoredModel';
+import type { ExplodedModelSpec } from '../anchored-model/ExplodedModel';
 
 const HeroCentralCanvas = lazy(() => import('./HeroCentralCanvas'));
 
@@ -36,6 +37,8 @@ interface HeroCentralSectionProps {
   targetAnchorRef: RefObject<HTMLElement | null>;
   /** T11: extra solid GLBs fitted into other sections' boxes, rendered in the same persistent canvas. */
   models?: AnchoredModelSpec[];
+  /** T11: scroll-assembled exploded views (e.g. the Nodo in Cómo trabajamos). */
+  exploded?: ExplodedModelSpec[];
   /** 0..1 scroll-driven progress (see useDisplayProgress.ts), read every frame regardless of reduced-motion. */
   progressRef: RefObject<number>;
 }
@@ -52,7 +55,13 @@ interface HeroCentralSectionProps {
  *  - otherwise -> canvas, deferred by two RAFs so it never blocks first
  *    paint of the surrounding page text.
  */
-export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progressRef }: HeroCentralSectionProps) {
+export function HeroCentralSection({
+  anchorRef,
+  targetAnchorRef,
+  models,
+  exploded,
+  progressRef,
+}: HeroCentralSectionProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   // This React-state anchor is now ONLY for readiness gating and the
   // static poster fallback below -- the live 3D group's position is read
@@ -117,6 +126,7 @@ export function HeroCentralSection({ anchorRef, targetAnchorRef, models, progres
           anchorRef={anchorRef}
           targetAnchorRef={targetAnchorRef}
           models={models}
+          exploded={exploded}
           progressRef={progressRef}
           onDegrade={handleDegrade}
         />
