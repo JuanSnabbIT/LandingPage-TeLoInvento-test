@@ -42,10 +42,33 @@ export default function PageSceneCanvas({
   const [curl, setCurl] = useState(tier.curl);
   const [forcedReduced, setForcedReduced] = useState(false);
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
   useEffect(() => {
     loadManifest().then(setManifest).catch((e) => console.error('[scene] manifest', e));
   }, []);
   useEffect(() => installSceneDebug(tier, reduced || forcedReduced), [tier, reduced, forcedReduced]);
+  // Un resize cambia el viewport de r3f y las cajas ancla del DOM, pero no
+  // toca `registry` -- sin esto el ticker se queda en idle y la nube se
+  // dibuja contra el layout viejo hasta el siguiente scroll (fuente dirty, spec §8).
+  useEffect(() => {
+    window.addEventListener('resize', registry.markDirty);
+    return () => { window.removeEventListener('resize', registry.markDirty); };
+  }, []);
+  // Pérdida/recuperación de contexto WebGL (spec §7). `preventDefault()` en
+  // `webglcontextlost` es lo que habilita a que el navegador *pueda* restaurar
+  // el contexto; mientras tanto se degrada al póster del DOM igual que el
+  // guardián de frame-budget, así el Hero no queda con un canvas muerto.
+  useEffect(() => {
+    if (!canvasEl) return;
+    const onLost = (e: Event) => { e.preventDefault(); onStep('poster'); };
+    const onRestored = () => { registry.markDirty(); };
+    canvasEl.addEventListener('webglcontextlost', onLost);
+    canvasEl.addEventListener('webglcontextrestored', onRestored);
+    return () => {
+      canvasEl.removeEventListener('webglcontextlost', onLost);
+      canvasEl.removeEventListener('webglcontextrestored', onRestored);
+    };
+  }, [canvasEl, onStep]);
   const step = (s: BudgetStep) => {
     if (isSceneDebug()) console.info('[scene] budget step', s);
     if (s === 'dpr1.5') setDprMax(1.5);
@@ -60,7 +83,7 @@ export default function PageSceneCanvas({
       frameloop="never"
       dpr={[1, dprMax]}
       gl={{ antialias: false, powerPreference: 'high-performance', premultipliedAlpha: true }}
-      onCreated={() => { registry.markDirty(); }}
+      onCreated={({ gl }) => { setCanvasEl(gl.domElement); registry.markDirty(); }}
     >
       <PageCamera />
       <SceneLights />

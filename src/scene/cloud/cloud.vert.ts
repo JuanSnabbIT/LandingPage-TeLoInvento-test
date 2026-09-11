@@ -24,7 +24,11 @@ export const cloudVert = /* glsl */ `
     // Tramo 0 "Fluye": caída + curl extra durante el viaje (uFluye = 1 solo en el tramo 0).
     // Ambos términos salen de cloudTokens.fluye (spec §5: "parametrizado por cloudTokens");
     // antes la caída estaba fijada a 0.25 en el shader y los tokens no se usaban.
-    if (uCurlOn > 0.5) p += curl(pA * uCurlFreq + a.w * 7.) * (uCurl + uFluye * uFluyeCurl) * wing;
+    // wing = sin(PI*tl): en reposo (tl = 0 o 1) el término de curl vale
+    // exactamente 0, así que saltear la evaluación del ruido ahí es un no-op
+    // visual que ahorra los 12 samples de curl() por vértice en los dos
+    // extremos de cada tramo, que es donde la nube pasa la mayor parte del tiempo.
+    if (uCurlOn > 0.5 && wing > 0.001) p += curl(pA * uCurlFreq + a.w * 7.) * (uCurl + uFluye * uFluyeCurl) * wing;
     p.y -= uFluye * uFluyeDrop * wing * (0.6 + 0.4 * a.w);
     vSeed = a.w; vTl = tl;
     vec4 mv = modelViewMatrix * vec4(p, 1.);

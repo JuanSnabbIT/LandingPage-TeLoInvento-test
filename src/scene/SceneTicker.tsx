@@ -2,10 +2,7 @@ import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { gsap } from 'gsap';
 import { registry } from './registry';
-
-export function shouldRender(now: number, lastDirtyAt: number, dirty: boolean, graceMs: number): boolean {
-  return dirty || now - lastDirtyAt < graceMs;
-}
+import { shouldRender } from './sceneTickerPolicy';
 
 /**
  * Un solo loop: gsap.ticker (ScrollTrigger ya actualizó) → advance() de r3f, solo si algo cambió.

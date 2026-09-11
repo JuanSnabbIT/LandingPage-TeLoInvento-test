@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { collectErrors } from './helpers';
 
 /**
  * Scene end-to-end (spec 13 §10). These assert the *contract* of the scene,
@@ -41,6 +42,7 @@ async function scrollAndRead(page: Page, y: number) {
 const positions = [0, 0.15, 0.35, 0.55, 0.75, 0.9, 1.0];
 
 test('tramos avanzan con el scroll', async ({ page }) => {
+  const errors = collectErrors(page);
   await page.goto('/?debug');
   await waitForScene(page);
   const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
@@ -55,6 +57,7 @@ test('tramos avanzan con el scroll', async ({ page }) => {
   expect(seen[0]).toBe('logo');
   expect(seen.at(-1)).toBe('nodo');
   expect(new Set(seen).size).toBeGreaterThanOrEqual(4);
+  expect(errors).toEqual([]);
 });
 
 test('reduced motion cuantiza', async ({ page }) => {
@@ -69,4 +72,23 @@ test('?no3d muestra poster y placeholders', async ({ page }) => {
   await page.goto('/?no3d');
   await expect(page.locator('.hero__poster')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
+});
+
+/**
+ * Pérdida de contexto WebGL (spec 13 §7). `WEBGL_lose_context` es la
+ * única forma de provocarla de forma determinista; el contrato es el mismo que
+ * el del guardián de frame-budget cuando llega a 'poster': el canvas se
+ * desmonta y el DOM vuelve al póster + placeholders, sin pantalla en blanco.
+ */
+test('perder el contexto WebGL degrada al poster del DOM', async ({ page }) => {
+  await page.goto('/?debug');
+  await waitForScene(page);
+
+  await page.evaluate(() => {
+    document.querySelector('canvas')!.getContext('webgl2')!.getExtension('WEBGL_lose_context')!.loseContext();
+  });
+
+  await page.waitForSelector('html.scene-poster', { timeout: 3000 });
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('.hero__poster')).toBeVisible();
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shouldRender } from './SceneTicker';
+import { shouldRender } from './sceneTickerPolicy';
 
 describe('shouldRender', () => {
   it('renderiza si hubo dirty', () => { expect(shouldRender(1000, 990, true, 1000)).toBe(true); });
