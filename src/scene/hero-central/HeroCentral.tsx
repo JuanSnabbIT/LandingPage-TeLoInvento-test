@@ -20,6 +20,15 @@ const HERO_FIT = 0.8;
 // contra `screen.size.y` (extensión vertical de la cara frontal) y no contra
 // `min(size.x, size.y)`, que lo dejaba a menos de la mitad del alto útil.
 const LOGO_FIT = 1.05;
+/**
+ * Semi-ancho normalizado del logo bakeado: tras `flatten_to_plane` + `normalize`
+ * el eje largo (vertical) ocupa [-1, 1] y el ancho llega a ±0.4563. Se usa como
+ * guarda de contención: la escala se ajusta al ALTO de la pantalla, pero si la
+ * pantalla fuera más angosta (u otro logo fuera más ancho) el término
+ * `size.x / LOGO_HALF_WIDTH` gana y el logo sigue entrando a lo ancho.
+ * Ver `public/textures/particulas/logo-positions-lod2.json` (bbox).
+ */
+const LOGO_HALF_WIDTH = 0.4563;
 
 export function HeroCentral({
   anchorRef,
@@ -102,7 +111,7 @@ export function HeroCentral({
     const local = new THREE.Matrix4().compose(
       screen.center,
       screen.quaternion,
-      new THREE.Vector3().setScalar((LOGO_FIT * screen.size.y) / 2),
+      new THREE.Vector3().setScalar((LOGO_FIT * Math.min(screen.size.y, screen.size.x / LOGO_HALF_WIDTH)) / 2),
     );
     return registry.registerPoseProvider({
       id: 'hero-display',

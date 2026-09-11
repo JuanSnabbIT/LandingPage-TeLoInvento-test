@@ -15,6 +15,7 @@ import { useSectionScrub } from './hooks/useSectionScrub';
 import { usePrefersReducedMotion } from './hooks/usePrefersReducedMotion';
 import { useTramoScrubs } from './motion/useTramoScrubs';
 import { isSceneV2 } from './scene/flags';
+import { isSceneDebug } from './scene/debug';
 import { Header } from './sections/Header';
 import { Hero } from './sections/Hero';
 import { Problema } from './sections/Problema';
@@ -41,8 +42,7 @@ import { Footer } from './sections/Footer';
  */
 // The leva slider (useDisplayProgress) is a dev harness, not product UI:
 // only shown when the page is opened with `?debug`.
-const SHOW_DEBUG_PANEL =
-  typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+const SHOW_DEBUG_PANEL = isSceneDebug();
 
 /**
  * Task 22: hooks can't be called conditionally, so the two scroll-driver
