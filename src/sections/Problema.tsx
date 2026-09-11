@@ -7,7 +7,8 @@ export function Problema() {
   // The scene draws the Nodo cloud into this box; `useSceneSlot` registers
   // it and reads its live rect every frame (spec 13 §3.3).
   const ref = useRef<HTMLDivElement>(null);
-  useSceneSlot({ id: 'problema', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
+  // Encuadre: el nodo llena ~1.05 del alto de la caja (548x280): su lado mayor es la profundidad, que bajo la pose se reparte entre alto y ancho.
+  useSceneSlot({ id: 'problema', anchorRef: ref, fit: 1.15, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="problema">
       <div className="wrap grid">

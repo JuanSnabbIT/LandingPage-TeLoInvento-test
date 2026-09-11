@@ -6,7 +6,8 @@ import { useSceneSlot } from '../scene/useSceneSlot';
 export function Proceso() {
   // Scene stage box where the Nodo assembles itself -- see spec 13 §3.3.
   const ref = useRef<HTMLDivElement>(null);
-  useSceneSlot({ id: 'proceso', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', surface: 'light' });
+  // Encuadre: manda el nodo EXPLOTADO, que es la forma más alta de las dos que pasan por este slot.
+  useSceneSlot({ id: 'proceso', anchorRef: ref, fit: 0.95, pose: 'tresCuartos', surface: 'light' });
   return (
     <section className="proceso" id="proceso">
       <div className="wrap grid">
