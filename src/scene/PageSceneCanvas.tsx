@@ -87,6 +87,12 @@ export default function PageSceneCanvas({
       frameloop="never"
       dpr={[1, dprMax]}
       gl={{ antialias: false, powerPreference: 'high-performance', premultipliedAlpha: true }}
+      // r3f pone `pointer-events: auto` en su propio div envolvente (para su
+      // sistema de eventos 3D), y eso anula el `none` de PersistentSceneLayer:
+      // el canvas fijo a pantalla completa se comía los clicks de todo lo que
+      // tiene debajo (formularios, el carrusel de Capacidades). Acá no hay
+      // objetos 3D interactivos, así que la capa entera es sólo visual.
+      style={{ pointerEvents: 'none' }}
       onCreated={({ gl }) => { setCanvasEl(gl.domElement); registry.markDirty(); }}
     >
       <PageCamera />
