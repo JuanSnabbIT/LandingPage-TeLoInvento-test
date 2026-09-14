@@ -29,7 +29,7 @@ registrar o consultar decisiones de arquitectura usar el skill
 `adr-obsidian`** en vez de editar `09-registro-decisiones.md` a mano — su
 descripción referencia explícitamente este mismo patrón de vault.
 
-## Estado actual (2026-09-11)
+## Estado actual (2026-09-14)
 
 - Dirección visual **decidida y validada**: réplica fiel de una maqueta
   hecha en Relume por el dueño del proyecto (paleta `#5479E1` / `#809BE9`,
@@ -38,21 +38,31 @@ descripción referencia explícitamente este mismo patrón de vault.
 - Maqueta HTML/CSS de referencia aprobada en **`reference/maqueta-aprobada.html`**
   (solo lectura, no se modifica). Las 9 secciones están portadas a React en
   `src/sections/` (T10).
-- **La escena v2 ("la nube") es la única escena.** Una sola nube de
-  partículas recorre la página transformándose en seis formas a lo largo de
-  siete tramos (logo → nodo → set → capacidades → wifi → nodo explotado →
-  nodo): morph sin estado en el vertex shader entre dos texturas de
-  posiciones horneadas, más curl noise solo en vuelo. Sin GPGPU, sin flag de
-  migración, sin escena v1. Detalle completo en
-  `docs/architecture/3d-web-standard.md`.
-- **El scroll DISPARA la transición, no la scrubbea** (`motion.tramoModo`,
-  2026-09-11). Cruzar el rango de un tramo arranca un tween con su propia
-  duración; si el visitante para a mitad, la nube igual termina de acomodarse.
-  Es el modelo del sitio de referencia (Dala) y reemplaza al scrub, que dejaba
-  la nube exactamente donde decía el scroll y se sentía como un deslizador.
-  Dentro del tramo, cada partícula tiene su propio desfase (`stagger` 0.82) y
-  su propio resorte amortiguado, así que la transformación es una ONDA que
-  barre el enjambre y cada partícula sobrepasa y se asienta.
+- **La escena v3 ("la nube") es la única escena.** Una sola nube de
+  puntos (`GL_POINTS`, no mallas instanciadas) recorre la página
+  transformándose en seis formas a lo largo de siete tramos (logo → nodo →
+  set → capacidades → wifi → nodo explotado → nodo): morph sin estado en el
+  vertex shader entre dos texturas de posiciones horneadas (16 384
+  partículas en desktop, 6 400 en mobile), más curl solo en vuelo. Sobre esa
+  misma nube se dibujan además dos `LineSegments` ("redes de superficie":
+  líneas cortas entre partículas vecinas de la MISMA pieza, horneadas por
+  `assets-source/tools/surface_structure.py`) que aparecen al llegar a una
+  forma y desaparecen al salir de ella — es lo que da la lectura de
+  superficie ordenada en vez de nube difusa. Sin GPGPU, sin mallas de
+  partícula por instancia (el enfoque `InstancedMesh` de pirámides se probó
+  y se abandonó — ver `09-registro-decisiones.md` del vault, 2026-09-14).
+  Detalle completo en `docs/architecture/3d-web-standard.md`.
+- **El scroll SCRUBBEA la transición, no la dispara** (`motion.tramoModo:
+  'scrub'`, `scrub: true` — GSAP sin lerp numérico: la posición de scroll ES
+  el progreso, sin retraso). Parar de scrollear conserva el estado exacto
+  (forma, dispersión, conexiones); retroceder deshace la misma transición.
+  Es el pedido explícito del dueño del proyecto (2026-09-14, ver
+  `docs/qa/plan-particulas-nitidas-scroll.md`) y reemplaza al modo
+  `'disparo'` (tween con duración propia disparado al cruzar un umbral,
+  inspirado en el sitio Dala) que se probó antes: con disparo, una vez
+  arrancada la transición ya no respondía 1:1 al scroll, que es justo lo que
+  se pidió cambiar. El código de `'disparo'` (`createTriggerTween`) se dejó
+  en `scrollTrigger.ts` por si se retoma, pero no es el modo activo.
 - Módulos:
   - `src/scene/` — `PersistentSceneLayer` (capa fija z 5) · `PageSceneHost`
     (poster vs canvas, degradación con TTL) · `PageSceneCanvas`
