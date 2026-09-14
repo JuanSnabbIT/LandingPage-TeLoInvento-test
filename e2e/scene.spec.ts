@@ -55,7 +55,8 @@ test('tramos avanzan con el scroll', async ({ page }) => {
   }
 
   expect(seen[0]).toBe('logo');
-  expect(seen.at(-1)).toBe('nodo');
+  // Al final de la página manda el apagado, que se apaga sobre el chip de Contacto.
+  expect(seen.at(-1)).toBe('microchip');
   expect(new Set(seen).size).toBeGreaterThanOrEqual(4);
   expect(errors).toEqual([]);
 });

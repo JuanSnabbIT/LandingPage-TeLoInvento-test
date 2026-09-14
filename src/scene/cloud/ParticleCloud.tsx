@@ -31,7 +31,10 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   const networkData = useRef<Array<Float32Array | undefined>>([]);
   const protectedElements = useRef<Element[]>([]);
   useEffect(() => {
-    protectedElements.current = [...document.querySelectorAll('header, section h1, section h2, section p, section ul, section ol, .card-grid, .hogar, form, .scene-caption, .scene-legend')];
+    // Sólo el TEXTO de la tarjeta del carrusel, no la tarjeta entera: la caja
+    // de escena vive adentro de `.capacidades__card`, y proteger el wrapper
+    // descartaba todos los fragmentos del modelo (el `p` ya entra por `section p`).
+    protectedElements.current = [...document.querySelectorAll('header, section h1, section h2, section p, section ul, section ol, .capacidades__card h3, form, .scene-caption')];
   }, []);
   useEffect(() => () => { particleGeometry.dispose(); networks.forEach(g => g.dispose()); }, [particleGeometry, networks]);
   const shapes = useShapeTextures(manifest, lod, [TRAMOS[0].from.shape, TRAMOS[0].to!.shape]);

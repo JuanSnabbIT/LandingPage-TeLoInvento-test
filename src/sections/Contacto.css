@@ -25,6 +25,26 @@
   font-size: 15.5px;
   line-height: 1.6;
   max-width: 40ch;
+  margin: 0 0 clamp(24px, 4vw, 36px);
+}
+/* Plataforma Central (T20/T21, rediseño 2026-09-14) -- llena el espacio bajo el texto de introducción. */
+.contacto .visual {
+  position: relative;
+  min-height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+}
+.contacto .visual svg {
+  width: 26%;
+  height: 26%;
+  color: var(--blue);
+}
+@media (max-width: 780px) {
+  .contacto .visual {
+    min-height: 160px;
+  }
 }
 .contacto .form-grid {
   display: grid;

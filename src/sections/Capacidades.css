@@ -16,12 +16,55 @@
   max-width: 52ch;
   margin: 0 0 clamp(32px, 5vw, 52px);
 }
+/*
+ * Carrusel (rediseño 2026-09-14): una tarjeta a la vez, flechas a los
+ * costados. El modelo 3D vive en `.capacidades__stage`, dentro de la
+ * tarjeta activa -- así el slot de la nube (`useSceneSlot`) siempre apunta
+ * al mismo elemento del DOM sin importar cuál tarjeta esté activa.
+ */
+.capacidades__carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.capacidades__nav {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.capacidades__nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.capacidades__nav:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.capacidades__card {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 26px;
+  text-align: center;
+}
 /* Slot for the 3D stage (T20/T21) -- hidden unless the scene is live; the transparent/floor-glow treatment lives in src/styles/scene.css. */
 .capacidades__stage {
-  height: 320px;
-  margin: 8px 0 24px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  height: 280px;
+  margin: 0 0 18px;
   display: none;
 }
 html.scene-3d .capacidades__stage {
@@ -29,20 +72,10 @@ html.scene-3d .capacidades__stage {
 }
 @media (max-width: 900px) {
   .capacidades__stage {
-    height: 160px;
+    height: 180px;
   }
 }
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-}
-.card {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 26px;
-}
-.card .icon {
+.capacidades__card .icon {
   width: 42px;
   height: 42px;
   border-radius: 10px;
@@ -50,26 +83,59 @@ html.scene-3d .capacidades__stage {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
+  margin: 0 auto 18px;
 }
-.card .icon svg {
+html.scene-3d .capacidades__card .icon {
+  display: none;
+}
+.capacidades__card .icon svg {
   width: 20px;
   height: 20px;
   color: var(--blue);
 }
-.card h3 {
+.capacidades__card h3 {
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 8px;
 }
-.card p {
+.capacidades__card p {
   font-size: 14.5px;
   line-height: 1.55;
   color: var(--ink-dim);
   margin: 0;
+  max-width: 46ch;
+  margin-inline: auto;
 }
-@media (max-width: 900px) {
-  .card-grid {
-    grid-template-columns: 1fr;
+.capacidades__dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+.capacidades__dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--line);
+  cursor: pointer;
+}
+.capacidades__dots button.is-active {
+  background: var(--blue);
+}
+/* En teléfono las flechas a los costados dejaban la tarjeta en ~230 px: pasan debajo de la tarjeta, sobre los puntos. */
+@media (max-width: 560px) {
+  .capacidades__carousel {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .capacidades__card {
+    flex: 1 1 100%;
+    order: -1;
+    padding: 20px;
+  }
+  .capacidades__dots {
+    margin-top: 14px;
   }
 }

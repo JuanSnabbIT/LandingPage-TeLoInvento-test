@@ -9,6 +9,8 @@
 html.scene-3d .problema .visual,
 html.scene-3d .valor .visual,
 html.scene-3d .proceso .visual,
+html.scene-3d .hogar .visual,
+html.scene-3d .contacto .visual,
 html.scene-3d .solucion .photo-ph,
 html.scene-3d .capacidades__stage {
   background: transparent;
@@ -34,6 +36,8 @@ html.scene-3d .hero__anchor,
 html.scene-3d .problema .visual,
 html.scene-3d .valor .visual,
 html.scene-3d .proceso .visual,
+html.scene-3d .hogar .visual,
+html.scene-3d .contacto .visual,
 html.scene-3d .solucion .photo-ph,
 html.scene-3d .capacidades__stage {
   border-color: transparent;
@@ -43,6 +47,8 @@ html.scene-3d .capacidades__stage {
 html.scene-3d .problema .visual svg,
 html.scene-3d .valor .visual svg,
 html.scene-3d .proceso .visual svg,
+html.scene-3d .hogar .visual svg,
+html.scene-3d .contacto .visual svg,
 html.scene-3d .solucion .photo-ph .cap {
   display: none;
 }
@@ -51,6 +57,8 @@ html.scene-3d .solucion .photo-ph .cap {
 html.scene-3d .problema .visual::after,
 html.scene-3d .valor .visual::after,
 html.scene-3d .proceso .visual::after,
+html.scene-3d .hogar .visual::after,
+html.scene-3d .contacto .visual::after,
 html.scene-3d .solucion .photo-ph::after,
 html.scene-3d .capacidades__stage::after {
   content: '';
@@ -69,7 +77,7 @@ html.scene-poster .hero__poster {
   display: block;
 }
 
-.scene-caption, .scene-legend { display: none; }
+.scene-caption { display: none; }
 html.scene-3d .scene-caption {
   display: block;
   position: absolute;
@@ -83,12 +91,3 @@ html.scene-3d .scene-caption {
   z-index: 6;
 }
 html.scene-3d .valor .scene-caption { color: #a4bbd6; }
-html.scene-3d .scene-legend {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: -16px 0 28px;
-  color: var(--ink-dim);
-  text-align: center;
-  font-size: 12px;
-}

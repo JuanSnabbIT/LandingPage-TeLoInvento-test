@@ -13,15 +13,17 @@ gsap.registerPlugin(ScrollTrigger);
  * plus the individual cards/stats/steps inside grids, so a grid staggers
  * card by card instead of popping in as one block.
  */
-const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', ':scope > .band > *', '.card', '.stat'].join(', ');
+const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', '.card', '.stat'].join(', ');
 /**
  * Never revealed: grid containers (targeted through their children instead)
  * and every box the 3D scene draws into -- `.visual`, `.photo-ph` and
  * `.capacidades__stage`. A reveal tween on a stage box would fade/translate
  * the DOM anchor the scene reads its rect from every frame, so the model
- * would drift away from its box on entry (spec 13 §11).
+ * would drift away from its box on entry (spec 13 §11). `.capacidades__carousel`
+ * and its nav buttons are skipped the same way `.card-grid` used to be --
+ * `.capacidades__card`, one level deeper, is what actually fades.
  */
-const SKIP = '.card-grid, .stat-grid, .grid, .form-grid, form, .visual, .photo-ph, .capacidades__stage';
+const SKIP = '.card-grid, .stat-grid, .grid, .form-grid, form, .visual, .photo-ph, .capacidades__stage, .capacidades__carousel, .capacidades__nav';
 
 /**
  * T12: subtle fade-up reveal for every content section as it scrolls into

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TRAMOS, resolveTramo, quantize, staircase } from './sequence';
+import { TRAMOS, CAROUSEL_TRAMO_INDEX, resolveTramo, quantize, staircase } from './sequence';
+import { CAPACIDADES_CARDS } from './capacidadesCarousel';
 
 const opts = { reposoCola: 0.2, reposoCabeza: 0.2, pasos: 3, meseta: 0.17, reduced: false };
 const unPaso = { ...opts, pasos: 1 };
@@ -38,7 +39,7 @@ describe('resolveTramo', () => {
   });
   it('apagado: alpha baja con t', () => {
     const r = resolveTramo(at(firstOfKind('apagado'), 0.5), TRAMOS, opts);
-    expect(r.kind).toBe('apagado'); expect(r.alpha).toBeCloseTo(0.5, 5); expect(r.b).toBe('nodo');
+    expect(r.kind).toBe('apagado'); expect(r.alpha).toBeCloseTo(0.5, 5); expect(r.b).toBe('microchip');
   });
   it('reduced: cuantizado y crossfade', () => {
     const r = resolveTramo(P([0.7]), TRAMOS, { ...opts, reduced: true });
@@ -49,13 +50,33 @@ describe('TRAMOS', () => {
   it('la cadena es continua: cada tramo arranca donde termina el anterior', () => {
     // Sin esto, insertar o renombrar un tramo (p. ej. meter `wifi` en Valor)
     // puede dejar un salto de forma o de slot que no falla en ningún test
-    // unitario y sólo se ve como un parpadeo en la página.
+    // unitario y sólo se ve como un parpadeo en la página. El tramo con
+    // `dynamicFrom` (salida de Capacidades hacia Hogar) es la única excepción
+    // deliberada: su forma de origen depende del carrusel en runtime, así
+    // que acá sólo se verifica que el slot encadena y que el default
+    // declarado es una de las dos formas que deja el tramo anterior.
     for (let i = 1; i < TRAMOS.length; i++) {
       const prev = TRAMOS[i - 1].to ?? TRAMOS[i - 1].from;
+      if (TRAMOS[i].dynamicFrom) {
+        expect(TRAMOS[i].from.slot).toBe(prev.slot);
+        expect([TRAMOS[i - 1].from.shape, TRAMOS[i - 1].to!.shape]).toContain(TRAMOS[i].from.shape);
+        continue;
+      }
       expect({ i, ...TRAMOS[i].from }).toEqual({ i, ...prev });
     }
     expect(TRAMOS.at(-1)!.to).toBeNull();
     expect(TRAMOS.filter((t) => t.kind === 'apagado')).toHaveLength(1);
+  });
+  it('el carrusel de Capacidades es manual y sale/entra en la misma forma que sus vecinos', () => {
+    const carousel = TRAMOS[CAROUSEL_TRAMO_INDEX];
+    expect(carousel.driver).toBe('manual');
+    expect(carousel.kind).toBe('morphEnSitio');
+    expect(CAPACIDADES_CARDS).toEqual([carousel.from.shape, carousel.to!.shape]);
+  });
+  it('el tramo que sale de Capacidades hacia Hogar arranca de la tarjeta que dejó activa el carrusel', () => {
+    const departure = TRAMOS[CAROUSEL_TRAMO_INDEX + 1];
+    expect(departure.dynamicFrom).toBeDefined();
+    expect(CAPACIDADES_CARDS).toContain(departure.dynamicFrom!());
   });
   it('cada tramo se dispara sobre la caja de su destino', () => {
     // Con tramos disparados (no scrubbeados) el rango es una ventana sobre la
@@ -66,8 +87,12 @@ describe('TRAMOS', () => {
       expect({ k: t.kind, e: t.trigger.start[0] }).toEqual({ k: t.kind, e: t.to.slot });
       expect(t.trigger.end[0]).toBe(t.to.slot);
     }
-    // El apagado es el único que se dispara sobre una sección sin slot.
-    expect(TRAMOS.at(-1)!.trigger.start[0]).toBe('contacto');
+    // El apagado se dispara sobre la caja de la forma que apaga (su `from.slot`):
+    // misma caja que su llegada, ventana más abajo, así el modelo descansa
+    // entero antes de irse en vez de apagarse sobre la sección completa.
+    const off = TRAMOS.at(-1)!;
+    expect(off.trigger.start[0]).toBe(off.from.slot);
+    expect(off.trigger.end[0]).toBe(off.from.slot);
   });
   it('morphEnSitio no cambia de slot y viaje sí', () => {
     for (const t of TRAMOS) {

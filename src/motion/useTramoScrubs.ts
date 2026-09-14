@@ -9,7 +9,6 @@ import { isSceneDebug } from '../scene/debug';
 
 function resolveEl(slot: string): Element | null {
   if (slot === 'hero') return document.querySelector('.hero');
-  if (slot === 'contacto') return document.querySelector('#contacto');
   if (slot === 'hero-display') return document.querySelector('.hero__anchor');
   return registry.getSlot(slot)?.anchorRef.current ?? null;
 }
@@ -20,6 +19,8 @@ export function useTramoScrubs(reduced: boolean) {
     const markers = isSceneDebug();
     const prev: number[] = [];
     TRAMOS.forEach((tr, i) => {
+      // El tramo del carrusel de Capacidades lo mueve un click, no el scroll -- ver capacidadesCarousel.ts.
+      if (tr.driver === 'manual') return;
       const trigger = resolveEl(tr.trigger.start[0]);
       const endTrigger = resolveEl(tr.trigger.end[0]);
       if (!trigger || !endTrigger) {

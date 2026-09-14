@@ -37,7 +37,7 @@ async function scrollAndRead(page: Page, y: number) {
 
 const positions = [0, 0.15, 0.35, 0.55, 0.75, 0.9, 1.0];
 
-test('mobile: tier low, sin overflow horizontal, franja 160px y tramos avanzan', async ({ page }) => {
+test('mobile: tier low, sin overflow horizontal, caja de Capacidades 180px y tramos avanzan', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/?debug');
   await waitForScene(page);
@@ -52,7 +52,7 @@ test('mobile: tier low, sin overflow horizontal, franja 160px y tramos avanzan',
   const stageHeight = await page.evaluate(
     () => document.querySelector('.capacidades__stage')!.getBoundingClientRect().height,
   );
-  expect(stageHeight).toBe(160);
+  expect(stageHeight).toBe(180);
 
   const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
   expect(max).toBeGreaterThan(0);
@@ -64,6 +64,6 @@ test('mobile: tier low, sin overflow horizontal, franja 160px y tramos avanzan',
   }
 
   expect(seen[0]).toBe('logo');
-  expect(seen.at(-1)).toBe('nodo');
+  expect(seen.at(-1)).toBe('microchip');
   expect(errors).toEqual([]);
 });

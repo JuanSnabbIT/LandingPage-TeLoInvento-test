@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { isValidEmail, submitLead, type ContactoLead } from '../lib/submitLead';
+import { useSceneSlot } from '../scene/useSceneSlot';
 import './Contacto.css';
 
 type Values = Omit<ContactoLead, 'kind'>;
@@ -48,6 +49,10 @@ export function Contacto() {
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  // Plataforma Central se mudó acá desde Capacidades (rediseño 2026-09-14):
+  // llena el espacio que quedaba vacío bajo el texto de introducción.
+  const microchipRef = useRef<HTMLDivElement>(null);
+  useSceneSlot({ id: 'contacto-microchip', anchorRef: microchipRef, fit: 0.95, pose: 'tresCuartos', surface: 'light' });
 
   const update = (field: Field, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -96,6 +101,15 @@ export function Contacto() {
           <p className="lead">
             Cuéntenos qué necesita y le respondemos con una propuesta concreta para su operación.
           </p>
+          <div ref={microchipRef} className="visual">
+            <span className="scene-caption">Una Central con pantalla, la web y la app</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+              <rect x="4" y="4" width="7" height="7" rx="1.2" />
+              <rect x="13" y="4" width="7" height="7" rx="1.2" />
+              <rect x="4" y="13" width="7" height="7" rx="1.2" />
+              <rect x="13" y="13" width="7" height="7" rx="1.2" />
+            </svg>
+          </div>
         </div>
 
         {status === 'sent' ? (
