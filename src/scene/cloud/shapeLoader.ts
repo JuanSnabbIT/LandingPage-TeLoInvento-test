@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-export interface ShapeEntry { file: string; size: number; count: number; bbox: { min: number[]; max: number[] }; params?: string; hasColor?: boolean; links?: string; linkCount?: number }
+export interface ShapeEntry { file: string; size: number; count: number; bbox: { min: number[]; max: number[] }; params?: string; hasColor?: boolean; links?: string; linkCount?: number; animated?: boolean }
 export interface LoadedShape { positions: THREE.DataTexture; color?: THREE.DataTexture }
 export interface Manifest { shapes: Record<string, Record<'lod2' | 'mobile', ShapeEntry>>; sequence: string[]; tiers: Record<'high' | 'medium' | 'low', 'lod2' | 'mobile'> }
 

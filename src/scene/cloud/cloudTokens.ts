@@ -14,4 +14,8 @@ export const cloudTokens = {
   alphaDark: 1.0,
   travelDip: 0.25,
   swirl: { radius: 0.09, turns: 0.45 },
+  // Llama del logo (partículas marcadas en el bake): turbulencia relativa al span y parpadeo de tamaño.
+  flame: { amp: 0.035, freq: 2.6, speed: 0.9, flicker: 0.35 },
+  // Puntero: empuje muy sutil de las partículas cerca del cursor (radio y empuje relativos al span del modelo).
+  pointer: { radius: 0.5, push: 0.045, damping: 8 },
 };

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type RefObject } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { hasWebgl2 } from './webglSupport';
 import type { BudgetStep } from './frameBudget';
@@ -19,13 +19,7 @@ function readDegraded(): boolean {
   }
 }
 
-export function PageSceneHost({
-  heroAnchorRef,
-  reduced,
-}: {
-  heroAnchorRef: RefObject<HTMLElement | null>;
-  reduced: boolean;
-}) {
+export function PageSceneHost({ reduced }: { reduced: boolean }) {
   const [webgl] = useState(() => hasWebgl2());
   const [degraded, setDegraded] = useState(readDegraded);
   const onStep = useCallback((_s: BudgetStep) => {
@@ -59,7 +53,7 @@ export function PageSceneHost({
   if (!webgl || degraded) return null;
   return (
     <Suspense fallback={null}>
-      <PageSceneCanvas heroAnchorRef={heroAnchorRef} reduced={reduced} onStep={onStep} onReady={onReady} />
+      <PageSceneCanvas reduced={reduced} onStep={onStep} onReady={onReady} />
     </Suspense>
   );
 }

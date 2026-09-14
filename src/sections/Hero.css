@@ -1,119 +1,67 @@
 /*
- * Ported from reference/maqueta-aprobada.html's `.hero` -- two intentional
- * deviations, both carried over from the T9 follow-up fixes, not oversights:
+ * Hero de una sola pantalla (rediseño 2026-09-14): texto a la izquierda, la
+ * ampolleta del logo en partículas a la derecha, en `.hero__anchor`.
  *
- * 1. No `background` set here. The maqueta gives `.hero` its own
- *    `linear-gradient(180deg, var(--dark) 0%, #060810 100%)`, but this
- *    section sits above the persistent r3f canvas (PersistentSceneLayer,
- *    mounted in App.tsx, z-index:0) -- an opaque section background here
- *    would paint over the canvas and hide the 3D scene. `index.css`'s
- *    `body` already carries that exact same gradient as the page-wide
- *    backdrop, so visually it's identical; only sections that don't host
- *    part of the persistent scene should set their own opaque background.
- * 2. No `.stage` box (icon + "foto real pendiente de producir" caption).
- *    That was a placeholder for 3D content that didn't exist yet -- it
- *    does now (T9's hero-central scene). `.hero__anchor` replaces it: an
- *    invisible layout marker, not a rendered container -- see App.tsx and
- *    docs/architecture/3d-web-standard.md §2/§7 for why it's not boxed.
- */
-/*
- * Alto por pantalla, no por contenido: cada una de las dos partes del Hero
- * mide exactamente un viewport. El padding vertical global de `section`
- * (tokens.css) se anula acá -- si no, cada parte mediria una pantalla MAS
- * hasta 96px por lado. El padding horizontal se mueve a las partes, que
- * ahora son las que tocan el borde. `svh` y no `vh` a proposito: en movil
- * la barra del navegador aparece/desaparece y `vh` haria saltar el alto en
- * pleno scroll (misma unidad que ya usaba `.hero__anchor`).
- *
- * `.hero__anchor` NO se estira a esa pantalla: conserva su proporcion 21:10
- * y queda centrado dentro de la segunda pantalla. La escala del modelo sale
- * del lado menor de esa caja (computeAnchorTransform, HERO_FIT), asi que
- * dejarla crecer con el viewport agrandaba la Central ~1.6x.
+ * Sin `background` propio: la sección va por encima del canvas persistente
+ * (PersistentSceneLayer) y un fondo opaco lo taparía; `index.css` ya pinta
+ * el mismo degradado oscuro en `body`. `svh` y no `vh`: en móvil la barra del
+ * navegador aparece y desaparece y `vh` haría saltar el alto en pleno scroll.
  */
 .hero {
   color: var(--dark-ink);
-  text-align: center;
   padding: 0;
 }
-
-.hero__text,
-.hero__stage {
+.hero__grid {
   box-sizing: border-box;
   min-height: 100svh;
-  padding-inline: clamp(20px, 6vw, 64px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding-block: clamp(96px, 14vh, 150px) clamp(48px, 8vh, 96px);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: clamp(28px, 5vw, 72px);
 }
 .hero h1 {
   font-weight: 800;
-  font-size: clamp(32px, 4.6vw, 52px);
+  font-size: clamp(32px, 4.4vw, 52px);
   line-height: 1.12;
-  max-width: 22ch;
-  margin: 0 auto;
+  max-width: 18ch;
+  margin: 18px 0 0;
 }
 .hero .sub {
   font-size: 16.5px;
   line-height: 1.6;
   color: var(--dark-ink-dim);
-  max-width: 56ch;
-  margin: 20px auto 0;
+  max-width: 52ch;
+  margin: 20px 0 0;
 }
 .hero .cta-row {
   margin-top: 28px;
 }
 
 /*
- * Two explicit parts, per the project owner's direction: `.hero__text`
- * (copy) and `.hero__stage` (product presentation -- the Central, and
- * only the Central, doesn't appear anywhere else on the page). Previously
- * both lived in one `.wrap`; split into two siblings so the product
- * presentation reads as its own distinct part of the Hero, not a tail end
- * of the copy block.
- */
-/*
- * Sin margin-top: la separacion entre las dos partes ya no es un margen,
- * es que cada una ocupa su propia pantalla completa.
- */
-
-/*
- * Product-shot stage, proportioned like the approved reference (a wide
- * ~2.1:1 frame with the device standing centered on a dark floor). The
- * frame is deliberately NOT filled -- only a hairline border and a
- * transparent interior -- because the 3D Central is drawn on the
- * persistent canvas BEHIND this section (see note 1 above); any opaque
- * fill here would hide it. The floor reflection is a thin translucent
- * gradient at the very bottom, drawn under the device's feet only.
- * The r3f group sizes itself to this element's live height, so the
- * Device always fits inside it fully, never cropped.
+ * Caja de la ampolleta: marcador de layout, no un contenedor pintado -- la
+ * nube se dibuja en el canvas persistente DETRÁS de la sección y un relleno
+ * opaco la taparía. Cuadrada: el logo es más alto que ancho y la escala sale
+ * del lado menor (computeAnchorTransform). Sin marco con `scene-3d`
+ * (src/styles/scene.css); sin WebGL muestra el póster.
  */
 .hero__anchor {
   position: relative;
   width: 100%;
-  aspect-ratio: 21 / 10;
-  min-height: 260px;
-  max-height: 70svh;
+  max-width: 560px;
+  aspect-ratio: 1;
+  max-height: 72svh;
+  margin-inline: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
 }
-.hero__anchor::after {
-  content: '';
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 0;
-  height: 18%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(84, 121, 225, 0.22) 0%, rgba(84, 121, 225, 0) 70%);
-  pointer-events: none;
-}
 /*
- * DOM fallback poster for the Central -- hidden by default (this rule),
- * shown only under `html.scene-poster` (src/styles/scene.css), a class
- * PageSceneHost adds when it decides NOT to mount the canvas (no WebGL2,
- * or degraded). Gate inverted on purpose: the canvas is a lazy chunk that
- * mounts after first paint, so hiding the poster under `scene-3d` instead
- * would let it flash visible on every load.
+ * Póster de respaldo (el logo renderizado en Blender, render-poster.py):
+ * oculto por defecto, visible sólo bajo `html.scene-poster`
+ * (src/styles/scene.css), que PageSceneHost agrega cuando decide NO montar
+ * el canvas (sin WebGL2, o degradado). Gate invertido a propósito: el canvas
+ * es un chunk perezoso que monta después del primer paint, y ocultar el
+ * póster bajo `scene-3d` lo haría parpadear en cada carga.
  */
 .hero__poster {
   display: none;
@@ -123,4 +71,15 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+}
+@media (max-width: 900px) {
+  .hero__grid {
+    grid-template-columns: 1fr;
+    padding-block: 110px 48px;
+    gap: 24px;
+  }
+  .hero__anchor {
+    max-width: 380px;
+    max-height: 52svh;
+  }
 }

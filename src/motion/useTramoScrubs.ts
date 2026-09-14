@@ -8,8 +8,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { isSceneDebug } from '../scene/debug';
 
 function resolveEl(slot: string): Element | null {
-  if (slot === 'hero') return document.querySelector('.hero');
-  if (slot === 'hero-display') return document.querySelector('.hero__anchor');
   return registry.getSlot(slot)?.anchorRef.current ?? null;
 }
 

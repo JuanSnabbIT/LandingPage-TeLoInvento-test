@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { registry } from '../registry';
 import { computeAnchorTransform, anchorMatrix } from '../anchoring';
+import { anchorToWorldXY } from '../pageCameraMath';
 import { scenePalette } from '../scenePalette';
 import { motion } from '../../motion/tokens';
 import { TRAMOS, resolveTramo, type TramoKind } from './sequence';
@@ -57,6 +58,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepScale: { value: 0.5 }, uSweepJitter: { value: cloudTokens.sweepJitter },
     uSpread: { value: 1 }, uSizeJitter: { value: cloudTokens.sizeJitter },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
+    uTime: { value: 0 }, uFlame: { value: 0 }, uFlameFreq: { value: cloudTokens.flame.freq }, uFlameSpeed: { value: cloudTokens.flame.speed }, uFlameFlicker: { value: cloudTokens.flame.flicker },
+    uPointer: { value: new THREE.Vector3() }, uPointerOn: { value: 0 }, uPointerRadius: { value: cloudTokens.pointer.radius }, uPointerPush: { value: cloudTokens.pointer.push },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
@@ -67,33 +70,70 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       half: new THREE.Vector3(1, 1, 1),
       sweep: { dir: new THREE.Vector3(0, -1, 0), scale: 0.5 } as SweepFrame,
       fade: { from: '', to: '', start: 0 },
+      // Puntero: objetivo en fracción de viewport, posición amortiguada en mundo (z = 0) y `on` (0..1) para que el empuje aparezca/desaparezca suave.
+      pointer: { target: new THREE.Vector2(0.5, 0.5), has: false, on: 0, onTarget: 0, world: new THREE.Vector3() },
+      // Parallax: yaw/pitch amortiguados en [-1, 1]; cada slot con `parallax` los escala a su giro máximo.
+      parallax: { yaw: 0, pitch: 0 },
+      q: new THREE.Quaternion(), euler: new THREE.Euler(),
     }),
     [],
   );
-  const heroAnchorRef = useRef<HTMLElement | null>(null);
+  // Puntero fino solamente (sin hover no hay interacción); con reduced-motion, nada se mueve con el mouse.
+  useEffect(() => {
+    if (reduced || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const ptr = tmp.pointer;
+    const move = (e: PointerEvent) => {
+      ptr.target.set(e.clientX / window.innerWidth, e.clientY / window.innerHeight);
+      ptr.has = true; ptr.onTarget = 1;
+      registry.markDirty();
+    };
+    const leave = () => { ptr.onTarget = 0; registry.markDirty(); };
+    window.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('mouseleave', leave);
+    window.addEventListener('pointercancel', leave);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('mouseleave', leave);
+      window.removeEventListener('pointercancel', leave);
+    };
+  }, [reduced, tmp]);
   const rectsRef = useRef<{ a: DOMRectReadOnly | null; b: DOMRectReadOnly | null; t: number; kind: TramoKind }>({ a: null, b: null, t: 1, kind: 'apagado' });
 
   const rectFor = (slot: string): DOMRectReadOnly | null => {
-    if (slot === 'hero-display') {
-      if (!heroAnchorRef.current) heroAnchorRef.current = document.querySelector('.hero__anchor');
-      return heroAnchorRef.current?.getBoundingClientRect() ?? null;
-    }
     const el = registry.getSlot(slot)?.anchorRef.current;
     return el ? el.getBoundingClientRect() : null;
   };
 
-  const poseFor = (slot: string, out: THREE.Matrix4): { surface: number; visible: boolean } => {
+  /** `weight`: cuánto del parallax del slot aplica (1 en reposo; en un viaje, el origen lo pierde y el destino lo gana con `t`). */
+  const poseFor = (slot: string, out: THREE.Matrix4, weight: number): { surface: number; visible: boolean } => {
     const prov = registry.getPoseProvider(slot);
     if (prov) { prov.getMatrix(out); return { surface: prov.surface === 'light' ? 1 : 0, visible: true }; }
     const s = registry.getSlot(slot); const el = s?.anchorRef.current;
     if (!s || !el) { out.identity(); return { surface: 1, visible: false }; }
     const t = computeAnchorTransform(el.getBoundingClientRect(), viewport, { fit: s.fit, maxDim: BBOX_MAXDIM });
-    anchorMatrix(t, s.pose, out); return { surface: s.surface === 'light' ? 1 : 0, visible: t.visible };
+    const extra = s.parallax && !reduced
+      ? tmp.q.setFromEuler(tmp.euler.set(tmp.parallax.pitch * s.parallax * 0.5 * weight, tmp.parallax.yaw * s.parallax * weight, 0, 'XYZ'))
+      : undefined;
+    anchorMatrix(t, s.pose, out, extra); return { surface: s.surface === 'light' ? 1 : 0, visible: t.visible };
   };
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const m = mat.current; if (!m) return;
     const r = resolveTramo((i) => registry.getProgress(i), TRAMOS, { ...motion.tramo, reduced });
+    // Puntero y parallax, amortiguados: piden un frame más mientras no convergen (misma idea que el crossfade de abajo).
+    const dt = Math.min(delta, 1 / 30);
+    const ptr = tmp.pointer; const par = tmp.parallax;
+    if (ptr.has) {
+      const kp = 1 - Math.exp(-cloudTokens.pointer.damping * dt);
+      const w = anchorToWorldXY(ptr.target.x, ptr.target.y, viewport.width / Math.max(viewport.height, 1));
+      // oxlint-disable-next-line react/immutability -- scratch memoizado mutado dentro de useFrame, patrón documentado de r3f (docs 3d-web-standard §7); estado de React acá sería un render por frame
+      ptr.world.x += (w.x - ptr.world.x) * kp; ptr.world.y += (w.y - ptr.world.y) * kp;
+      ptr.on += (ptr.onTarget - ptr.on) * kp;
+      const ty = (ptr.target.x * 2 - 1) * ptr.on, tp = (ptr.target.y * 2 - 1) * ptr.on;
+      const kr = 1 - Math.exp(-motion.parallax.damping * dt);
+      par.yaw += (ty - par.yaw) * kr; par.pitch += (tp - par.pitch) * kr;
+      if (Math.abs(w.x - ptr.world.x) + Math.abs(w.y - ptr.world.y) > 1e-3 || Math.abs(ptr.onTarget - ptr.on) > 1e-3 || Math.abs(ty - par.yaw) + Math.abs(tp - par.pitch) > 1e-3) registry.markDirty();
+    }
     // `.catch(() => {})`, no `void`: el cargador ya avisa por consola y esto
     // corre por frame -- una promesa rechazada sin manejar por frame llena la
     // consola de `unhandledrejection` y ensucia cualquier reporte de errores.
@@ -143,7 +183,12 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uRigid.value = rigid ? 1 : 0;
     u.uStagger.value = rigid ? 0 : cloudTokens.stagger;
     u.uCurlOn.value = curl && !rigid ? 1 : 0;
-    const pa = poseFor(r.slotA, u.uPoseA.value); const pb = poseFor(r.slotB, u.uPoseB.value);
+    const pa = poseFor(r.slotA, u.uPoseA.value, r.kind === 'viaje' ? 1 - t : 1); const pb = poseFor(r.slotB, u.uPoseB.value, r.kind === 'viaje' ? t : 1);
+    u.uPointer.value.copy(ptr.world); u.uPointerOn.value = ptr.on;
+    u.uTime.value = state.clock.elapsedTime;
+    // Formas con partículas animadas (la llama del logo): la nube pide frames seguidos mientras esté a la vista.
+    const animated = !!(manifest.shapes[r.a]?.[lod]?.animated || (texB && manifest.shapes[r.b]?.[lod]?.animated));
+    u.uFlame.value = animated && !reduced ? cloudTokens.flame.amp : 0;
     if (r.kind === 'apagado') u.uPoseB.value.copy(u.uPoseA.value);
     const rectA = rectFor(r.slotA);
     const rectB = rectFor(r.slotB);
@@ -188,6 +233,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uAlpha.value = alpha;
     m.visible = alpha > 0.01 && (pa.visible || pb.visible || r.kind === 'apagado');
     networkRefs.current.forEach(n => { if (n) n.visible = m.visible; });
+    if (u.uFlame.value > 0 && m.visible) registry.markDirty();
   });
 
   const beforeRender = () => {

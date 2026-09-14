@@ -5,6 +5,6 @@ export function useSceneSlot(spec: SlotSpec) {
   useEffect(
     () => registry.registerSlot(spec),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spec.id, spec.anchorRef, spec.fit, spec.pose, spec.surface],
+    [spec.id, spec.anchorRef, spec.fit, spec.pose, spec.surface, spec.parallax],
   );
 }

@@ -23,7 +23,9 @@ export function computeAnchorTransform(rect: DOMRectReadOnly, size: { width: num
   return { x, y, scale, visible };
 }
 
-const _pos = new THREE.Vector3(); const _scl = new THREE.Vector3();
-export function anchorMatrix(t: AnchorTransform, pose: Pose, out: THREE.Matrix4): THREE.Matrix4 {
-  return out.compose(_pos.set(t.x, t.y, 0), poseQuaternion(pose), _scl.setScalar(t.scale));
+const _pos = new THREE.Vector3(); const _scl = new THREE.Vector3(); const _q = new THREE.Quaternion();
+/** `extra`: rotación adicional (parallax del puntero) aplicada en el espacio de la forma, después de la pose. */
+export function anchorMatrix(t: AnchorTransform, pose: Pose, out: THREE.Matrix4, extra?: THREE.Quaternion): THREE.Matrix4 {
+  const q = extra ? _q.copy(poseQuaternion(pose)).multiply(extra) : poseQuaternion(pose);
+  return out.compose(_pos.set(t.x, t.y, 0), q, _scl.setScalar(t.scale));
 }

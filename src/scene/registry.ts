@@ -3,7 +3,8 @@ import type * as THREE from 'three';
 import type { Pose } from './anchoring';
 
 export type Surface = 'light' | 'dark';
-export interface SlotSpec { id: string; anchorRef: RefObject<HTMLElement | null>; fit: number; pose: Pose; surface: Surface; }
+/** `parallax`: giro máximo (rad) con el puntero, amortiguado -- sólo el Hero lo usa (ParticleCloud lo aplica sobre la pose). */
+export interface SlotSpec { id: string; anchorRef: RefObject<HTMLElement | null>; fit: number; pose: Pose; surface: Surface; parallax?: number; }
 export interface PoseProvider { id: string; getMatrix: (out: THREE.Matrix4) => THREE.Matrix4; surface: Surface; }
 
 const slots = new Map<string, SlotSpec>();

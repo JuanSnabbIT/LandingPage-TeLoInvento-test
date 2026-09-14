@@ -14,7 +14,7 @@ import { shouldRender } from './sceneTickerPolicy';
  * los `useFrame` de la escena. `gsap.ticker`'s `time` ya viene en
  * segundos, que es lo que asumen esos consumidores (`FrameBudget.maxDelta`
  * en segundos, `motion.duration.crossfade` = 0.2 s en ParticleCloud,
- * `Math.min(delta, 1/30)` en HeroCentral): pasarlo tal cual, sin `*1000`
+ * `Math.min(delta, 1/30)` en el parallax/puntero de ParticleCloud): pasarlo tal cual, sin `*1000`
  * (bug detectado en T25 -- con `*1000` el guard de frame-budget nunca
  * acumulaba ventana porque cada delta en ms superaba `maxDelta`).
  */

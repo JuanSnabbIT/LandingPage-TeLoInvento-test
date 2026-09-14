@@ -23,9 +23,8 @@ import { Footer } from './sections/Footer';
  * The persistent r3f canvas (`PersistentSceneLayer` + `PageSceneHost`)
  * mounts once at the app root, not inside any section -- see
  * docs/architecture/3d-web-standard.md §2/§7. Each section registers its
- * own stage box with `useSceneSlot`; `heroAnchorRef` is Hero's invisible
- * layout marker (`.hero__anchor`), which the scene needs by ref because
- * the Hero cloud is placed before any slot is registered.
+ * own stage box with `useSceneSlot` -- the Hero too (`hero-display`): since
+ * 2026-09-14 the logo cloud anchors to `.hero__anchor` like any other slot.
  */
 
 /**
@@ -40,7 +39,6 @@ function TramoScrubs({ reduced }: { reduced: boolean }) {
 }
 
 function App() {
-  const heroAnchorRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const reduced = usePrefersReducedMotion();
   useSectionReveals(mainRef);
@@ -48,12 +46,12 @@ function App() {
   return (
     <>
       <PersistentSceneLayer>
-        <PageSceneHost heroAnchorRef={heroAnchorRef} reduced={reduced} />
+        <PageSceneHost reduced={reduced} />
       </PersistentSceneLayer>
 
       <Header />
       <main ref={mainRef} className="page-content">
-        <Hero anchorRef={heroAnchorRef} />
+        <Hero />
         <Problema />
         <Solucion />
         <Capacidades />

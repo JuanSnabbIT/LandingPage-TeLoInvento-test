@@ -1,11 +1,10 @@
-import { Suspense, useEffect, useState, type RefObject } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PageCamera } from './PageCamera';
 import { SceneLights } from './SceneLights';
 import { SceneTicker } from './SceneTicker';
 import { FrameBudgetGuard } from './FrameBudgetGuard';
 import { SlotErrorBoundary } from './SlotErrorBoundary';
-import { HeroCentral } from './hero-central/HeroCentral';
 import { ParticleCloud } from './cloud/ParticleCloud';
 import { loadManifest, type Manifest } from './cloud/shapeLoader';
 import { getDeviceTier } from './deviceTier';
@@ -31,12 +30,10 @@ function forcedBudgetOptions(): { minFps: number; warmup: number } | undefined {
 }
 
 export default function PageSceneCanvas({
-  heroAnchorRef,
   reduced,
   onStep,
   onReady,
 }: {
-  heroAnchorRef: RefObject<HTMLElement | null>;
   reduced: boolean;
   onStep: (s: BudgetStep) => void;
   onReady: () => void;
@@ -103,11 +100,6 @@ export default function PageSceneCanvas({
         active={() => performance.now() - registry.lastDirtyAt() < 1000}
         options={forcedBudgetOptions()}
       />
-      <SlotErrorBoundary name="hero">
-        <Suspense fallback={null}>
-          <HeroCentral anchorRef={heroAnchorRef} animate={!reduced} />
-        </Suspense>
-      </SlotErrorBoundary>
       <SlotErrorBoundary name="cloud">
         <Suspense fallback={null}>
           <ParticleCloud manifest={manifest} lod={tier.lod} reduced={reduced || forcedReduced} curl={curl} />
