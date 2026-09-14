@@ -9,26 +9,9 @@ const ANCHA = '(min-width: 901px)';
 /** Ported 1:1 from reference/maqueta-aprobada.html's `<section class="capacidades" id="capacidades">`. */
 export function Capacidades() {
   const stageRef = useRef<HTMLDivElement>(null);
-  // `fit` es fracción del lado MENOR de la caja (anchoring.ts) y escala el lado
-  // MAYOR de la forma. Esta caja es una franja (1160x320 en ancho, 350x160 en
-  // teléfono), así que en las dos manda el ALTO y `fit` sale del alto proyectado.
-  //
-  // La cuenta vieja (3.2) medía la fila plana -- 4.7:1, 0.42 de alto normalizado
-  // -- y se salía por arriba y por abajo, porque la pose `tresCuartos` inclina la
-  // fila: con Euler(0.25, 0.5) el ancho y el fondo se proyectan sobre la vertical
-  // y el alto real en pantalla pasa de 0.42 a 0.68 unidades. Con 3.2 eso daba 239
-  // px en una franja de 220. A 2.6 el modelo ocupa ~88% del alto de la caja y
-  // ~65% de su ancho, entero y sin tocar los bordes.
-  //
-  // Subir el alto de la franja NO arregla el corte por sí solo: la escala se mide
-  // contra el lado menor, así que el modelo crece con la caja y la proporción no
-  // cambia. Los 320 px son para que el modelo se lea más grande, no para que
-  // entre.
-  //
-  // En teléfono el 2.0 se queda: ahí el límite es el ancho de pantalla (1.82 x 2.0
-  // / 2 x 160 = 291 px de fila, dentro de los ~350 útiles), no el alto.
+  // Frontal alignment keeps the three symbols associated with their cards.
   const ancha = useMediaQuery(ANCHA);
-  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: ancha ? 2.6 : 2.0, pose: 'tresCuartos', surface: 'light' });
+  useSceneSlot({ id: 'capacidades', anchorRef: stageRef, fit: ancha ? 2.9 : 1.85, pose: 'frontal', surface: 'light' });
   return (
     <section className="capacidades" id="capacidades">
       <div className="wrap">
@@ -39,6 +22,7 @@ export function Capacidades() {
           medida.
         </p>
         <div ref={stageRef} className="capacidades__stage" aria-hidden="true" />
+        <div className="scene-legend" aria-hidden="true"><span>Riego</span><span>Seguridad</span><span>Plataforma</span></div>
         <div className="card-grid">
           <div className="card">
             <div className="icon">

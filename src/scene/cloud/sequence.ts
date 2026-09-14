@@ -12,31 +12,15 @@ export interface Tramo {
    */
   sweep: [number, number, number];
 }
-/**
- * Los rangos se definen sobre la caja de DESTINO, no entre centros de secciones.
- *
- * Con tramos scrubbeados el rango iba del centro de una seccion al centro de la
- * siguiente, y la nube descansaba en las ventanas de reposo de las dos puntas.
- * Desde que la transicion se DISPARA al cruzar el arranque
- * (`motion.tramoModo`), ese reparto dejaba a la nube saliendo de la seccion
- * justo cuando el visitante llegaba a leerla: cruzar el centro de Capacidades
- * ES el arranque del tramo que se la lleva a Valor.
- *
- * Ahora cada tramo arranca cuando su caja de destino ASOMA por abajo y termina
- * cuando esa caja sale por arriba: la nube llega a la seccion y se queda ahi
- * mientras se la lee, que es lo que hace el sitio de referencia. El Hero de dos
- * pantallas queda cubierto de paso -- el logo ya no sale volando antes de que
- * se alcance a ver la Central, porque el disparo depende de Problema, no del
- * final del Hero.
- */
+/** Travel occupies the arrival window; the model rests while its section is read. */
 export const TRAMOS: Tramo[] = [
-  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 85%'], end: ['problema', 'bottom 25%'] }, sweep: [0, -1, 0] },
-  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 85%'], end: ['solucion', 'bottom 25%'] }, sweep: [1, 0, 0] },
-  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 85%'], end: ['capacidades', 'bottom 25%'] }, sweep: [-1, 0, 0] },
-  { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 85%'], end: ['valor', 'bottom 25%'] }, sweep: [1, 0, 0] },
-  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 85%'], end: ['proceso', 'center center'] }, sweep: [0, -1, 0] },
-  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'center 55%'], end: ['proceso', 'bottom 20%'] }, sweep: [0, 1, 0] },
-  { from: { shape: 'nodo', slot: 'proceso' }, to: null, kind: 'apagado', trigger: { start: ['contacto', 'top 75%'], end: ['contacto', 'bottom bottom'] }, sweep: [0, -1, 0] },
+  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 95%'], end: ['problema', 'top 48%'] }, sweep: [0, -1, 0] },
+  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 95%'], end: ['solucion', 'top 48%'] }, sweep: [1, 0, 0] },
+  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'capacidades', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [-1, 0, 0] },
+  { from: { shape: 'capacidades', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 95%'], end: ['valor', 'top 48%'] }, sweep: [1, 0, 0] },
+  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 95%'], end: ['proceso', 'top 68%'] }, sweep: [0, -1, 0] },
+  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'top 55%'], end: ['proceso', 'top 25%'] }, sweep: [0, 1, 0] },
+  { from: { shape: 'nodo', slot: 'proceso' }, to: null, kind: 'apagado', trigger: { start: ['contacto', 'top 60%'], end: ['contacto', 'top 30%'] }, sweep: [0, -1, 0] },
 ];
 export interface Resolved { a: string; b: string; slotA: string; slotB: string; t: number; alpha: number; kind: TramoKind; index: number; crossfade: boolean }
 const smooth = (x: number) => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };

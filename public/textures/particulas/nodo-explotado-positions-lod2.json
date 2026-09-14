@@ -5,20 +5,23 @@
   "count": 16384,
   "bbox": {
     "min": [
-      -0.1404959112405777,
-      -0.0038086576387286186,
-      -0.08980976045131683
+      -0.12433364987373352,
+      0.0,
+      -0.08062533289194107
     ],
     "max": [
-      0.07089626044034958,
-      0.26073017716407776,
-      0.21469277143478394
+      0.05999833717942238,
+      0.2462557703256607,
+      0.20142178237438202
     ]
   },
   "sources": [
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-14T12:11:01.908945+00:00",
+  "generatedAt": "2026-09-14T13:24:40.035428+00:00",
   "params": "nodo-explotado-params-lod2.bin",
-  "hasColor": true
+  "hasColor": true,
+  "links": "nodo-explotado-links-lod2.bin",
+  "linkCount": 32297,
+  "structure": "surface-lattice-v1"
 }

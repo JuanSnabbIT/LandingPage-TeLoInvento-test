@@ -1,28 +1,40 @@
 {
   "_comment": "offset/explode van en espacio Blender (Z arriba), que es donde el bake mueve las piezas antes de blender_to_yup(): three (x,y,z) -> blender (x, -z, y). `scale` normaliza la fuente al lado mayor de la PRIMERA fuente; `pitch` la gira sobre X (pi/2 = la para de frente); `exclude` descarta mallas por nombre base antes de medir y muestrear.",
   "seed": 20260911,
-  "_lods": "Lado de la textura de posiciones: lod2 128 = 16 384 partículas, mobile 80 = 6 400. Bajó de 256/128 al pasar de puntos planos a mallas instanciadas de 48 caras: menos partículas y más grandes, que es lo que pidió el dueño del proyecto, y menos saturación.",
-  "lods": { "lod2": 128, "mobile": 80 },
-  "shell": 0.018,
+  "_lods": "Surface lattice: 16384 points desktop / 6400 mobile, bounded local links.",
+  "lods": {
+    "lod2": 128,
+    "mobile": 80
+  },
+  "shell": 0,
   "outDir": "public/textures/particulas",
   "shapes": {
     "logo": {
-      "sources": [{ "file": "assets-source/models/hero-central/logo-lod1.glb" }],
-      "flatten": true, "shell": 0.0,
+      "sources": [
+        {
+          "file": "assets-source/models/hero-central/logo-lod1.glb"
+        }
+      ],
+      "flatten": false,
+      "shell": 0.0,
       "colors": {
         "TLI_Yellow": "#FFC83D",
-        "TLI_Teal": "#2B95C3",
-        "TLI_Navy": "#2C6DA8",
+        "TLI_Teal": "#49DDE7",
+        "TLI_Navy": "#448AB5",
         "TLI_Flame_Core": "#FFE08A",
         "TLI_Flame_Outer": "#F5A623"
       }
     },
     "nodo": {
       "_comment": "Colores por pieza: sin esto la forma sale entera del azul de producto y un gabinete gris con antena y bornera no se distingue de una mancha.",
-      "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }],
+      "sources": [
+        {
+          "file": "assets-source/models/nodo/nodo.glb"
+        }
+      ],
       "colors": {
         "Mat_Chassis_Gray": "#5479E1",
-        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Antenna_Rubber": "#58677E",
         "Mat_Terminal_Housing": "#3A4250",
         "Mat_Brass_Gold": "#C9922E",
         "Mat_Steel_Screws": "#C3CBD8",
@@ -30,16 +42,52 @@
       }
     },
     "nodo-explotado": {
-      "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }],
+      "sources": [
+        {
+          "file": "assets-source/models/nodo/nodo.glb"
+        }
+      ],
       "explode": {
-        "Lid_Screws": [0, 0, 1.1], "Chassis_Lid": [0, 0, 0.6], "Terminal_Cover": [0, -0.55, 0.25],
-        "Terminal_BrassParts": [0, -0.3, 0.08], "Terminal_Block": [0, -0.16, 0.04],
-        "Antenna": [0, 0, 0.45], "Chassis_ClipTab": [-0.35, 0, 0]
+        "Lid_Screws": [
+          0,
+          0,
+          1.1
+        ],
+        "Chassis_Lid": [
+          0,
+          0,
+          0.6
+        ],
+        "Terminal_Cover": [
+          0,
+          -0.55,
+          0.25
+        ],
+        "Terminal_BrassParts": [
+          0,
+          -0.3,
+          0.08
+        ],
+        "Terminal_Block": [
+          0,
+          -0.16,
+          0.04
+        ],
+        "Antenna": [
+          0,
+          0,
+          0.45
+        ],
+        "Chassis_ClipTab": [
+          -0.35,
+          0,
+          0
+        ]
       },
       "pairWith": "nodo",
       "colors": {
         "Mat_Chassis_Gray": "#5479E1",
-        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Antenna_Rubber": "#58677E",
         "Mat_Terminal_Housing": "#3A4250",
         "Mat_Brass_Gold": "#C9922E",
         "Mat_Steel_Screws": "#C3CBD8",
@@ -48,16 +96,36 @@
     },
     "set": {
       "sources": [
-        { "file": "public/models/hero-central/central-v2.glb" },
-        { "file": "assets-source/models/nodo/nodo.glb", "offset": [-0.72, -0.25, -0.38], "scale": 0.42, "yaw": 0.9 },
-        { "file": "assets-source/models/nodo/nodo.glb", "offset": [0.7, -0.15, -0.4], "scale": 0.4, "yaw": -0.5 }
+        {
+          "file": "public/models/hero-central/central-v2.glb"
+        },
+        {
+          "file": "assets-source/models/nodo/nodo.glb",
+          "offset": [
+            -0.55,
+            -0.08,
+            -0.24
+          ],
+          "scale": 0.5,
+          "yaw": 0.35
+        },
+        {
+          "file": "assets-source/models/nodo/nodo.glb",
+          "offset": [
+            0.55,
+            -0.08,
+            -0.24
+          ],
+          "scale": 0.5,
+          "yaw": -0.35
+        }
       ],
       "colors": {
         "Mat_Casing": "#5479E1",
         "Mat_Screen": "#1B2432",
         "Mat_Button": "#C3CBD8",
         "Mat_Chassis_Gray": "#5479E1",
-        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Antenna_Rubber": "#58677E",
         "Mat_Terminal_Housing": "#3A4250",
         "Mat_Brass_Gold": "#C9922E",
         "Mat_Steel_Screws": "#C3CBD8",
@@ -67,21 +135,65 @@
     "capacidades": {
       "_comment": "Una pieza por tarjeta de la seccion, en el mismo orden: Set de Riego, Set de Seguridad Perimetral, Plataforma Central.",
       "sources": [
-        { "file": "assets-source/models/capacidades/riego.glb", "offset": [-0.277, 0, -0.098], "scale": 0.70, "exclude": ["Suelo_Disco"] },
-        { "file": "assets-source/models/capacidades/seguridad.glb", "offset": [0.204, 0, 0.095], "scale": 0.258 },
-        { "file": "assets-source/models/capacidades/microchip.glb", "offset": [0.464, 0, 0.071], "scale": 0.258, "pitch": 1.5708 }
+        {
+          "file": "assets-source/models/capacidades/riego.glb",
+          "offset": [
+            -0.35,
+            0,
+            0
+          ],
+          "scale": 0.42,
+          "exclude": [
+            "Suelo_Disco"
+          ]
+        },
+        {
+          "file": "assets-source/models/capacidades/seguridad.glb",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": 0.32
+        },
+        {
+          "file": "assets-source/models/capacidades/microchip.glb",
+          "offset": [
+            0.35,
+            0,
+            0
+          ],
+          "scale": 0.32,
+          "pitch": 1.5708
+        }
       ],
       "colors": {
-        "Riego_Metal": "#9AA7B8", "Riego_Hoja": "#4FA96A", "Riego_Tallo": "#3C8452", "Riego_Agua": "#5FC8E8",
-        "Baliza_Base": "#5A6472", "Baliza_Rojo": "#E2574C", "Baliza_Rayo": "#FFC83D",
-        "Azul_Escudo": "#5479E1", "Metal_Plata": "#A9B6C6",
-        "Chip_Verde": "#3E9A6E", "Chip_Amarillo": "#E8B84B", "Chip_Cian": "#5FD0E8",
-        "Chip_Oscuro": "#2B3444", "Chip_Pin": "#B0BAC8"
+        "Riego_Metal": "#9AA7B8",
+        "Riego_Hoja": "#4FA96A",
+        "Riego_Tallo": "#3C8452",
+        "Riego_Agua": "#5FC8E8",
+        "Baliza_Base": "#5A6472",
+        "Baliza_Rojo": "#E2574C",
+        "Baliza_Rayo": "#FFC83D",
+        "Azul_Escudo": "#5479E1",
+        "Metal_Plata": "#A9B6C6",
+        "Chip_Verde": "#3E9A6E",
+        "Chip_Amarillo": "#E8B84B",
+        "Chip_Cian": "#5FD0E8",
+        "Chip_Oscuro": "#2B3444",
+        "Chip_Pin": "#B0BAC8"
       }
     },
     "wifi": {
-      "sources": [{ "file": "assets-source/models/valor/wifi.glb" }],
-      "colors": { "WiFi_Signal": "#809BE9" }
+      "sources": [
+        {
+          "file": "assets-source/models/valor/wifi.glb"
+        }
+      ],
+      "colors": {
+        "WiFi_Signal": "#58CCD9"
+      }
     }
-  }
+  },
+  "edgeBoost": 0
 }

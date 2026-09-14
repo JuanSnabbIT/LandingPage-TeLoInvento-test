@@ -72,7 +72,8 @@ export function createScrub(o: {
   start: string;
   endTrigger: Element;
   end: string;
-  scrub?: number;
+  scrub?: boolean | number;
+  id?: string;
   /** `?debug`: dibuja los markers de ScrollTrigger de este tramo. */
   markers?: boolean;
   onUpdate: (p: number) => void;
@@ -83,6 +84,7 @@ export function createScrub(o: {
     p: 1,
     ease: 'none',
     scrollTrigger: {
+      id: o.id,
       trigger: o.trigger,
       start: o.start,
       endTrigger: o.endTrigger,

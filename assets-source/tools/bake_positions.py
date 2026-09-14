@@ -3,6 +3,8 @@ uso: blender -b --python assets-source/tools/bake_positions.py -- [--shape nombr
 Sin args: todas las formas, todos los LODs."""
 import bpy, bmesh, json, math, os, sys, datetime, zlib
 import numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from surface_structure import lattice_surface, surface_links
 from mathutils import Vector, Matrix
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
@@ -83,7 +85,7 @@ def import_glb(path, exclude=None):
             else:
                 keep.append(o)
         objs = keep
-    return objs
+    return sorted(objs, key=lambda o: o.name)
 
 def object_bounds(objs):
     mn = Vector((1e9,) * 3); mx = Vector((-1e9,) * 3)
@@ -96,12 +98,12 @@ def object_bounds(objs):
 def hex_to_rgb8(h):
     h = h.lstrip('#'); return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
 
-def triangles_world(objs, explode=None, max_dim=1.0, colors=None):
+def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=False):
     """Lista de (tri 3x3 float32, área) en mundo, aplicando explode por nombre de objeto.
     Si `colors` (material base name -> hex) está definido, devuelve también un
     color RGB8 por triángulo según el material de la cara (blanco si no hay match)."""
-    tris = []; areas = []; tri_colors = []
-    for o in objs:
+    tris = []; areas = []; tri_colors = []; groups = []
+    for group_id, o in enumerate(objs):
         dep = bpy.context.evaluated_depsgraph_get()
         me = o.evaluated_get(dep).to_mesh()
         bm = bmesh.new(); bm.from_mesh(me); bmesh.ops.triangulate(bm, faces=bm.faces)
@@ -120,6 +122,7 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None):
         for f in bm.faces:
             v = [(o.matrix_world @ vv.co) + off for vv in f.verts]
             tris.append([[p.x, p.y, p.z] for p in v])
+            groups.append(group_id)
             if mat_rgb is not None:
                 tri_colors.append(mat_rgb[min(f.material_index, len(mat_rgb) - 1)])
             # Área EN MUNDO, no `f.calc_area()`: esa es el área en espacio local
@@ -130,6 +133,8 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None):
             # grumo denso + nube difusa del T22.
             areas.append((v[1] - v[0]).cross(v[2] - v[0]).length * 0.5)
         bm.free(); o.evaluated_get(dep).to_mesh_clear()
+    if components:
+        return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8), np.array(groups)
     if colors is not None:
         return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8)
     return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64)
@@ -333,7 +338,7 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     # formas es la MISMA partícula. Eso es lo que hace que el morph par sea
     # rígido por pieza en vez de una reasignacion global.
     rng = np.random.RandomState(cfg['seed'] + _name_seed(spec.get('pairWith', name)))
-    all_tris = []; all_areas = []; all_colors = []; first_max = None
+    all_tris = []; all_areas = []; all_colors = []; all_groups = []; group_offset = 0; first_max = None
     colors = spec.get('colors')  # material name -> hex; solo el logo lo usa hoy
     for src in spec['sources']:
         objs = import_glb(src['file'], src.get('exclude'))
@@ -359,11 +364,11 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
             missing = [k for k in explode if k not in names]
             if missing:
                 print('ERROR explode: mallas sin match', missing, 'disponibles', sorted(names)); sys.exit(2)
+        tris, areas, tcol, groups = triangles_world(objs, explode, first_max, colors, components=True)
+        all_groups.append(groups + group_offset)
+        group_offset += len(objs)
         if colors is not None:
-            tris, areas, tcol = triangles_world(objs, explode, first_max, colors)
             all_colors.append(tcol)
-        else:
-            tris, areas = triangles_world(objs, explode, first_max)
         all_tris.append(tris); all_areas.append(areas)
     tris = np.concatenate(all_tris); areas = np.concatenate(all_areas)
     # Aristas vivas sobre la MISMA sopa de triángulos que se muestrea, así el
@@ -371,7 +376,19 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     edge_pts, edge_tris = sharp_edges(tris, first_max, cfg.get('sharpAngle', 28.0))
     boost = spec.get('edgeBoost', cfg.get('edgeBoost', 1.8))
     weights = areas * (1.0 + boost * edge_tris) if boost > 0 else areas
-    pts, tri_idx = sample_surface(tris, weights, count, rng, spec.get('shell', cfg['shell']), return_idx=True)
+    # Quantize area weights to keep rigid exploded pairs numerically identical.
+    # BUG corregido 2026-09-14: esta línea pisaba `weights` con `areas` puras,
+    # descartando el sesgo de `boost` calculado arriba -- con `edgeBoost: 0` en
+    # la config global es inobservable (ambas fórmulas coinciden), pero dejaba
+    # el sesgo hacia aristas vivas muerto en el código: subir `edgeBoost` en
+    # `shapes.json` no habría cambiado nada. Se cuantiza el resultado CON
+    # boost, no las áreas crudas.
+    weights = np.round(weights / weights.sum(), 8)
+    pts, tri_idx = lattice_surface(tris, weights, count)
+    normals = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    normals /= np.maximum(np.linalg.norm(normals, axis=1)[:, None], 1e-12)
+    sample_normals = blender_to_yup(normals[tri_idx])
+    sample_groups = np.concatenate(all_groups)[tri_idx]
     sample_rgb = np.concatenate(all_colors)[tri_idx] if colors is not None else None
     # TAMAÑO DEL DETALLE bajo cada partícula, en [0,1]: 0 = detalle fino (pegada a
     # una arista viva, o sobre una pieza delgada), 1 = zona ancha y gruesa. Es lo
@@ -413,6 +430,8 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     if order is None:
         order = hilbert_order(pts, bits=6 if size <= 128 else 8)
     pts = pts[order]
+    sample_normals = sample_normals[order]
+    sample_groups = sample_groups[order]
     edge_k = edge_k[order]
     if sample_rgb is not None:
         sample_rgb = sample_rgb[order]
@@ -436,6 +455,11 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     rgba.tofile(os.path.join(out_dir, f'{name}-params-{lod}.bin'))
     meta['params'] = f'{name}-params-{lod}.bin'
     meta['hasColor'] = sample_rgb is not None
+    links = surface_links(pts, sample_normals, sample_groups, 0.065 if lod == 'lod2' else 0.10)
+    links.astype('<u4').tofile(os.path.join(out_dir, f'{name}-links-{lod}.bin'))
+    meta['links'] = f'{name}-links-{lod}.bin'
+    meta['linkCount'] = len(links)
+    meta['structure'] = 'surface-lattice-v1' 
     with open(base + '.json', 'w', encoding='utf-8') as f:
         json.dump(meta, f, indent=2)
     print('BAKED', name, lod, count, os.path.getsize(base + '.bin'))

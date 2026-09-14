@@ -5,14 +5,14 @@
   "count": 6400,
   "bbox": {
     "min": [
-      -0.22404362261295319,
-      -0.07136842608451843,
-      -0.14199018478393555
+      -0.17848017811775208,
+      -0.032207753509283066,
+      -0.1420000046491623
     ],
     "max": [
-      0.20410466194152832,
-      0.22963780164718628,
-      0.1103735864162445
+      0.17824332416057587,
+      0.22977450489997864,
+      0.0912575051188469
     ]
   },
   "sources": [
@@ -20,7 +20,10 @@
     "assets-source/models/nodo/nodo.glb",
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-14T12:11:08.858678+00:00",
+  "generatedAt": "2026-09-14T13:24:49.712675+00:00",
   "params": "set-params-mobile.bin",
-  "hasColor": true
+  "hasColor": true,
+  "links": "set-links-mobile.bin",
+  "linkCount": 12132,
+  "structure": "surface-lattice-v1"
 }

@@ -1,6 +1,5 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { registry } from '../registry';
 import { computeAnchorTransform, anchorMatrix } from '../anchoring';
@@ -18,68 +17,50 @@ import type { Manifest } from './shapeLoader';
 interface Props { manifest: Manifest; lod: 'lod2' | 'mobile'; size?: number; reduced: boolean; curl: boolean }
 const BBOX_MAXDIM = 2; // formas normalizadas a [-1,1]
 
-/**
- * Caja sintética del destino del tramo 'apagado': la nube no viaja a otro slot,
- * cae y se desvanece bajo el último. La pose B la baja 1.5 y la escala x1.6 en
- * los tres ejes, así que el corredor del scissor tiene que crecer igual en las
- * dos direcciones: 1.5 + 1 alturas hacia abajo (de ahí height x2.5) y x1.6 de
- * ancho alrededor de su centro. Sin el ensanche el recorte cortaba los bordes
- * laterales del enjambre mientras se apagaba.
- */
-function apagadoRect(a: DOMRectReadOnly): DOMRectReadOnly {
-  const cx = a.left + a.width / 2; const width = a.width * 1.6;
-  const left = cx - width / 2;
-  return { left, right: left + width, width, top: a.top, bottom: a.bottom + 1.5 * a.height, height: a.height * 2.5 } as DOMRectReadOnly;
-}
-
-useGLTF.preload(cloudTokens.particleMesh.lod2);
-
 export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   // El lado de la textura sale del manifest y no de una constante: si se
   // re-hornea con otro LOD, el runtime lo sigue sin que haya que tocar código.
   const S = size ?? manifest.shapes[manifest.sequence[0]]?.[lod]?.size ?? 96;
-  const { scene: particleScene } = useGLTF(cloudTokens.particleMesh[lod]);
   const particleGeometry = useMemo(() => {
-    let g: THREE.BufferGeometry | null = null;
-    particleScene.traverse((o) => { if (!g && o instanceof THREE.Mesh) g = o.geometry; });
-    if (!g) throw new Error('[cloud] la malla de partícula no trae geometría');
-    // La malla viene descentrada en su propio espacio (bbox de py-lod1:
-    // x -0.71..0.36, y -0.27..0.80): sin recentrar, cada partícula queda
-    // corrida de la posición que le tocó en el horneado, y la forma entera
-    // sale desplazada respecto de su caja.
-    const geo = (g as THREE.BufferGeometry).clone();
-    geo.computeBoundingBox();
-    const c = geo.boundingBox!.getCenter(new THREE.Vector3());
-    geo.translate(-c.x, -c.y, -c.z);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(S * S * 3), 3));
     return geo;
-  }, [particleScene]);
+  }, [S]);
+  const networks = useMemo(() => [new THREE.BufferGeometry(), new THREE.BufferGeometry()], []);
+  const networkRefs = useRef<Array<THREE.LineSegments | null>>([]);
+  const networkData = useRef<Array<Float32Array | undefined>>([]);
+  const protectedElements = useRef<Element[]>([]);
+  useEffect(() => {
+    protectedElements.current = [...document.querySelectorAll('header, section h1, section h2, section p, section ul, section ol, .card-grid, .hogar, form, .scene-caption, .scene-legend')];
+  }, []);
+  useEffect(() => () => { particleGeometry.dispose(); networks.forEach(g => g.dispose()); }, [particleGeometry, networks]);
   const shapes = useShapeTextures(manifest, lod, [TRAMOS[0].from.shape, TRAMOS[0].to!.shape]);
   const mat = useRef<THREE.ShaderMaterial>(null);
   const viewport = useThree((s) => s.size); const gl = useThree((s) => s.gl);
   const uniforms = useMemo(() => ({
+    uViewportHeight: { value: 1 }, uPixelRatio: { value: 1 }, uNetworkRole: { value: -1 },
+    uProtectedCount: { value: 0 }, uProtected: { value: Array.from({ length: 24 }, () => new THREE.Vector4()) },
+    uRigid: { value: 0 },
     uShapeA: { value: null as THREE.Texture | null }, uShapeB: { value: null as THREE.Texture | null }, uSize: { value: S },
     uParamsA: { value: null as THREE.Texture | null }, uHasColorA: { value: 0 }, uTintA: { value: 0 },
     uParamsB: { value: null as THREE.Texture | null }, uHasColorB: { value: 0 }, uTintB: { value: 0 },
     uPoseA: { value: new THREE.Matrix4() }, uPoseB: { value: new THREE.Matrix4() },
     uT: { value: 0 }, uStagger: { value: cloudTokens.stagger },
-    uSpringOmega: { value: cloudTokens.spring.omega }, uSpringZeta: { value: cloudTokens.spring.zeta }, uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
-    uParticleScale: { value: 0 }, uFluye: { value: 0 },
+    uCurl: { value: cloudTokens.curl }, uCurlOn: { value: curl ? 1 : 0 }, uCurlFreq: { value: cloudTokens.curlFreq },
+    uParticleScale: { value: 0 },
     uCenterA: { value: new THREE.Vector3() }, uCenterB: { value: new THREE.Vector3() }, uSpan: { value: 1 },
     uEdgeScale: { value: cloudTokens.edgeScale }, uFaceScale: { value: cloudTokens.faceScale },
-    uBackAlpha: { value: cloudTokens.backAlpha }, uSpin: { value: cloudTokens.spin },
-    uOrientNoise: { value: cloudTokens.orientNoise }, uBillboard: { value: cloudTokens.billboard ? 1 : 0 },
+    uBackAlpha: { value: cloudTokens.backAlpha },
     uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepScale: { value: 0.5 }, uSweepJitter: { value: cloudTokens.sweepJitter },
     uSpread: { value: 1 }, uSizeJitter: { value: cloudTokens.sizeJitter },
-    uFluyeDrop: { value: cloudTokens.fluye.drop }, uFluyeCurl: { value: cloudTokens.fluye.curl },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
     uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, curl]);
+  const networkUniforms = useMemo(() => [0, 1].map(role => ({ ...uniforms, uNetworkRole: { value: role } })), [uniforms]);
   const tmp = useMemo(
     () => ({
-      m: new THREE.Matrix4(),
-      v: new THREE.Vector3(),
       half: new THREE.Vector3(1, 1, 1),
       sweep: { dir: new THREE.Vector3(0, -1, 0), scale: 0.5 } as SweepFrame,
       fade: { from: '', to: '', start: 0 },
@@ -119,6 +100,25 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const texA = shapes.get(r.a); const texB = shapes.get(r.b);
     if (!texA) { m.visible = false; return; }
     const u = m.uniforms;
+    u.uViewportHeight.value = viewport.height;
+    u.uPixelRatio.value = gl.getPixelRatio();
+    let protectedCount = 0;
+    for (const element of protectedElements.current) {
+      const box = element.getBoundingClientRect();
+      if (box.bottom <= 0 || box.top >= viewport.height || protectedCount >= 24) continue;
+      u.uProtected.value[protectedCount++].set(box.left - 5, viewport.height - box.bottom - 5, box.right + 5, viewport.height - box.top + 5).multiplyScalar(gl.getPixelRatio());
+    }
+    u.uProtectedCount.value = protectedCount;
+    [r.a, r.b].forEach((name, i) => {
+      const ids = shapes.getLinks(name);
+      if (ids !== networkData.current[i]) {
+        networkData.current[i] = ids;
+        const geo = networks[i];
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((ids?.length ?? 0) * 3), 3));
+        geo.setAttribute('particleIndex', new THREE.BufferAttribute(ids ?? new Float32Array(), 1));
+        geo.setDrawRange(0, ids?.length ?? 0);
+      }
+    });
     u.uShapeA.value = texA; u.uShapeB.value = texB ?? texA;
     // Las dos puntas del morph llevan su propia textura de parámetros (color +
     // cercanía a arista). Cae a la de A (y no a null) porque un sampler sin
@@ -136,10 +136,14 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     // geometría, la nube quieta en A se teñía del color del destino.
     const t = texB ? r.t : 0;
     u.uT.value = t;
+    const rigid = r.kind === 'morphEnSitio' || r.kind === 'apagado';
+    u.uRigid.value = rigid ? 1 : 0;
+    u.uStagger.value = rigid ? 0 : cloudTokens.stagger;
+    u.uCurlOn.value = curl && !rigid ? 1 : 0;
     const pa = poseFor(r.slotA, u.uPoseA.value); const pb = poseFor(r.slotB, u.uPoseB.value);
-    if (r.kind === 'apagado') { u.uPoseB.value.copy(u.uPoseA.value).multiply(tmp.m.makeTranslation(0, -1.5, 0)).multiply(tmp.m.makeScale(1.6, 1.6, 1.6)); }
+    if (r.kind === 'apagado') u.uPoseB.value.copy(u.uPoseA.value);
     const rectA = rectFor(r.slotA);
-    const rectB = r.kind === 'apagado' && rectA ? apagadoRect(rectA) : rectFor(r.slotB);
+    const rectB = rectFor(r.slotB);
     rectsRef.current = { a: rectA, b: rectB, t, kind: r.kind };
     u.uSurface.value = THREE.MathUtils.lerp(pa.surface, pb.surface, t);
     // Una forma se pinta con su color horneado si lo tiene; el logo además se
@@ -154,7 +158,7 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uParticleScale.value = span * cloudTokens.particleScale;
     // El enjambre respira: se abre a mitad del tramo y se cierra exacto al llegar.
     // El fade de profundidad se mide sobre la nube ABIERTA, no sobre la horneada.
-    const spread = 1 + cloudTokens.spread * Math.sin(Math.PI * t);
+    const spread = rigid ? 1 : 1 + cloudTokens.spread * Math.sin(Math.PI * t);
     u.uSpread.value = spread;
     u.uSpan.value = span * spread;
     poseCenter(u.uPoseA.value, u.uCenterA.value);
@@ -168,7 +172,6 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     sweepFrame(u.uPoseA.value, TRAMOS[r.index].sweep, tmp.half, tmp.sweep);
     u.uSweepDir.value.copy(tmp.sweep.dir);
     u.uSweepScale.value = tmp.sweep.scale;
-    u.uFluye.value = r.index === 0 ? 1 : 0;
     u.uSwirl.value = r.kind === 'viaje' ? 1 : 0;
     let alpha = r.alpha;
     if (r.crossfade) { // reduced: fundido de alpha de 200 ms al cambiar la forma efectiva
@@ -181,28 +184,29 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     if (r.kind === 'viaje') alpha *= 1 - cloudTokens.travelDip * Math.sin(Math.PI * t);
     u.uAlpha.value = alpha;
     m.visible = alpha > 0.01 && (pa.visible || pb.visible || r.kind === 'apagado');
+    networkRefs.current.forEach(n => { if (n) n.visible = m.visible; });
   });
 
+  const beforeRender = () => {
+    const { a, b, t, kind } = rectsRef.current;
+    const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, 0.32, viewport);
+    if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
+  };
+  const afterRender = () => gl.setScissorTest(false);
   return (
-    <instancedMesh
-      args={[undefined, undefined, S * S]}
-      frustumCulled={false}
-      onBeforeRender={() => {
-        const { a, b, t, kind } = rectsRef.current;
-        // El margen del corredor tiene que cubrir lo que el enjambre se aparta del
-        // eje en vuelo (curl + giro): con 0.2 el giro nuevo llegaba al borde del
-        // recorte y las partículas de afuera se cortaban en una línea recta.
-        // El margen tiene que cubrir lo que el enjambre se aparta del eje: curl,
-        // giro y respiración. En un morph en sitio o un apagado no hay viaje,
-        // pero la respiración sí infla la nube, así que 0.2 se quedaba corto.
-        const scissor = corridorRect(a, b, kind === 'viaje' ? t : 1, cloudTokens.stagger, kind === 'viaje' ? 0.32 : 0.28, viewport);
-        if (scissor) { gl.setScissorTest(true); gl.setScissor(scissor.x, scissor.y, scissor.w, scissor.h); }
-      }}
-      onAfterRender={() => { gl.setScissorTest(false); }}
-    >
-      <primitive object={particleGeometry} attach="geometry" />
-      <shaderMaterial ref={mat} glslVersion={THREE.GLSL3} vertexShader={cloudVert} fragmentShader={cloudFrag} uniforms={uniforms}
-        transparent depthWrite={false} depthTest blending={THREE.NormalBlending} premultipliedAlpha side={THREE.DoubleSide} />
-    </instancedMesh>
+    <group>
+      {networks.map((geometry, i) => (
+        <lineSegments key={i} ref={n => { networkRefs.current[i] = n; }} geometry={geometry} frustumCulled={false}
+          onBeforeRender={beforeRender} onAfterRender={afterRender}>
+          <shaderMaterial glslVersion={THREE.GLSL3} defines={{ SURFACE_LINES: 1 }}
+            vertexShader={cloudVert} fragmentShader={cloudFrag} uniforms={networkUniforms[i]}
+            transparent depthWrite={false} depthTest premultipliedAlpha />
+        </lineSegments>
+      ))}
+      <points geometry={particleGeometry} frustumCulled={false} onBeforeRender={beforeRender} onAfterRender={afterRender}>
+        <shaderMaterial ref={mat} glslVersion={THREE.GLSL3} vertexShader={cloudVert} fragmentShader={cloudFrag} uniforms={uniforms}
+          transparent depthWrite={false} depthTest premultipliedAlpha />
+      </points>
+    </group>
   );
 }

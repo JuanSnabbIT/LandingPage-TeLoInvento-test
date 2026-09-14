@@ -44,6 +44,7 @@ export function Problema() {
           </ul>
         </div>
         <div ref={ref} className="visual">
+          <span className="scene-caption">Dispositivos que deben trabajar como un sistema</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
             <rect x="4" y="4" width="16" height="16" rx="3" />
             <path d="M8 12h8M12 8v8" />

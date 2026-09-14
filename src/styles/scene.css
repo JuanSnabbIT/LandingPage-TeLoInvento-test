@@ -68,3 +68,27 @@ html.scene-3d .capacidades__stage::after {
 html.scene-poster .hero__poster {
   display: block;
 }
+
+.scene-caption, .scene-legend { display: none; }
+html.scene-3d .scene-caption {
+  display: block;
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+  z-index: 6;
+}
+html.scene-3d .valor .scene-caption { color: #a4bbd6; }
+html.scene-3d .scene-legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: -16px 0 28px;
+  color: var(--ink-dim);
+  text-align: center;
+  font-size: 12px;
+}

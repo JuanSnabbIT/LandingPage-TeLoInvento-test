@@ -21,6 +21,12 @@ import { shouldRender } from './sceneTickerPolicy';
 export function SceneTicker({ graceMs = 1000 }: { graceMs?: number }) {
   const advance = useThree((s) => s.advance);
   useEffect(() => {
+    // A resting morph still moves with its DOM anchor when the page scrolls.
+    const invalidate = () => registry.markDirty();
+    window.addEventListener('scroll', invalidate, { passive: true });
+    window.addEventListener('resize', invalidate);
+    window.addEventListener('pageshow', invalidate);
+    invalidate();
     const tick = (time: number) => {
       const now = performance.now();
       if (shouldRender(now, registry.lastDirtyAt(), registry.consumeDirty(), graceMs)) {
@@ -34,7 +40,12 @@ export function SceneTicker({ graceMs = 1000 }: { graceMs?: number }) {
       }
     };
     gsap.ticker.add(tick);
-    return () => { gsap.ticker.remove(tick); };
+    return () => {
+      gsap.ticker.remove(tick);
+      window.removeEventListener('scroll', invalidate);
+      window.removeEventListener('resize', invalidate);
+      window.removeEventListener('pageshow', invalidate);
+    };
   }, [advance, graceMs]);
   return null;
 }

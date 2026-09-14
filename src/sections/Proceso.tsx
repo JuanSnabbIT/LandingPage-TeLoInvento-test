@@ -12,6 +12,7 @@ export function Proceso() {
     <section className="proceso" id="proceso">
       <div className="wrap grid">
         <div ref={ref} className="visual">
+          <span className="scene-caption">Componentes preparados para su instalación</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
             <path d="M4 12h16M4 12l5-5M4 12l5 5" />
           </svg>

@@ -1,20 +1,33 @@
-// GLSL3 fragment shader for the stateless particle-cloud morph (T16).
-// Same ShaderMaterial({ glslVersion: THREE.GLSL3 }) note as cloud.vert.ts:
-// no `#version`, no `precision` line (three injects it), `out vec4
-// fragColor` instead of `gl_FragColor`.
-//
-// Desde que la nube se dibuja con mallas instanciadas (ver cloud.vert.ts) acá
-// no hay recorte circular ni `gl_PointCoord`: la silueta la da la malla y el
-// relieve lo da `vShade`, el sombreado plano por cara que calculó el vertex.
+﻿// Analytic circular dots: a crisp core with a small, controlled luminous edge.
 export const cloudFrag = /* glsl */ `
-  uniform vec3 uColorProdLight; uniform vec3 uColorProdDark;
-  uniform float uSurface; uniform float uAlpha; uniform float uAlphaLight; uniform float uAlphaDark;
-  in vec3 vColor; in float vTint; in float vShade; in float vFade; out vec4 fragColor;
+  uniform vec3 uColorProdLight, uColorProdDark;
+  uniform float uSurface, uAlpha, uAlphaLight, uAlphaDark;
+  uniform int uProtectedCount;
+  uniform vec4 uProtected[24];
+  in vec3 vColor;
+  in float vTint, vFade, vNetwork;
+  out vec4 fragColor;
+  vec3 displayColor(vec3 c) {
+    return mix(12.92 * c, 1.055 * pow(max(c, vec3(0.)), vec3(1./2.4)) - .055, step(vec3(.0031308), c));
+  }
   void main() {
-    // vColor y vTint ya vienen mezclados A→B por partícula desde el vertex:
-    // acá solo se decide entre el azul de producto y el color horneado.
-    vec3 prod = mix(uColorProdDark, uColorProdLight, uSurface);
-    vec3 c = mix(prod, vColor, vTint) * vShade;
+    for (int i = 0; i < 24; i++) {
+      if (i >= uProtectedCount) break;
+      vec4 box = uProtected[i];
+      if (gl_FragCoord.x >= box.x && gl_FragCoord.x <= box.z && gl_FragCoord.y >= box.y && gl_FragCoord.y <= box.w) discard;
+    }
+    vec3 c = mix(mix(uColorProdDark, uColorProdLight, uSurface), vColor, vTint);
     float alpha = uAlpha * mix(uAlphaDark, uAlphaLight, uSurface) * vFade;
-    fragColor = vec4(c * alpha, alpha);   // premultiplicado
-  }`;
+    #ifdef SURFACE_LINES
+      alpha *= vNetwork * mix(.40, .30, uSurface);
+    #else
+      float radius = length(gl_PointCoord - .5) * 2.;
+      float aa = max(fwidth(radius), .06);
+      float core = 1. - smoothstep(.78-aa, .78+aa, radius);
+      float halo = (1. - smoothstep(.55, 1., radius)) * .20;
+      alpha *= max(core, halo);
+    #endif
+    if (alpha < .005) discard;
+    fragColor = vec4(displayColor(c) * alpha, alpha);
+  }
+`;

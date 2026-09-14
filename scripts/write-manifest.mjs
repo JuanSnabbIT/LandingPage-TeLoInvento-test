@@ -9,6 +9,7 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
     // `params` lo tiene TODA forma (RGB = color horneado, A = cercanía a arista);
     // `hasColor` dice si el RGB es un color de verdad o blanco de relleno.
     ...(j.params ? { params: `/textures/particulas/${j.params}`, hasColor: !!j.hasColor } : {}),
+    ...(j.links ? { links: `/textures/particulas/${j.links}`, linkCount: j.linkCount, structure: j.structure } : {}),
   };
 }
 const manifest = {

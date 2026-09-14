@@ -5,20 +5,23 @@
   "count": 6400,
   "bbox": {
     "min": [
-      -1.84575617313385,
-      -1.3466519117355347,
-      -0.3292219936847687
+      -1.8474745750427246,
+      -1.3502143621444702,
+      -0.33847153186798096
     ],
     "max": [
-      1.8420543670654297,
-      1.3495348691940308,
-      0.33571672439575195
+      1.8474745750427246,
+      1.3514002561569214,
+      0.3384709358215332
     ]
   },
   "sources": [
     "assets-source/models/valor/wifi.glb"
   ],
-  "generatedAt": "2026-09-14T12:11:14.950648+00:00",
+  "generatedAt": "2026-09-14T13:24:58.964955+00:00",
   "params": "wifi-params-mobile.bin",
-  "hasColor": true
+  "hasColor": true,
+  "links": "wifi-links-mobile.bin",
+  "linkCount": 12767,
+  "structure": "surface-lattice-v1"
 }

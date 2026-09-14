@@ -31,7 +31,7 @@ export function useTramoScrubs(reduced: boolean) {
         registry.setProgress(i, v);
       };
       if (motion.tramoModo === 'scrub') {
-        kills.push(createScrub({ trigger, start: tr.trigger.start[1], endTrigger, end: tr.trigger.end[1], markers, onUpdate }));
+        kills.push(createScrub({ id: `cloud-${i}`, trigger, start: tr.trigger.start[1], endTrigger, end: tr.trigger.end[1], markers, onUpdate }));
         return;
       }
       kills.push(

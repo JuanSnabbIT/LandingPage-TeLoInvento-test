@@ -13,22 +13,9 @@ import { motion } from '../../motion/tokens';
 const URL = '/models/hero-central/central-v2.glb';
 useGLTF.preload(URL);
 const HERO_FIT = 0.8;
-// Fracción del ALTO de la pantalla que ocupa el logo plano. El logo se
-// bakea aplanado y normalizado por su eje mayor (vertical, tras arreglar
-// `flatten_to_plane` en T23), así que su alto ocupa todo el rango [-1, 1] y
-// su ancho ~0.46 de eso -- encaja de sobra a lo ancho. Por eso se ajusta
-// contra `screen.size.y` (extensión vertical de la cara frontal) y no contra
-// `min(size.x, size.y)`, que lo dejaba a menos de la mitad del alto útil.
-const LOGO_FIT = 1.05;
-/**
- * Semi-ancho normalizado del logo bakeado: tras `flatten_to_plane` + `normalize`
- * el eje largo (vertical) ocupa [-1, 1] y el ancho llega a ±0.4563. Se usa como
- * guarda de contención: la escala se ajusta al ALTO de la pantalla, pero si la
- * pantalla fuera más angosta (u otro logo fuera más ancho) el término
- * `size.x / LOGO_HALF_WIDTH` gana y el logo sigue entrando a lo ancho.
- * Ver `public/textures/particulas/logo-positions-lod2.json` (bbox).
- */
-const LOGO_HALF_WIDTH = 0.4563;
+// Fit the shallow volumetric mark within the physical display.
+const LOGO_FIT = 1.0;
+const LOGO_HALF_WIDTH = 0.50;
 /**
  * La carcasa de central-v2.glb trae un material texturizado casi negro que
  * sobre el fondo oscuro del Hero no se distingue. Se reemplaza por un gris

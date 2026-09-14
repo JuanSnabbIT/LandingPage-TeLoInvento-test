@@ -3,12 +3,10 @@ import { cloudVert } from './cloud.vert';
 import { cloudFrag } from './cloud.frag';
 
 describe('cloud shaders (GLSL3 sanity)', () => {
-  it('vertex shader uses texelFetch + gl_InstanceID and no legacy uTargetMatrix uniform', () => {
+  it('vertex shader uses texelFetch + point/link indices and no legacy uTargetMatrix uniform', () => {
     expect(cloudVert).toContain('texelFetch(');
-    // La nube es InstancedMesh: el índice de partícula es la instancia, no el
-    // vértice -- `position`/`normal` son los de la malla de cada partícula.
-    expect(cloudVert).toContain('gl_InstanceID');
-    expect(cloudVert).not.toContain('gl_VertexID');
+    expect(cloudVert).toContain('gl_VertexID');
+    expect(cloudVert).toContain('particleIndex');
     expect(cloudVert).not.toContain('uTargetMatrix');
   });
 
@@ -17,8 +15,9 @@ describe('cloud shaders (GLSL3 sanity)', () => {
     expect(cloudFrag).toContain('uSurface');
   });
 
-  it('fragment shader no recorta sprites redondos: la silueta la da la malla', () => {
-    expect(cloudFrag).not.toContain('gl_PointCoord');
-    expect(cloudFrag).toContain('vShade');
+  it('round dots and surface networks have separate fragment coverage', () => {
+    expect(cloudFrag).toContain('gl_PointCoord');
+    expect(cloudFrag).toContain('SURFACE_LINES');
+    expect(cloudFrag).toContain('vNetwork');
   });
 });
