@@ -4,7 +4,7 @@
 > `webgl-scene-brief`. Describe la escena v3 ("la nube") tal como está en el
 > código al 2026-09-14, tras dos refactors: el del 2026-09-11 (morph sin
 > estado, seis formas, siete tramos — sigue vigente en lo estructural; al
-> 2026-09-14 son nueve formas y diez tramos, uno de ellos movido por click y
+> 2026-09-14 son nueve formas y diez tramos, dos de ellos movidos por click y
 > no por scroll, ver §5) y el
 > del 2026-09-14 (vuelta de mallas instanciadas por partícula a puntos +
 > "redes de superficie", y de transición disparada a scroll scrubbeado). La
@@ -166,9 +166,11 @@ La variante elegida (ADR del 2026-09-11 en el vault):
    `(uT − rank·uStagger)/(1 − uStagger)`, donde `rank` es el desfase por
    partícula (§5.2 — ordenado espacialmente por el barrido del tramo, ya no
    una semilla aleatoria). Sin estado: scrollear hacia atrás deshace
-   exactamente el morph. Única excepción: el tramo riego ⇄ seguridad del
-   carrusel de Capacidades lleva `driver: 'manual'` — `useTramoScrubs` no le
-   crea ScrollTrigger y su progreso lo escribe un tween GSAP desde el click
+   exactamente el morph. Única excepción: los tramos riego → seguridad →
+   hogar del carrusel de Capacidades llevan `driver: 'manual'` —
+   `useTramoScrubs` no les crea ScrollTrigger y su progreso lo escribe un
+   timeline GSAP desde el click, tramo por tramo (saltar dos tarjetas pasa
+   por la del medio)
    (`cloud/capacidadesCarousel.ts`, `registry.setProgress`). Sigue siendo el
    mismo `resolveTramo`: al elegir el último tramo con progreso > 0, un
    carrusel en 0 cae al tramo de llegada (misma forma, `riego`) sin salto. El
@@ -480,7 +482,7 @@ useSceneSlot({ id: 'problema', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', s
 intermedios — cada sección calibra el suyo contra su propia caja y la
 proporción de su forma (hoy: `problema` 1.04, `solucion` 1.0, `capacidades`
 0.95–1.05 según ancho con pose `frontal` — riego y seguridad son planos —,
-`hogar` 1.1, `valor` 1.26, `proceso` 0.86, `contacto-microchip` 0.95, 0.8
+`valor` 1.26, `proceso` 0.86, `contacto-microchip` 0.95, 0.8
 para la Central del Hero — son valores de ajuste visual, no una convención
 fija, y cambian cuando cambia la forma horneada de esa caja). El Hero es la
 excepción al rect: en vez de registrar una caja registra un **proveedor de
@@ -537,8 +539,8 @@ agrega `html.scene-poster`, que es lo único que muestra `.hero__poster` (el
 poster está en `display:none` por defecto: así no parpadea antes de que el
 canvas esté listo). `html.scene-3d` se agrega **cuando la nube reporta listo**,
 no al montar, y es lo que vuelve transparentes las cajas-escenario y revela
-las que sin escena van ocultas (la de la tarjeta de Capacidades, las `.visual`
-de Hogar y Contacto); como ese cambio mueve el layout, el host hace
+las que sin escena van ocultas (la de la tarjeta de Capacidades, la `.visual`
+de Contacto); como ese cambio mueve el layout, el host hace
 `ScrollTrigger.refresh()` en el frame siguiente.
 
 **Aislamiento de fallos.** Cada hijo del canvas va en su propio

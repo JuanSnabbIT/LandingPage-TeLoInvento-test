@@ -11,7 +11,6 @@ import { Hero } from './sections/Hero';
 import { Problema } from './sections/Problema';
 import { Solucion } from './sections/Solucion';
 import { Capacidades } from './sections/Capacidades';
-import { Hogar } from './sections/Hogar';
 import { Valor } from './sections/Valor';
 import { Proceso } from './sections/Proceso';
 import { Contacto } from './sections/Contacto';
@@ -58,7 +57,6 @@ function App() {
         <Problema />
         <Solucion />
         <Capacidades />
-        <Hogar />
         <Valor />
         <Proceso />
         <Contacto />

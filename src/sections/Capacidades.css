@@ -124,6 +124,72 @@ html.scene-3d .capacidades__card .icon {
 .capacidades__dots button.is-active {
   background: var(--blue);
 }
+/* Tarjeta Set Hogar: etiqueta "Próximamente" y lista de espera (venían de la sección Hogar, eliminada el 2026-09-14). */
+.capacidades__tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9a6a05;
+  background: #fdf1dc;
+  padding: 5px 11px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+.hogar-waitlist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 18px;
+}
+.hogar-waitlist__row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hogar-waitlist input[type='email'] {
+  font-family: var(--font);
+  font-size: 13.5px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 260px;
+}
+.hogar-waitlist input[aria-invalid='true'] {
+  border-color: #d64545;
+}
+.hogar-waitlist button {
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hogar-waitlist button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.hogar-waitlist__status {
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+.hogar-waitlist__status--ok {
+  color: var(--blue);
+  font-weight: 600;
+}
+.hogar-waitlist__status--error {
+  color: #b93232;
+}
 /* En teléfono las flechas a los costados dejaban la tarjeta en ~230 px: pasan debajo de la tarjeta, sobre los puntos. */
 @media (max-width: 560px) {
   .capacidades__carousel {

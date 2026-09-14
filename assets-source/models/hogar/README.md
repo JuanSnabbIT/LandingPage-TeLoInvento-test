@@ -3,7 +3,8 @@
 Generado el 2026-09-14 con Blender 5.2 headless por `generar_modelo.py`
 (mismo directorio). **No es diseño de producto**: es una casa genérica
 reconocible (paredes, techo a dos aguas, puerta, dos ventanas, chimenea,
-antena con anillos de señal) para que la sección Hogar tenga un visual 3D
+antena con anillos de señal) para que la tarjeta Set Hogar del carrusel de
+Capacidades tenga un visual 3D
 mientras no exista el modelo real. Mismo criterio que
 `assets-source/models/capacidades/` — cuando el equipo produzca el diseño
 real, se reemplaza `hogar.glb` con el mismo nombre y el código no cambia.
@@ -28,8 +29,9 @@ Regenerar:
 
 Forma nueva `hogar` en `assets-source/tools/shapes.json`, horneada por
 `bake_positions.py` como el resto de las formas de la nube de partículas
-(no es un `AnchoredModel` estático). Slot `useSceneSlot({ id: 'hogar' })`
-en `src/sections/Hogar.tsx`.
+(no es un `AnchoredModel` estático). Es la tercera tarjeta del carrusel de
+Capacidades (`src/sections/Capacidades.tsx`, slot `capacidades`): se llega
+con el click, tramo manual seguridad→hogar en `sequence.ts`.
 
 ## Notas técnicas
 

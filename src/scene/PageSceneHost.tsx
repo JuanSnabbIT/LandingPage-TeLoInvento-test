@@ -36,7 +36,7 @@ export function PageSceneHost({
     document.documentElement.classList.add('scene-3d');
     document.documentElement.classList.remove('scene-poster');
     // `.scene-3d` is what reveals every stage box (`.capacidades__stage`,
-    // the `.visual` boxes in Hogar/Contacto...), so adding it pushes
+    // the `.visual` box in Contacto...), so adding it pushes
     // everything below the first one down by that many px. The tramo
     // ScrollTriggers have already cached their start/end in px by now, so
     // without this re-measure the later tramos fire too early for the whole

@@ -41,7 +41,7 @@ descripción referencia explícitamente este mismo patrón de vault.
 - **La escena v3 ("la nube") es la única escena.** Una sola nube de
   puntos (`GL_POINTS`, no mallas instanciadas) recorre la página
   transformándose en nueve formas a lo largo de diez tramos (logo → nodo →
-  set → riego ⇄ seguridad → hogar → wifi → nodo explotado → nodo →
+  set → riego ⇄ seguridad ⇄ hogar (carrusel, por click) → wifi → nodo explotado → nodo →
   microchip → apagado): morph sin estado en el
   vertex shader entre dos texturas de posiciones horneadas (16 384
   partículas en desktop, 6 400 en mobile), más curl solo en vuelo. Sobre esa
@@ -80,12 +80,14 @@ descripción referencia explícitamente este mismo patrón de vault.
   - `src/motion/` — `tokens` · `scrollTrigger` (`createScrub`) ·
     `useTramoScrubs` · `useSectionReveals`
   - Las secciones con nube declaran su caja con `useSceneSlot`
-    (Problema, Solución, Capacidades, Hogar, Valor, Proceso, Contacto); el CSS
-    de escenarios vive en `src/styles/scene.css`. Capacidades es un carrusel
-    de dos tarjetas (Riego, Seguridad Perimetral) con la caja de escena dentro
-    de la tarjeta activa; Plataforma Central (`microchip`) vive en Contacto,
-    bajo el texto de introducción; Hogar muestra el placeholder `hogar.glb`
-    (`assets-source/models/hogar/README.md`).
+    (Problema, Solución, Capacidades, Valor, Proceso, Contacto); el CSS de
+    escenarios vive en `src/styles/scene.css`. Capacidades es un carrusel de
+    tres tarjetas (Riego, Seguridad Perimetral, Set Hogar — próximamente, con
+    su lista de espera `HogarWaitlist`) con la caja de escena dentro de la
+    tarjeta activa; la tarjeta Set Hogar muestra el placeholder `hogar.glb`
+    (`assets-source/models/hogar/README.md`). Plataforma Central (`microchip`)
+    vive en Contacto, bajo el texto de introducción. La sección Hogar de la
+    maqueta ya no existe como sección (2026-09-14).
 - **T13 hecho en código**: `src/lib/submitLead.ts` envía los leads del
   formulario de contacto y de la lista de espera Hogar a un destino
   configurado por env (`.env.example`); en dev sin env se simula.

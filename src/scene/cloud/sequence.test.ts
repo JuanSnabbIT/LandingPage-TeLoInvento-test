@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { TRAMOS, CAROUSEL_TRAMO_INDEX, resolveTramo, quantize, staircase } from './sequence';
-import { CAPACIDADES_CARDS } from './capacidadesCarousel';
+import { TRAMOS, CAROUSEL_TRAMOS, resolveTramo, quantize, staircase } from './sequence';
+import { CAPACIDADES_CARDS, driveCapacidadesCarousel, getCapacidadesCard } from './capacidadesCarousel';
+import { registry } from '../registry';
 
 const opts = { reposoCola: 0.2, reposoCabeza: 0.2, pasos: 3, meseta: 0.17, reduced: false };
 const unPaso = { ...opts, pasos: 1 };
@@ -51,15 +52,16 @@ describe('TRAMOS', () => {
     // Sin esto, insertar o renombrar un tramo (p. ej. meter `wifi` en Valor)
     // puede dejar un salto de forma o de slot que no falla en ningún test
     // unitario y sólo se ve como un parpadeo en la página. El tramo con
-    // `dynamicFrom` (salida de Capacidades hacia Hogar) es la única excepción
-    // deliberada: su forma de origen depende del carrusel en runtime, así
-    // que acá sólo se verifica que el slot encadena y que el default
-    // declarado es una de las dos formas que deja el tramo anterior.
+    // `dynamicFrom` (salida de Capacidades) es la única excepción deliberada:
+    // su forma de origen depende del carrusel en runtime, así que acá sólo se
+    // verifica que el slot encadena y que tanto el default declarado como lo
+    // que devuelve en runtime son tarjetas del carrusel.
     for (let i = 1; i < TRAMOS.length; i++) {
       const prev = TRAMOS[i - 1].to ?? TRAMOS[i - 1].from;
       if (TRAMOS[i].dynamicFrom) {
         expect(TRAMOS[i].from.slot).toBe(prev.slot);
-        expect([TRAMOS[i - 1].from.shape, TRAMOS[i - 1].to!.shape]).toContain(TRAMOS[i].from.shape);
+        expect(CAPACIDADES_CARDS).toContain(TRAMOS[i].from.shape);
+        expect(CAPACIDADES_CARDS).toContain(TRAMOS[i].dynamicFrom!());
         continue;
       }
       expect({ i, ...TRAMOS[i].from }).toEqual({ i, ...prev });
@@ -67,15 +69,19 @@ describe('TRAMOS', () => {
     expect(TRAMOS.at(-1)!.to).toBeNull();
     expect(TRAMOS.filter((t) => t.kind === 'apagado')).toHaveLength(1);
   });
-  it('el carrusel de Capacidades es manual y sale/entra en la misma forma que sus vecinos', () => {
-    const carousel = TRAMOS[CAROUSEL_TRAMO_INDEX];
-    expect(carousel.driver).toBe('manual');
-    expect(carousel.kind).toBe('morphEnSitio');
-    expect(CAPACIDADES_CARDS).toEqual([carousel.from.shape, carousel.to!.shape]);
+  it('los tramos manuales del carrusel son consecutivos, morphEnSitio, y recorren las tarjetas en orden', () => {
+    expect(CAROUSEL_TRAMOS.length).toBe(CAPACIDADES_CARDS.length - 1);
+    CAROUSEL_TRAMOS.forEach((idx, k) => {
+      expect(TRAMOS[idx].driver).toBe('manual');
+      expect(TRAMOS[idx].kind).toBe('morphEnSitio');
+      if (k > 0) expect(idx).toBe(CAROUSEL_TRAMOS[k - 1] + 1);
+    });
+    expect(CAPACIDADES_CARDS).toEqual([TRAMOS[CAROUSEL_TRAMOS[0]].from.shape, ...CAROUSEL_TRAMOS.map((i) => TRAMOS[i].to!.shape)]);
   });
-  it('el tramo que sale de Capacidades hacia Hogar arranca de la tarjeta que dejó activa el carrusel', () => {
-    const departure = TRAMOS[CAROUSEL_TRAMO_INDEX + 1];
+  it('el tramo que sale de Capacidades arranca de la tarjeta que dejó activa el carrusel', () => {
+    const departure = TRAMOS[CAROUSEL_TRAMOS.at(-1)! + 1];
     expect(departure.dynamicFrom).toBeDefined();
+    expect(departure.driver).toBeUndefined();
     expect(CAPACIDADES_CARDS).toContain(departure.dynamicFrom!());
   });
   it('cada tramo se dispara sobre la caja de su destino', () => {
@@ -99,6 +105,23 @@ describe('TRAMOS', () => {
       if (t.kind === 'morphEnSitio') expect(t.to!.slot).toBe(t.from.slot);
       if (t.kind === 'viaje') expect(t.to!.slot).not.toBe(t.from.slot);
     }
+  });
+});
+describe('carrusel de Capacidades (progreso manual)', () => {
+  it('la tarjeta activa i deja en 1 los tramos manuales anteriores y en 0 el resto, y resolveTramo muestra su forma', () => {
+    // Sin gsap (reduced): el progreso se escribe de una. Los tramos anteriores al carrusel se dan por completos.
+    const p = (i: number) => (i < CAROUSEL_TRAMOS[0] ? 1 : registry.getProgress(i));
+    CAPACIDADES_CARDS.forEach((card, i) => {
+      driveCapacidadesCarousel(i, CAROUSEL_TRAMOS, true);
+      CAROUSEL_TRAMOS.forEach((idx, k) => expect(registry.getProgress(idx)).toBe(i > k ? 1 : 0));
+      const r = resolveTramo(p, TRAMOS, opts);
+      expect(r.t >= 1 ? r.b : r.a).toBe(card);
+      expect(getCapacidadesCard()).toBe(card);
+    });
+    // Y hacia atrás, saltando dos tarjetas.
+    driveCapacidadesCarousel(0, CAROUSEL_TRAMOS, true);
+    CAROUSEL_TRAMOS.forEach((idx) => expect(registry.getProgress(idx)).toBe(0));
+    expect(resolveTramo(p, TRAMOS, opts).b).toBe('riego');
   });
 });
 describe('staircase', () => {

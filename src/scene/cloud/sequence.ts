@@ -37,18 +37,19 @@ export const TRAMOS: Tramo[] = [
   { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 95%'], end: ['problema', 'top 48%'] }, sweep: [0, -1, 0] },
   { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 95%'], end: ['solucion', 'top 48%'] }, sweep: [1, 0, 0] },
   { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'riego', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [-1, 0, 0] },
-  // Carrusel: riego<->seguridad, disparado por click en las tarjetas (capacidadesCarousel.ts), no por scroll.
+  // Carrusel de Capacidades: riego -> seguridad -> hogar, disparado por click en las tarjetas (capacidadesCarousel.ts), no por scroll. El `trigger` es inerte (useTramoScrubs los salta); apunta a la caja para cumplir la invariante trigger == to.slot.
   { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'seguridad', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [1, 0, 0], driver: 'manual' },
-  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'hogar', slot: 'hogar' }, kind: 'viaje', trigger: { start: ['hogar', 'top 95%'], end: ['hogar', 'top 48%'] }, sweep: [0, -1, 0], dynamicFrom: getCapacidadesCard },
-  { from: { shape: 'hogar', slot: 'hogar' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 95%'], end: ['valor', 'top 48%'] }, sweep: [1, 0, 0] },
+  { from: { shape: 'seguridad', slot: 'capacidades' }, to: { shape: 'hogar', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [1, 0, 0], driver: 'manual' },
+  // Salida de Capacidades: arranca de la tarjeta activa (`dynamicFrom`); `from.shape` es el default (carrusel sin tocar).
+  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 95%'], end: ['valor', 'top 48%'] }, sweep: [1, 0, 0], dynamicFrom: getCapacidadesCard },
   { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 95%'], end: ['proceso', 'top 68%'] }, sweep: [0, -1, 0] },
   { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'top 55%'], end: ['proceso', 'top 25%'] }, sweep: [0, 1, 0] },
   { from: { shape: 'nodo', slot: 'proceso' }, to: { shape: 'microchip', slot: 'contacto-microchip' }, kind: 'viaje', trigger: { start: ['contacto-microchip', 'top 90%'], end: ['contacto-microchip', 'top 55%'] }, sweep: [1, 0, 0] },
   // Apagado sobre la MISMA caja que la llegada, más abajo: el chip descansa entero mientras su caja va del 55% al 32% del viewport y se apaga al meterse bajo el header. Sobre la sección entera (#contacto) se apagaba antes de que el visitante lo viera.
   { from: { shape: 'microchip', slot: 'contacto-microchip' }, to: null, kind: 'apagado', trigger: { start: ['contacto-microchip', 'top 32%'], end: ['contacto-microchip', 'top 4%'] }, sweep: [0, -1, 0] },
 ];
-/** Posición en `TRAMOS` del tramo `morphEnSitio` riego<->seguridad -- capacidadesCarousel.ts lo necesita para escribir su progreso. */
-export const CAROUSEL_TRAMO_INDEX = TRAMOS.findIndex((t) => t.driver === 'manual');
+/** Posiciones en `TRAMOS` de los tramos manuales del carrusel de Capacidades, en orden (riego→seguridad, seguridad→hogar) -- capacidadesCarousel.ts escribe su progreso. */
+export const CAROUSEL_TRAMOS: readonly number[] = TRAMOS.flatMap((t, i) => (t.driver === 'manual' ? [i] : []));
 export interface Resolved { a: string; b: string; slotA: string; slotB: string; t: number; alpha: number; kind: TramoKind; index: number; crossfade: boolean }
 const smooth = (x: number) => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
 
