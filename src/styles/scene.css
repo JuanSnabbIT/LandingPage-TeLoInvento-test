@@ -16,6 +16,30 @@ html.scene-3d .capacidades__stage {
   position: relative;
 }
 
+/*
+ * Sin marco alrededor de los modelos (pedido del dueño del proyecto, 2026-09-14):
+ * la nube flota sobre la sección en vez de quedar encerrada en una tarjeta.
+ *
+ * Dos detalles a propósito:
+ * - `border-color: transparent` y no `border: 0`. El borde sigue ocupando su
+ *   píxel, así la caja mide exactamente lo mismo y el anclaje -- que lee el
+ *   rect de la caja por frame -- no corre el modelo ni un píxel.
+ * - Sólo con `scene-3d`. Sin WebGL (`?no3d`, contexto perdido, degradación a
+ *   póster) las cajas vuelven a mostrar su ícono o su foto de relleno, y ahí el
+ *   marco sí hace falta para que se lean como un espacio reservado.
+ * El Hero entra también: su hilo de 1 px alrededor de la Central es el mismo
+ * marco, en otra sección.
+ */
+html.scene-3d .hero__anchor,
+html.scene-3d .problema .visual,
+html.scene-3d .valor .visual,
+html.scene-3d .proceso .visual,
+html.scene-3d .solucion .photo-ph,
+html.scene-3d .capacidades__stage {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 html.scene-3d .problema .visual svg,
 html.scene-3d .valor .visual svg,
 html.scene-3d .proceso .visual svg,
