@@ -75,6 +75,19 @@ html.scene-3d .capacidades__stage {
     height: 180px;
   }
 }
+/* Los tres textos apilados en la misma celda: la tarjeta mide lo de la más alta y no cambia de tamaño al cambiar de set. */
+.capacidades__body {
+  display: grid;
+}
+.capacidades__text {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.capacidades__text:not(.is-active) {
+  visibility: hidden;
+}
 .capacidades__card .icon {
   width: 42px;
   height: 42px;

@@ -41,6 +41,11 @@ const CARDS = [
  * sección aparte). "Plataforma Central" vive en Contacto. El modelo 3D de
  * la tarjeta activa se anima con un click, no con scroll (ver
  * capacidadesCarousel.ts y los tramos `driver: 'manual'` en sequence.ts).
+ *
+ * Los tres textos se montan siempre, apilados en la misma celda de la
+ * tarjeta y con `visibility: hidden` los inactivos: así la tarjeta mide lo
+ * que mide la más alta (la de Hogar, con su formulario) y no cambia de
+ * tamaño al pasar de una a otra.
  */
 export function Capacidades() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -58,8 +63,6 @@ export function Capacidades() {
     setIndex(next);
     driveCapacidadesCarousel(next, CAROUSEL_TRAMOS, reduced);
   };
-
-  const active = CARDS[index];
 
   return (
     <section className="capacidades" id="capacidades">
@@ -82,15 +85,25 @@ export function Capacidades() {
           </button>
           <div className="capacidades__card">
             <div ref={stageRef} className="capacidades__stage" aria-hidden="true" />
-            <div className="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                {active.icon}
-              </svg>
+            <div className="capacidades__body">
+              {CARDS.map((card, i) => (
+                <div
+                  key={card.id}
+                  className={`capacidades__text${i === index ? ' is-active' : ''}`}
+                  aria-hidden={i !== index}
+                >
+                  <div className="icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      {card.icon}
+                    </svg>
+                  </div>
+                  {card.soon && <span className="capacidades__tag">Próximamente</span>}
+                  <h3>{card.title}</h3>
+                  <p>{card.body}</p>
+                  {card.soon && <HogarWaitlist />}
+                </div>
+              ))}
             </div>
-            {active.soon && <span className="capacidades__tag">Próximamente</span>}
-            <h3>{active.title}</h3>
-            <p>{active.body}</p>
-            {active.soon && <HogarWaitlist />}
           </div>
           <button
             type="button"
