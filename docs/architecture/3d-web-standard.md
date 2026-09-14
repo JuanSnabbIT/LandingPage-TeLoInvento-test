@@ -65,10 +65,10 @@ assets-source/
   tools/                            # scripts de Blender headless
 ```
 
-`assets-source/` no se bundlea ni se sirve — es insumo del pipeline de §6. Con
-la escena v2, el único GLB que el navegador descarga es
-`public/models/hero-central/central-v2.glb` (la Central sólida del Hero); todo
-lo demás se consume offline al hornear.
+`assets-source/` no se bundlea ni se sirve — es insumo del pipeline de §6.
+Desde el 2026-09-14 (Hero sin Central sólida) el navegador no descarga ningún
+GLB: todo se consume offline al hornear, y sólo viajan las texturas horneadas
+y el póster.
 
 Corolario operativo: **un GLB que solo alimenta el horneado nunca vive bajo
 `public/`**. Si está ahí, Vite lo copia a `dist/` y el visitante paga bytes que
@@ -102,9 +102,6 @@ src/
       sweep.ts                 # dirección/escala del barrido en espacio de objeto (JS, testeable)
       scissor.ts               # unionRect + corridorRect (recorte del renderer)
       cloudTokens.ts           # tamaño de punto, stagger, curl, spread, sweep, alphas
-    hero-central/            # la Central sólida del Hero
-      HeroCentral.tsx          # anclada a .hero__anchor; provee la pose 'hero-display'
-      bestFitPlane.ts / glow.vert.ts / glow.frag.ts
   motion/
     tokens.ts                  # ease, duraciones, stagger, parallax, tramo, scrub, tramoModo
     scrollTrigger.ts           # registerPlugin + config + createScrub (activo) + createTriggerTween (no usado hoy)
@@ -117,17 +114,16 @@ assets-source/
     bake_positions.py          # Blender headless: GLB → .bin/.json por forma y LOD
     shapes.json                # definición declarativa de las 9 formas
     test_bake_positions.py     # tests del horneado; se corren BAJO Blender (usan bpy)
-    render-poster.py           # Eevee → public/posters/central-v2.webp
+    render-poster.py           # Eevee → public/posters/logo.webp (el logo, respaldo del Hero)
   models/<escena>/             # fuentes .blend/.glb — insumos SOLO de horneado, nunca bajo public/
-    nodo/nodo.glb · capacidades/*.glb · hogar/hogar.glb (+ generar_modelo.py) · valor/*.glb · hero-central/*
+    nodo/nodo.glb · capacidades/*.glb · hogar/hogar.glb (+ generar_modelo.py) · valor/*.glb · hero-central/* (logo-lod1.glb, central-v2.glb)
     particles/                 # mallas py-*.glb + targets.bin: archivado, no lo usa el pipeline actual (README ahí)
     inbox/                     # entregas del dueño del proyecto sin destino asignado aún
 scripts/
   write-manifest.mjs           # public/scene-manifest.json desde los .json horneados
-public/
-  models/hero-central/central-v2.glb   # único GLB que descarga el navegador
+public/                        # el navegador no descarga ningún GLB: sólo texturas horneadas y el póster
   textures/particulas/<forma>-{positions,params,links}-<lod>.{bin,json}
-  posters/central-v2.webp
+  posters/logo.webp
   scene-manifest.json
 e2e/
   scene.spec.ts / scene-mobile.spec.ts / scene-budget.spec.ts
@@ -443,8 +439,10 @@ horneada hoy trae los cuatro). **Se regenera después de cada horneado.**
 blender -b --python assets-source/tools/render-poster.py
 ```
 
-Render Eevee de `central-v2.glb` a `public/posters/central-v2.webp`. Es el
-fallback del Hero: vive en el DOM dentro de `.hero__anchor`, no en la capa fija.
+Render Eevee ortográfico y de frente de `logo-lod1.glb` (la ampolleta, con los
+mismos colores por material que `shapes.json`, emisivos) a
+`public/posters/logo.webp`. Es el fallback del Hero: vive en el DOM dentro de
+`.hero__anchor`, no en la capa fija.
 
 ### 6.6 Convención de nombres
 
@@ -482,14 +480,31 @@ useSceneSlot({ id: 'problema', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', s
 intermedios — cada sección calibra el suyo contra su propia caja y la
 proporción de su forma (hoy: `problema` 1.04, `solucion` 1.0, `capacidades`
 0.95–1.05 según ancho con pose `frontal` — riego y seguridad son planos —,
-`valor` 1.26, `proceso` 0.86, `contacto-microchip` 0.95, 0.8
-para la Central del Hero — son valores de ajuste visual, no una convención
-fija, y cambian cuando cambia la forma horneada de esa caja). El Hero es la
-excepción al rect: en vez de registrar una caja registra un **proveedor de
-pose** (`registerPoseProvider('hero-display')`) que devuelve la matriz del
-plano de la pantalla de la Central, para que el logo nazca dentro del display.
-Los scrubs de tramo se montan en un componente propio **después** de las
-secciones, para que todos los slots ya estén registrados.
+`valor` 1.26, `proceso` 0.86, `contacto-microchip` 0.95, `hero-display` 1.0
+— son valores de ajuste visual, no una convención fija, y cambian cuando
+cambia la forma horneada de esa caja). Desde el 2026-09-14 el Hero también es
+un slot sobre `.hero__anchor` (antes registraba un **proveedor de pose**,
+`registerPoseProvider('hero-display')`, con la matriz de la pantalla de la
+Central sólida; el mecanismo sigue en `registry` por si vuelve a hacer falta).
+Un slot puede declarar `parallax` (giro máximo en rad): ParticleCloud lo
+aplica sobre la pose con un yaw/pitch amortiguado por el puntero
+(`motion.parallax.damping`), que el origen de un viaje pierde y el destino
+gana con `t`. Los scrubs de tramo se montan en un componente propio
+**después** de las secciones, para que todos los slots ya estén registrados.
+
+**Puntero y llama (2026-09-14).** Dos movimientos que no son función del
+scroll, ambos en el vertex shader y acotados: (1) el puntero empuja las
+partículas de cualquier modelo hacia afuera del cursor, en el plano de
+pantalla, con radio y empuje relativos al span del modelo
+(`cloudTokens.pointer`: 0.5 y 0.045 — muy sutil a propósito); la posición del
+puntero llega amortiguada desde ParticleCloud (`anchorToWorldXY` en z = 0) y
+sólo con puntero fino y sin reduced-motion. (2) Las partículas marcadas en el
+horneado (`animate` en `shapes.json`, la llama del logo) reciben un campo de
+curl que fluye en el tiempo más un parpadeo de tamaño (`cloudTokens.flame`);
+mientras una forma con esa marca está a la vista la nube pide frames seguidos
+(`registry.markDirty` por frame), así que el Hero sí renderiza continuo — es
+el único lugar. La marca viaja en el canal `w` de la textura de posiciones
+(`seed * .5 + flag * .5`; el shader lee `seed = fract(w * 2)`, `flag = step(.5, w)`).
 
 **Scissor de corredor — la nube nunca dibuja sobre texto.** La capa está en
 z 5 (sobre el contenido, bajo el header en z 20): los fondos de sección son

@@ -75,12 +75,17 @@ descripción referencia explícitamente este mismo patrón de vault.
     `resolveTramo`) · `useShapeTextures`/`shapeLoader` ·
     `cloud.vert`/`cloud.frag`/`curl.glsl` · `scissor` · `cloudTokens` ·
     `capacidadesCarousel` (tween GSAP que mueve el tramo manual riego ⇄ seguridad)
-  - `src/scene/hero-central/` — `HeroCentral` (Central sólida del Hero,
-    `central-v2.glb`, provee la pose `hero-display`) · `bestFitPlane` · `glow.*`
+  - El Hero es un slot más (`hero-display` sobre `.hero__anchor`, en
+    `Hero.tsx`): texto a la izquierda, el logo en partículas a la derecha, con
+    `parallax` (giro leve con el puntero) y la llama animada (partículas
+    `TLI_Flame_*`, marcadas en el horneado con `animate` en `shapes.json`). La
+    Central sólida (`HeroCentral`, `bestFitPlane`, `glow.*`) se retiró el
+    2026-09-14 — `central-v2.glb` sólo alimenta el horneado de `set`. El puntero
+    además empuja muy levemente las partículas de cualquier modelo (`cloudTokens.pointer`).
   - `src/motion/` — `tokens` · `scrollTrigger` (`createScrub`) ·
     `useTramoScrubs` · `useSectionReveals`
   - Las secciones con nube declaran su caja con `useSceneSlot`
-    (Problema, Solución, Capacidades, Valor, Proceso, Contacto); el CSS de
+    (Hero, Problema, Solución, Capacidades, Valor, Proceso, Contacto); el CSS de
     escenarios vive en `src/styles/scene.css`. Capacidades es un carrusel de
     tres tarjetas (Riego, Seguridad Perimetral, Set Hogar — próximamente, con
     su lista de espera `HogarWaitlist`) con la caja de escena dentro de la
@@ -105,7 +110,7 @@ blender -b --python assets-source/tools/bake_positions.py
 blender -b --python assets-source/tools/bake_positions.py -- --shape nodo --lod mobile
 # regenerar public/scene-manifest.json después de hornear  (OBLIGATORIO)
 npm run manifest
-# poster del Hero
+# poster del Hero (el logo, respaldo sin WebGL) -> public/posters/logo.webp
 blender -b --python assets-source/tools/render-poster.py
 
 npm test                                        # vitest (unitarios + smoke r3f)
