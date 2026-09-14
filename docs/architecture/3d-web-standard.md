@@ -3,7 +3,9 @@
 > **Esta es la copia del proyecto**, no la semilla bundlada con la skill
 > `webgl-scene-brief`. Describe la escena v3 ("la nube") tal como está en el
 > código al 2026-09-14, tras dos refactors: el del 2026-09-11 (morph sin
-> estado, seis formas, siete tramos — sigue vigente en lo estructural) y el
+> estado, seis formas, siete tramos — sigue vigente en lo estructural; al
+> 2026-09-14 son nueve formas y diez tramos, uno de ellos movido por click y
+> no por scroll, ver §5) y el
 > del 2026-09-14 (vuelta de mallas instanciadas por partícula a puntos +
 > "redes de superficie", y de transición disparada a scroll scrubbeado). La
 > spec de diseño original vive en el vault: `13-spec-diseno-nube.md` (y sus
@@ -93,6 +95,7 @@ src/
     cloud/                   # la nube
       ParticleCloud.tsx        # <points> + 2 <lineSegments> ("redes"), matriz identidad, poses en uniforms
       sequence.ts              # TRAMOS (datos, con sweep por tramo) + resolveTramo (pura) + quantize
+      capacidadesCarousel.ts   # tarjeta activa del carrusel + tween GSAP que escribe el progreso del tramo manual
       useShapeTextures.ts      # carga/caché/reintento de posiciones, params y links horneados
       shapeLoader.ts           # manifest + .bin → DataTexture RGBA16F / links → Uint32Array
       cloud.vert.ts / cloud.frag.ts / curl.glsl.ts   # GLSL3 sin estado, comparte puntos y redes
@@ -112,11 +115,11 @@ src/
 assets-source/
   tools/
     bake_positions.py          # Blender headless: GLB → .bin/.json por forma y LOD
-    shapes.json                # definición declarativa de las 6 formas
+    shapes.json                # definición declarativa de las 9 formas
     test_bake_positions.py     # tests del horneado; se corren BAJO Blender (usan bpy)
     render-poster.py           # Eevee → public/posters/central-v2.webp
   models/<escena>/             # fuentes .blend/.glb — insumos SOLO de horneado, nunca bajo public/
-    nodo/nodo.glb · capacidades/*.glb · valor/*.glb · hero-central/*
+    nodo/nodo.glb · capacidades/*.glb · hogar/hogar.glb (+ generar_modelo.py) · valor/*.glb · hero-central/*
     particles/                 # mallas py-*.glb + targets.bin: archivado, no lo usa el pipeline actual (README ahí)
     inbox/                     # entregas del dueño del proyecto sin destino asignado aún
 scripts/
@@ -163,7 +166,14 @@ La variante elegida (ADR del 2026-09-11 en el vault):
    `(uT − rank·uStagger)/(1 − uStagger)`, donde `rank` es el desfase por
    partícula (§5.2 — ordenado espacialmente por el barrido del tramo, ya no
    una semilla aleatoria). Sin estado: scrollear hacia atrás deshace
-   exactamente el morph.
+   exactamente el morph. Única excepción: el tramo riego ⇄ seguridad del
+   carrusel de Capacidades lleva `driver: 'manual'` — `useTramoScrubs` no le
+   crea ScrollTrigger y su progreso lo escribe un tween GSAP desde el click
+   (`cloud/capacidadesCarousel.ts`, `registry.setProgress`). Sigue siendo el
+   mismo `resolveTramo`: al elegir el último tramo con progreso > 0, un
+   carrusel en 0 cae al tramo de llegada (misma forma, `riego`) sin salto. El
+   tramo siguiente declara `dynamicFrom` (origen = tarjeta activa) para
+   arrancar de la forma que realmente se ve.
 4. **Curl solo en vuelo**: turbulencia curl-noise calculada en el shader,
    modulada por `sin(π·local)` (`wing`, vale 0 en ambos extremos) y escalada
    al tamaño del morph (`uSpan`), con rama por uniform (`uCurlOn`) — así en
@@ -258,9 +268,9 @@ piezas curvas sin aristas -- una esfera lisa (los chorros de agua de
 `riego.glb`) "no tiene borde cerca" y se llevaba las particulas mas grandes
 del modelo; el grosor corrige eso. El resultado se normaliza por **percentiles
 de la propia forma** (p8-p92, no una fraccion fija del bounding box) para que
-una forma compuesta de piezas de tamanos muy distintos (la fila de
-Capacidades: 10.9 de ancho total, piezas de ~2) use todo el rango de tamano en
-vez de quedar entera del lado chico.
+una forma compuesta de piezas de tamanos muy distintos (como era la fila
+de tres piezas de Capacidades antes del carrusel: 10.9 de ancho total, piezas
+de ~2) use todo el rango de tamano en vez de quedar entera del lado chico.
 
 Se hornea el factor (canal A de la textura de parametros `<forma>-params-<lod>.bin`,
 junto al color en RGB), no el tamano final, asi el rango (`edgeScale`/
@@ -319,8 +329,8 @@ los vértices, así que la densidad de la malla no determina la distribución.
 
 ### 6.2 Definición declarativa — `assets-source/tools/shapes.json`
 
-Las seis formas (`logo`, `nodo`, `nodo-explotado`, `set`, `capacidades`,
-`wifi`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw`/
+Las nueve formas (`logo`, `nodo`, `nodo-explotado`, `set`, `riego`,
+`seguridad`, `hogar`, `wifi`, `microchip`), sus fuentes GLB, y por forma: `offset`/`scale`/`yaw`/
 `pitch`/`exclude` por fuente, `explode` (desplazamiento por **nombre exacto de
 malla**), `flatten`, `shell`, `pairWith`, `colors` (material → hex, hornea una
 textura de color por partícula), `edgeBoost` (sesgo de densidad hacia aristas
@@ -469,7 +479,8 @@ useSceneSlot({ id: 'problema', anchorRef: ref, fit: 0.72, pose: 'tresCuartos', s
 `fit` es fracción del **lado menor** de la caja, así nada desborda en anchos
 intermedios — cada sección calibra el suyo contra su propia caja y la
 proporción de su forma (hoy: `problema` 1.04, `solucion` 1.0, `capacidades`
-1.85–2.9 según ancho con pose `frontal`, `valor` 1.26, `proceso` 0.86, 0.8
+0.95–1.05 según ancho con pose `frontal` — riego y seguridad son planos —,
+`hogar` 1.1, `valor` 1.26, `proceso` 0.86, `contacto-microchip` 0.95, 0.8
 para la Central del Hero — son valores de ajuste visual, no una convención
 fija, y cambian cuando cambia la forma horneada de esa caja). El Hero es la
 excepción al rect: en vez de registrar una caja registra un **proveedor de
@@ -495,8 +506,10 @@ el dpr internamente.
 
 **Elementos de texto protegidos, además del scissor.** Cada partícula/línea
 que cae sobre una caja de texto marcada (`header, h1, h2, p, ul, ol,
-.card-grid, .hogar, form, .scene-caption, .scene-legend` — recolectadas una
-vez al montar `ParticleCloud`, hasta 24 cajas, en coordenadas de framebuffer)
+.capacidades__card h3, form, .scene-caption` — recolectadas una vez al montar
+`ParticleCloud`, hasta 24 cajas, en coordenadas de framebuffer; nunca un
+wrapper que contenga una caja de escena: proteger `.capacidades__card` entera
+descartaba el modelo del carrusel)
 se descarta en el fragment shader (`uProtected[24]`, `discard`). Es una
 segunda defensa, no un reemplazo del scissor: cubre el caso de partículas que
 SÍ están dentro del corredor recortado pero caen justo sobre una línea de
@@ -523,8 +536,9 @@ reduced → poster`. El último se persiste en `sessionStorage` bajo la clave
 agrega `html.scene-poster`, que es lo único que muestra `.hero__poster` (el
 poster está en `display:none` por defecto: así no parpadea antes de que el
 canvas esté listo). `html.scene-3d` se agrega **cuando la nube reporta listo**,
-no al montar, y es lo que vuelve transparentes las cajas-escenario y revela la
-franja de Capacidades; como ese cambio mueve el layout ~244 px, el host hace
+no al montar, y es lo que vuelve transparentes las cajas-escenario y revela
+las que sin escena van ocultas (la de la tarjeta de Capacidades, las `.visual`
+de Hogar y Contacto); como ese cambio mueve el layout, el host hace
 `ScrollTrigger.refresh()` en el frame siguiente.
 
 **Aislamiento de fallos.** Cada hijo del canvas va en su propio

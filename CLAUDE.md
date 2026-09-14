@@ -40,8 +40,9 @@ descripción referencia explícitamente este mismo patrón de vault.
   `src/sections/` (T10).
 - **La escena v3 ("la nube") es la única escena.** Una sola nube de
   puntos (`GL_POINTS`, no mallas instanciadas) recorre la página
-  transformándose en seis formas a lo largo de siete tramos (logo → nodo →
-  set → capacidades → wifi → nodo explotado → nodo): morph sin estado en el
+  transformándose en nueve formas a lo largo de diez tramos (logo → nodo →
+  set → riego ⇄ seguridad → hogar → wifi → nodo explotado → nodo →
+  microchip → apagado): morph sin estado en el
   vertex shader entre dos texturas de posiciones horneadas (16 384
   partículas en desktop, 6 400 en mobile), más curl solo en vuelo. Sobre esa
   misma nube se dibujan además dos `LineSegments` ("redes de superficie":
@@ -72,14 +73,19 @@ descripción referencia explícitamente este mismo patrón de vault.
     `frameBudget`/`FrameBudgetGuard` · `SlotErrorBoundary` · `debug`
   - `src/scene/cloud/` — `ParticleCloud` · `sequence` (TRAMOS +
     `resolveTramo`) · `useShapeTextures`/`shapeLoader` ·
-    `cloud.vert`/`cloud.frag`/`curl.glsl` · `scissor` · `cloudTokens`
+    `cloud.vert`/`cloud.frag`/`curl.glsl` · `scissor` · `cloudTokens` ·
+    `capacidadesCarousel` (tween GSAP que mueve el tramo manual riego ⇄ seguridad)
   - `src/scene/hero-central/` — `HeroCentral` (Central sólida del Hero,
     `central-v2.glb`, provee la pose `hero-display`) · `bestFitPlane` · `glow.*`
   - `src/motion/` — `tokens` · `scrollTrigger` (`createScrub`) ·
     `useTramoScrubs` · `useSectionReveals`
   - Las secciones con nube declaran su caja con `useSceneSlot`
-    (Problema, Solución, Capacidades, Valor, Proceso); el CSS de escenarios
-    vive en `src/styles/scene.css`.
+    (Problema, Solución, Capacidades, Hogar, Valor, Proceso, Contacto); el CSS
+    de escenarios vive en `src/styles/scene.css`. Capacidades es un carrusel
+    de dos tarjetas (Riego, Seguridad Perimetral) con la caja de escena dentro
+    de la tarjeta activa; Plataforma Central (`microchip`) vive en Contacto,
+    bajo el texto de introducción; Hogar muestra el placeholder `hogar.glb`
+    (`assets-source/models/hogar/README.md`).
 - **T13 hecho en código**: `src/lib/submitLead.ts` envía los leads del
   formulario de contacto y de la lista de espera Hogar a un destino
   configurado por env (`.env.example`); en dev sin env se simula.
@@ -124,10 +130,6 @@ lo usa el e2e).
 - **T16 — validación en dispositivo mobile real** (gama media). Emulación
   390×844 verificada; falta el aparato.
 - **Decisiones del dueño del proyecto**:
-  - Franja `.capacidades__stage`: ubicación y alto. Hoy va **encima** de las
-    tarjetas (220 px desktop / 160 px ≤900 px) y queda ~75 % vacía; además el
-    corredor del tramo 3 pasa tenue sobre la tarjeta del medio. Alternativa:
-    bajarla debajo de las tarjetas.
   - "Feel" de los reveals: los tokens cambiaron a 0.5 s / `expo.out` (antes
     0.7 s / `power2.out`) — falta que lo mire.
 - Si el sensor de humedad es parte del kit base de Riego o un add-on
