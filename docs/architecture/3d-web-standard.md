@@ -520,6 +520,13 @@ recorta las cajas de texto puntuales dentro de él).
 
 **Nunca `setState` de React dentro de `useFrame`** — mutar uniforms y refs.
 
+**Nunca un reveal (tween de opacidad/traslación del DOM) sobre una caja de
+escena ni sobre un ancestro suyo.** La nube lee el rect de la caja por frame:
+si la caja se desliza 22 px con el reveal de la sección, el modelo queda
+rezagado detrás de ella al entrar. `useSectionReveals` excluye las cajas y sus
+contenedores (`SKIP`) y `useSectionReveals.test.tsx` lo verifica renderizando
+las secciones — agregar ahí cualquier sección nueva con caja.
+
 **Reduced-motion (contrato).** `prefers-reduced-motion` ⇒ el progreso llega
 **cuantizado** (0 o 1, con histéresis ±0.05 alrededor de 0.5): estados finales
 por sección, sin viaje. Al cambiar la forma efectiva se hace un fundido de

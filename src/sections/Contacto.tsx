@@ -95,7 +95,8 @@ export function Contacto() {
   return (
     <section className="contacto" id="contacto">
       <div className="wrap grid">
-        <div>
+        {/* `contacto__intro` está en la lista SKIP de useSectionReveals: contiene la caja de escena del chip. */}
+        <div className="contacto__intro">
           <div className="eyebrow">CONTACTO</div>
           <h2>Solicite una propuesta a medida</h2>
           <p className="lead">

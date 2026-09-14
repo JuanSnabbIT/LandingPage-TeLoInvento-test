@@ -11,19 +11,33 @@ gsap.registerPlugin(ScrollTrigger);
  * What gets revealed, per section below the Hero: the direct children of
  * each section's main container (eyebrow, heading, lead, lists, visual...)
  * plus the individual cards/stats/steps inside grids, so a grid staggers
- * card by card instead of popping in as one block.
+ * card by card instead of popping in as one block. `.capacidades__body` is
+ * the text block of the carousel card, one level deeper than the selectors
+ * reach.
  */
-const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', '.card', '.stat'].join(', ');
+const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', '.card', '.stat', '.capacidades__body'].join(', ');
 /**
  * Never revealed: grid containers (targeted through their children instead)
- * and every box the 3D scene draws into -- `.visual`, `.photo-ph` and
- * `.capacidades__stage`. A reveal tween on a stage box would fade/translate
- * the DOM anchor the scene reads its rect from every frame, so the model
- * would drift away from its box on entry (spec 13 §11). `.capacidades__carousel`
- * and its nav buttons are skipped the same way `.card-grid` used to be --
- * `.capacidades__card`, one level deeper, is what actually fades.
+ * and every box the 3D scene draws into -- `.visual`, `.photo-ph`,
+ * `.capacidades__stage` -- AND every element that CONTAINS one of those
+ * boxes (`.capacidades__card`, `.contacto__intro`). A reveal tween on a
+ * stage box, or on an ancestor of it, translates the DOM anchor the scene
+ * reads its rect from every frame, so the model drifts behind its box on
+ * entry (spec 13 §11; came back on 2026-09-14 when the Capacidades stage
+ * moved inside the carousel card). `.capacidades__carousel` and its nav
+ * buttons are skipped the same way `.card-grid` used to be.
  */
-const SKIP = '.card-grid, .stat-grid, .grid, .form-grid, form, .visual, .photo-ph, .capacidades__stage, .capacidades__carousel, .capacidades__nav';
+const SKIP = [
+  '.card-grid', '.stat-grid', '.grid', '.form-grid', 'form',
+  '.visual', '.photo-ph', '.capacidades__stage',
+  '.capacidades__card', '.contacto__intro',
+  '.capacidades__carousel', '.capacidades__nav',
+].join(', ');
+
+/** Elements a section reveals -- exported so a test can assert none of them wraps a stage box. */
+export function revealTargets(section: HTMLElement): HTMLElement[] {
+  return Array.from(section.querySelectorAll<HTMLElement>(TARGETS)).filter((el) => !el.matches(SKIP));
+}
 
 /**
  * T12: subtle fade-up reveal for every content section as it scrolls into
@@ -50,12 +64,7 @@ export function useSectionReveals(scopeRef: RefObject<HTMLElement | null>) {
 
       const sections = Array.from(scope.querySelectorAll<HTMLElement>('section:not(.hero)'));
       for (const section of sections) {
-        // Grid containers are targeted through their children, never
-        // themselves -- so a card-grid's own opacity is untouched and
-        // only its cards animate.
-        const elements = Array.from(section.querySelectorAll<HTMLElement>(TARGETS)).filter(
-          (el) => !el.matches(SKIP),
-        );
+        const elements = revealTargets(section);
         if (elements.length === 0) continue;
 
         gsap.from(elements, {
