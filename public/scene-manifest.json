@@ -65,6 +65,7 @@
         },
         "params": "/textures/particulas/logo-params-lod2.bin",
         "hasColor": true,
+        "animated": true,
         "links": "/textures/particulas/logo-links-lod2.bin",
         "linkCount": 32048,
         "structure": "surface-lattice-v1"
@@ -87,6 +88,7 @@
         },
         "params": "/textures/particulas/logo-params-mobile.bin",
         "hasColor": true,
+        "animated": true,
         "links": "/textures/particulas/logo-links-mobile.bin",
         "linkCount": 12269,
         "structure": "surface-lattice-v1"
@@ -419,15 +421,18 @@
     "logo",
     "nodo",
     "set",
-    "capacidades",
+    "riego",
+    "seguridad",
+    "hogar",
     "wifi",
     "nodo-explotado",
-    "nodo"
+    "nodo",
+    "microchip"
   ],
   "tiers": {
     "high": "lod2",
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-14T14:46:52.187Z"
+  "generatedAt": "2026-09-14T15:46:49.807Z"
 }

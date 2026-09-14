@@ -18,9 +18,10 @@
   "sources": [
     "assets-source/models/capacidades/riego.glb"
   ],
-  "generatedAt": "2026-09-14T14:26:51.407974+00:00",
+  "generatedAt": "2026-09-14T15:43:45.584806+00:00",
   "params": "riego-params-lod2.bin",
   "hasColor": true,
+  "animated": false,
   "links": "riego-links-lod2.bin",
   "linkCount": 29541,
   "structure": "surface-lattice-v1"

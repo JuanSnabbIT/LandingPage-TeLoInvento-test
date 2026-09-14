@@ -18,9 +18,10 @@
   "sources": [
     "assets-source/models/capacidades/microchip.glb"
   ],
-  "generatedAt": "2026-09-14T14:46:50.922284+00:00",
+  "generatedAt": "2026-09-14T15:44:26.562602+00:00",
   "params": "microchip-params-mobile.bin",
   "hasColor": true,
+  "animated": false,
   "links": "microchip-links-mobile.bin",
   "linkCount": 12192,
   "structure": "surface-lattice-v1"

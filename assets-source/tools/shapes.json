@@ -16,6 +16,11 @@
         }
       ],
       "flatten": false,
+      "_animate": "Partículas que el shader anima solas (turbulencia + parpadeo): la llama del logo. Se marca por material en el canal w de la textura de posiciones.",
+      "animate": [
+        "TLI_Flame_Core",
+        "TLI_Flame_Outer"
+      ],
       "shell": 0.0,
       "colors": {
         "TLI_Yellow": "#FFC83D",
@@ -97,7 +102,7 @@
     "set": {
       "sources": [
         {
-          "file": "public/models/hero-central/central-v2.glb"
+          "file": "assets-source/models/hero-central/central-v2.glb"
         },
         {
           "file": "assets-source/models/nodo/nodo.glb",

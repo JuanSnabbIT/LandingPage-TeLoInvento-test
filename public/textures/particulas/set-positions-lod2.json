@@ -16,13 +16,14 @@
     ]
   },
   "sources": [
-    "public/models/hero-central/central-v2.glb",
+    "assets-source/models/hero-central/central-v2.glb",
     "assets-source/models/nodo/nodo.glb",
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-14T14:26:45.018506+00:00",
+  "generatedAt": "2026-09-14T15:46:40.950325+00:00",
   "params": "set-params-lod2.bin",
   "hasColor": true,
+  "animated": false,
   "links": "set-links-lod2.bin",
   "linkCount": 31763,
   "structure": "surface-lattice-v1"

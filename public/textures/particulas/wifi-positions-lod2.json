@@ -18,9 +18,10 @@
   "sources": [
     "assets-source/models/valor/wifi.glb"
   ],
-  "generatedAt": "2026-09-14T14:27:10.784499+00:00",
+  "generatedAt": "2026-09-14T15:44:05.759263+00:00",
   "params": "wifi-params-lod2.bin",
   "hasColor": true,
+  "animated": false,
   "links": "wifi-links-lod2.bin",
   "linkCount": 32713,
   "structure": "surface-lattice-v1"

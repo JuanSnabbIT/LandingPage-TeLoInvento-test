@@ -18,9 +18,10 @@
   "sources": [
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-14T14:27:44.736564+00:00",
+  "generatedAt": "2026-09-14T15:44:31.073112+00:00",
   "params": "nodo-explotado-params-mobile.bin",
   "hasColor": true,
+  "animated": false,
   "links": "nodo-explotado-links-mobile.bin",
   "linkCount": 12433,
   "structure": "surface-lattice-v1"

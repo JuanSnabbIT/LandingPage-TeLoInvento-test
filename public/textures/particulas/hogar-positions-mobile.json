@@ -18,9 +18,10 @@
   "sources": [
     "assets-source/models/hogar/hogar.glb"
   ],
-  "generatedAt": "2026-09-14T14:27:37.910272+00:00",
+  "generatedAt": "2026-09-14T15:44:27.642564+00:00",
   "params": "hogar-params-mobile.bin",
   "hasColor": true,
+  "animated": false,
   "links": "hogar-links-mobile.bin",
   "linkCount": 12482,
   "structure": "surface-lattice-v1"
