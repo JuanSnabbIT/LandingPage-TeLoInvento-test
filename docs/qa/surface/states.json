@@ -1,0 +1,202 @@
+[
+  {
+    "device": "desktop",
+    "i": 0,
+    "y": 1079.9921875,
+    "scene": {
+      "a": "logo",
+      "b": "nodo",
+      "slotA": "hero-display",
+      "slotB": "problema",
+      "t": 0,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 0,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "i": 1,
+    "y": 1856,
+    "scene": {
+      "a": "logo",
+      "b": "nodo",
+      "slotA": "hero-display",
+      "slotB": "problema",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 0,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "i": 2,
+    "y": 2560.671875,
+    "scene": {
+      "a": "nodo",
+      "b": "set",
+      "slotA": "problema",
+      "slotB": "solucion",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 1,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "i": 3,
+    "y": 3367.828125,
+    "scene": {
+      "a": "set",
+      "b": "capacidades",
+      "slotA": "solucion",
+      "slotB": "capacidades",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 2,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "i": 4,
+    "y": 4429.859375,
+    "scene": {
+      "a": "wifi",
+      "b": "nodo-explotado",
+      "slotA": "valor",
+      "slotB": "proceso",
+      "t": 0.030032985443484678,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 4,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "i": 5,
+    "y": 5032.484375,
+    "scene": {
+      "a": "nodo-explotado",
+      "b": "nodo",
+      "slotA": "proceso",
+      "slotB": "proceso",
+      "t": 0.8620744318516741,
+      "alpha": 1,
+      "kind": "morphEnSitio",
+      "index": 5,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "desktop",
+    "errors": []
+  },
+  {
+    "device": "mobile",
+    "i": 0,
+    "y": 924,
+    "scene": {
+      "a": "logo",
+      "b": "nodo",
+      "slotA": "hero-display",
+      "slotB": "problema",
+      "t": 0,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 0,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "i": 1,
+    "y": 1534,
+    "scene": {
+      "a": "logo",
+      "b": "nodo",
+      "slotA": "hero-display",
+      "slotB": "problema",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 0,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "i": 2,
+    "y": 2490.234375,
+    "scene": {
+      "a": "nodo",
+      "b": "set",
+      "slotA": "problema",
+      "slotB": "solucion",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 1,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "i": 3,
+    "y": 3543.265625,
+    "scene": {
+      "a": "set",
+      "b": "capacidades",
+      "slotA": "solucion",
+      "slotB": "capacidades",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 2,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "i": 4,
+    "y": 4831.953125,
+    "scene": {
+      "a": "capacidades",
+      "b": "wifi",
+      "slotA": "capacidades",
+      "slotB": "valor",
+      "t": 1,
+      "alpha": 1,
+      "kind": "viaje",
+      "index": 3,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "i": 5,
+    "y": 5666.4375,
+    "scene": {
+      "a": "nodo-explotado",
+      "b": "nodo",
+      "slotA": "proceso",
+      "slotB": "proceso",
+      "t": 0.5914375958704308,
+      "alpha": 1,
+      "kind": "morphEnSitio",
+      "index": 5,
+      "crossfade": false
+    }
+  },
+  {
+    "device": "mobile",
+    "errors": []
+  }
+]
