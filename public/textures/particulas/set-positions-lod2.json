@@ -20,7 +20,7 @@
     "assets-source/models/nodo/nodo.glb",
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-11T20:53:34.116181+00:00",
+  "generatedAt": "2026-09-14T12:10:48.550951+00:00",
   "params": "set-params-lod2.bin",
-  "hasColor": false
+  "hasColor": true
 }

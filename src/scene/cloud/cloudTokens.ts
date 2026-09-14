@@ -25,8 +25,8 @@ export const cloudTokens = {
   // una caja de 300 px sería invisible. Con el jitter por semilla el rango
   // efectivo llega a ~15x, que es la vía legítima: ampliar el rango, no bajar la
   // media.
-  edgeScale: 0.34,
-  faceScale: 1.45,
+  edgeScale: 0.40,
+  faceScale: 1.22,
   // Ruido de tamaño por partícula, encima de la rampa geométrica (ver
   // cloud.vert.ts). Sin esto el grano queda parejo y la malla se lee como una
   // costra regular.
@@ -35,7 +35,7 @@ export const cloudTokens = {
   // completa, nuestras cajas miden 300-500 px), así que el mismo rango relativo
   // acá produce esquirlas en vez de grano. Se conserva la VARIANZA, que es lo que
   // rompe la costra pareja; se recorta el extremo.
-  sizeJitter: 0.35,
+  sizeJitter: 0.28,
   // Cuánto se abre el enjambre a mitad del tramo (el u_factor del sitio de
   // referencia llega a 0.23; 0.18 deja margen para el corredor del scissor).
   spread: 0.18,

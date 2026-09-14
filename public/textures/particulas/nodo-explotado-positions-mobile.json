@@ -18,7 +18,7 @@
   "sources": [
     "assets-source/models/nodo/nodo.glb"
   ],
-  "generatedAt": "2026-09-11T20:54:05.128657+00:00",
+  "generatedAt": "2026-09-14T12:11:15.758171+00:00",
   "params": "nodo-explotado-params-mobile.bin",
-  "hasColor": false
+  "hasColor": true
 }

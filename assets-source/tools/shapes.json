@@ -18,7 +18,16 @@
       }
     },
     "nodo": {
-      "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }]
+      "_comment": "Colores por pieza: sin esto la forma sale entera del azul de producto y un gabinete gris con antena y bornera no se distingue de una mancha.",
+      "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }],
+      "colors": {
+        "Mat_Chassis_Gray": "#5479E1",
+        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Terminal_Housing": "#3A4250",
+        "Mat_Brass_Gold": "#C9922E",
+        "Mat_Steel_Screws": "#C3CBD8",
+        "Mat_Cover_Transparent": "#5FC8E8"
+      }
     },
     "nodo-explotado": {
       "sources": [{ "file": "assets-source/models/nodo/nodo.glb" }],
@@ -27,14 +36,33 @@
         "Terminal_BrassParts": [0, -0.3, 0.08], "Terminal_Block": [0, -0.16, 0.04],
         "Antenna": [0, 0, 0.45], "Chassis_ClipTab": [-0.35, 0, 0]
       },
-      "pairWith": "nodo"
+      "pairWith": "nodo",
+      "colors": {
+        "Mat_Chassis_Gray": "#5479E1",
+        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Terminal_Housing": "#3A4250",
+        "Mat_Brass_Gold": "#C9922E",
+        "Mat_Steel_Screws": "#C3CBD8",
+        "Mat_Cover_Transparent": "#5FC8E8"
+      }
     },
     "set": {
       "sources": [
         { "file": "public/models/hero-central/central-v2.glb" },
         { "file": "assets-source/models/nodo/nodo.glb", "offset": [-0.72, -0.25, -0.38], "scale": 0.42, "yaw": 0.9 },
         { "file": "assets-source/models/nodo/nodo.glb", "offset": [0.7, -0.15, -0.4], "scale": 0.4, "yaw": -0.5 }
-      ]
+      ],
+      "colors": {
+        "Mat_Casing": "#5479E1",
+        "Mat_Screen": "#1B2432",
+        "Mat_Button": "#C3CBD8",
+        "Mat_Chassis_Gray": "#5479E1",
+        "Mat_Antenna_Rubber": "#333B47",
+        "Mat_Terminal_Housing": "#3A4250",
+        "Mat_Brass_Gold": "#C9922E",
+        "Mat_Steel_Screws": "#C3CBD8",
+        "Mat_Cover_Transparent": "#5FC8E8"
+      }
     },
     "capacidades": {
       "_comment": "Una pieza por tarjeta de la seccion, en el mismo orden: Set de Riego, Set de Seguridad Perimetral, Plataforma Central.",

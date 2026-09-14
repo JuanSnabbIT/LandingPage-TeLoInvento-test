@@ -98,7 +98,7 @@
           ]
         },
         "params": "/textures/particulas/nodo-explotado-params-lod2.bin",
-        "hasColor": false
+        "hasColor": true
       },
       "mobile": {
         "file": "/textures/particulas/nodo-explotado-positions-mobile.bin",
@@ -117,7 +117,7 @@
           ]
         },
         "params": "/textures/particulas/nodo-explotado-params-mobile.bin",
-        "hasColor": false
+        "hasColor": true
       }
     },
     "nodo": {
@@ -138,7 +138,7 @@
           ]
         },
         "params": "/textures/particulas/nodo-params-lod2.bin",
-        "hasColor": false
+        "hasColor": true
       },
       "mobile": {
         "file": "/textures/particulas/nodo-positions-mobile.bin",
@@ -157,7 +157,7 @@
           ]
         },
         "params": "/textures/particulas/nodo-params-mobile.bin",
-        "hasColor": false
+        "hasColor": true
       }
     },
     "set": {
@@ -178,7 +178,7 @@
           ]
         },
         "params": "/textures/particulas/set-params-lod2.bin",
-        "hasColor": false
+        "hasColor": true
       },
       "mobile": {
         "file": "/textures/particulas/set-positions-mobile.bin",
@@ -197,7 +197,7 @@
           ]
         },
         "params": "/textures/particulas/set-params-mobile.bin",
-        "hasColor": false
+        "hasColor": true
       }
     },
     "wifi": {
@@ -255,5 +255,5 @@
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-11T20:54:06.287Z"
+  "generatedAt": "2026-09-14T12:11:16.586Z"
 }

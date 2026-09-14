@@ -187,6 +187,38 @@ def sharp_edges(tris, max_dim, angle_deg=28.0, per_edge=6):
     return pts.astype(np.float32), touched
 
 
+def local_thickness(tris, points, tri_idx, max_dim):
+    """Grosor del sólido bajo cada punto: se tira un rayo hacia adentro (-normal)
+    y se mide hasta dónde llega.
+
+    Es lo que distingue una pieza CHICA de una pieza GRANDE, y por lo tanto lo
+    que decide cuánto detalle hace falta ahí. La distancia a una arista viva no
+    alcanza: los chorros de agua de `riego.glb` son esferas lisas, sin una sola
+    arista, así que por esa métrica quedaban "lejos de todo borde" y se llevaban
+    las partículas MÁS grandes del modelo -- justo al revés de lo que hace falta
+    para que la forma se distinga.
+
+    Sin intersección (superficie abierta, una hoja de un solo lado) devuelve el
+    tamaño del modelo: nada que achicar por ese lado.
+    """
+    from mathutils.bvhtree import BVHTree
+    verts = [tuple(v) for v in tris.reshape(-1, 3)]
+    polys = [(3 * i, 3 * i + 1, 3 * i + 2) for i in range(len(tris))]
+    bvh = BVHTree.FromPolygons(verts, polys, all_triangles=True)
+
+    n = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    n /= (np.linalg.norm(n, axis=1)[:, None] + 1e-12)
+    eps = max_dim * 1e-4
+    out = np.full(len(points), max_dim, dtype=np.float32)
+    for i in range(len(points)):
+        d = -n[tri_idx[i]]
+        o = points[i] + d * eps
+        hit = bvh.ray_cast(Vector(o.tolist()), Vector(d.tolist()), max_dim)
+        if hit[0] is not None:
+            out[i] = hit[3] + eps
+    return out
+
+
 def edge_distance(points, edge_pts, radius):
     """Distancia de cada punto a la arista viva más cercana, saturada en `radius`.
 
@@ -341,14 +373,31 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     weights = areas * (1.0 + boost * edge_tris) if boost > 0 else areas
     pts, tri_idx = sample_surface(tris, weights, count, rng, spec.get('shell', cfg['shell']), return_idx=True)
     sample_rgb = np.concatenate(all_colors)[tri_idx] if colors is not None else None
-    # `edgeK` en [0,1]: 0 pegada a una arista viva, 1 en el centro de una cara
-    # abierta. Se hornea el FACTOR, no el tamaño final: así el rango de tamaños
-    # se ajusta desde los tokens del front sin volver a hornear.
+    # TAMAÑO DEL DETALLE bajo cada partícula, en [0,1]: 0 = detalle fino (pegada a
+    # una arista viva, o sobre una pieza delgada), 1 = zona ancha y gruesa. Es lo
+    # que decide el tamaño de la partícula en el shader, y por lo tanto lo que
+    # hace que el modelo se distinga: donde hay detalle, grano fino.
+    #
+    # Son DOS medidas y manda la menor. Con sólo la distancia a arista, las
+    # piezas lisas sin aristas -- los 108 chorros de agua de riego.glb son
+    # esferas -- quedaban "lejos de todo borde" y se llevaban las partículas más
+    # grandes del modelo. Con sólo el grosor, una placa grande y fina tendría
+    # grano fino en toda su extensión aunque no haga falta.
     radius = first_max * cfg.get('edgeFalloff', 0.09)
-    edge_k = np.clip(edge_distance(pts, edge_pts, radius) / radius, 0.0, 1.0)
+    d_edge = edge_distance(pts, edge_pts, radius)
+    thick = local_thickness(tris, pts, tri_idx, first_max)
+    feature = np.minimum(d_edge, 0.5 * thick)
+    # Normalización por PERCENTILES de la propia forma y no por una fracción fija
+    # del modelo: cada forma usa así todo el rango de tamaños. Con un divisor
+    # fijo, una forma compuesta (la fila de Capacidades mide 10.9 de ancho pero
+    # sus piezas 2) quedaba entera del lado chico de la curva.
+    lo, hi = np.percentile(feature, [8.0, 92.0])
+    edge_k = np.clip((feature - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
     edge_k = edge_k * edge_k * (3 - 2 * edge_k)
     print('   aristas vivas:', len(edge_pts), 'puntos |', int(edge_tris.sum()), 'de', len(tris),
-          'triángulos tocados | edgeK medio', round(float(edge_k.mean()), 3))
+          'triángulos tocados')
+    print('   detalle: grosor mediano', round(float(np.median(thick) / first_max), 4), 'del modelo |',
+          'p8/p92', round(float(lo), 4), '/', round(float(hi), 4), '| k medio', round(float(edge_k.mean()), 3))
     # `flatten_to_plane` ya emite (u, v, 0) en espacio de pantalla; el resto de
     # las formas sale en espacio Blender y hay que devolverlas a Y-up.
     pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
