@@ -7,9 +7,16 @@
  * el mismo degradado oscuro en `body`. `svh` y no `vh`: en móvil la barra del
  * navegador aparece y desaparece y `vh` haría saltar el alto en pleno scroll.
  */
+/*
+ * Sólo el padding vertical va a 0 (lo pone `.hero__grid`); el lateral es el
+ * mismo gutter de toda `section` (tokens.css). Con `padding: 0` el texto del
+ * Hero quedaba pegado al borde en todo ancho menor al de `.wrap` (1160 px):
+ * en teléfono, tablet y hasta 1024 px arrancaba en x = 0.
+ */
 .hero {
   color: var(--dark-ink);
-  padding: 0;
+  padding-block: 0;
+  padding-inline: clamp(20px, 6vw, 64px);
 }
 .hero__grid {
   box-sizing: border-box;

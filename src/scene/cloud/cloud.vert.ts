@@ -13,13 +13,13 @@ export const cloudVert = /* glsl */ `
   uniform float uSwirl, uSwirlRadius, uSwirlTurns;
   uniform float uViewportHeight, uPixelRatio, uNetworkRole;
   uniform float uRigid;
-  uniform float uTime, uFlame, uFlameFreq, uFlameSpeed, uFlameFlicker;
-  uniform float uPointerOn, uPointerRadius, uPointerPush;
+  uniform float uTime, uFlame, uFlameBlink, uFlameBlinkRate;
+  uniform float uPointerOn, uPointerRadius, uPointerLift, uPointerGrow, uPointerWhite;
   #ifdef SURFACE_LINES
     in float particleIndex;
   #endif
   out vec3 vColor;
-  out float vTint, vFade, vNetwork;
+  out float vTint, vFade, vNetwork, vHighlight;
   ${curlGlsl}
   void main() {
     #ifdef SURFACE_LINES
@@ -30,9 +30,10 @@ export const cloudVert = /* glsl */ `
     ivec2 ij = ivec2(id % uSize, id / uSize);
     vec4 a = texelFetch(uShapeA, ij, 0), b = texelFetch(uShapeB, ij, 0);
     vec4 ca = texelFetch(uParamsA, ij, 0), cb = texelFetch(uParamsB, ij, 0);
-    // Canal w horneado: semilla en la mitad baja, marca "animada" (llama) en el bit alto.
+    // Canal w horneado: w = (nivel + semilla) / 2 -- semilla en la parte
+    // fraccionaria, nivel de animación (0 quieta .. 4 llama suelta) en la entera.
     float seed = fract(a.w * 2.);
-    float flame = mix(step(.5, a.w), step(.5, b.w), uT);
+    float flame = mix(floor(a.w * 2.), floor(b.w * 2.), uT) * .25;
     float rank = clamp(.5 + dot(a.xyz, uSweepDir) * uSweepScale, 0., 1.);
     float order = mix(rank, seed, uSweepJitter);
     float local = clamp((uT - order * uStagger) / (1. - uStagger), 0., 1.);
@@ -55,39 +56,43 @@ export const cloudVert = /* glsl */ `
         p += (x * cos(angle) + y * sin(angle)) * uSwirlRadius * uSpan * wing;
       }
     }
-    // Fuego: las partículas marcadas se mueven con un campo de curl que fluye
-    // en el tiempo (turbulencia, sin dirección privilegiada) -- sólo en las
-    // formas que lo traen y nunca con reduced-motion (uFlame = 0).
-    float flick = 0.;
+    // Fuego: las partículas con nivel > 0 NO se mueven (la llama es sólida como
+    // el resto del modelo); parpadean. Cada una tiene su propio ritmo (por
+    // semilla) y un pulso ralo -- casi siempre encendida, se apaga de a ratos --
+    // con profundidad proporcional a su nivel, que crece hacia la punta.
+    // Nunca con reduced-motion (uFlame = 0).
+    float blink = 1.;
     if (uFlame > 0. && flame > .001) {
-      vec3 shape = mix(a.xyz, b.xyz, t);
-      p += curl(shape * uFlameFreq + vec3(seed * 3., -uTime * uFlameSpeed, seed * 5.)) * uFlame * uSpan * flame;
-      flick = flame * uFlameFlicker * sin(uTime * 7. + seed * 40.);
+      float phase = uTime * uFlameBlinkRate * (.6 + .8 * seed) + seed * 43.7;
+      float pulse = pow(.5 + .5 * sin(phase), 4.);
+      blink = 1. - uFlameBlink * flame * pulse;
     }
-    // Puntero: empuje suave hacia afuera del cursor, en el plano de pantalla,
-    // acotado a un radio relativo al tamaño del modelo. Sin estado: es función
-    // de la posición (amortiguada) del puntero.
+    // Puntero: en un área chica alrededor del cursor las partículas se levantan
+    // un poco hacia la cámara (+Z; la cámara mira hacia -Z), crecen un poco y
+    // se aclaran a blanco. No se desplazan en el plano de la pantalla, así la
+    // silueta no se deforma. Sin estado: función de la posición amortiguada.
+    float hi = 0.;
     if (uPointerOn > .001) {
-      vec2 d = p.xy - uPointer.xy;
-      float r = length(d) / max(uPointerRadius * uSpan, .0001);
-      float k = 1. - smoothstep(0., 1., r);
-      p.xy += normalize(d + vec2(.00001, 0.)) * k * uPointerPush * uSpan * uPointerOn;
+      float r = length(p.xy - uPointer.xy) / max(uPointerRadius * uSpan, .0001);
+      hi = (1. - smoothstep(0., 1., r)) * uPointerOn;
+      p.z += hi * uPointerLift * uSpan;
     }
+    vHighlight = hi * uPointerWhite;
     vec3 fallback = mix(uColorLogoA, uColorLogoB, seed);
     vColor = mix(uHasColorA > .5 ? ca.rgb : fallback, uHasColorB > .5 ? cb.rgb : fallback, t);
     vTint = mix(uTintA, uTintB, t);
     vec4 mv = modelViewMatrix * vec4(p, 1.);
     float centerZ = (modelViewMatrix * vec4(center, 1.)).z;
     float depth = smoothstep(-.7, .6, (mv.z-centerZ) / max(uSpan, .0001));
-    vFade = mix(uBackAlpha, 1., depth);
+    // blink también apaga las líneas de red que tocan esas partículas.
+    vFade = mix(uBackAlpha, 1., depth) * blink;
     // Networks disappear before their edges stretch, and return after arrival.
     vNetwork = uNetworkRole < .5 ? 1. - smoothstep(0., .12, uT) : smoothstep(.88, 1., uT);
     if (uRigid > .5) vNetwork = uNetworkRole < .5 ? 1. : 0.;
     float detail = mix(ca.a, cb.a, t);
     float diameter = uParticleScale * mix(uEdgeScale, uFaceScale, detail);
     diameter *= 1. - uSizeJitter + 2. * uSizeJitter * seed;
-    diameter *= 1. + flick;
-    gl_PointSize = clamp(diameter * uViewportHeight * projectionMatrix[1][1] / max(-mv.z, .001), 1.35, 3.2) * uPixelRatio;
+    gl_PointSize = clamp(diameter * uViewportHeight * projectionMatrix[1][1] / max(-mv.z, .001), 1.35, 3.2) * uPixelRatio * (1. + hi * uPointerGrow);
     gl_Position = projectionMatrix * mv;
   }
 `;

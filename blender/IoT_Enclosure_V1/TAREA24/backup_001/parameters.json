@@ -1,0 +1,107 @@
+{
+  "units": "mm",
+  "wall": {
+    "value": 2.4,
+    "status": "APROBADO"
+  },
+  "reinforcement": {
+    "value": 3.2,
+    "status": "APROBADO"
+  },
+  "pcb_pilot_diameter": {
+    "value": 2.1,
+    "status": "INICIAL"
+  },
+  "pcb_pilot_depth": {
+    "value": 6.0,
+    "status": "INICIAL"
+  },
+  "m3_pilot_diameter": {
+    "value": 2.5,
+    "status": "INICIAL"
+  },
+  "m3_pilot_depth": {
+    "value": 6.4,
+    "status": "INICIAL"
+  },
+  "m3_clearance_diameter": {
+    "value": 3.4,
+    "status": "INICIAL"
+  },
+  "m3_head_recess_diameter": {
+    "value": 6.2,
+    "status": "INICIAL"
+  },
+  "m3_head_recess_depth": {
+    "value": 3.2,
+    "status": "INICIAL"
+  },
+  "m3_screw_length": {
+    "value": 8.0,
+    "status": "INICIAL"
+  },
+  "pcb_screw_length": {
+    "value": 6.0,
+    "status": "INICIAL"
+  },
+  "base_extension": {
+    "value": 9.6,
+    "status": "INICIAL",
+    "reason": "Espacio inferior para rosca M3, apoyo de cabeza y extraccion de lenguetas bajo el perimetro PCB; reserva de lastre baja."
+  },
+  "foot_diameter": {
+    "value": 15.0,
+    "status": "APROBADO"
+  },
+  "foot_depth": {
+    "value": 1.2,
+    "status": "INICIAL"
+  },
+  "assembly_clearance": {
+    "value": 0.3,
+    "status": "INICIAL"
+  },
+  "rear_usb_width": {
+    "value": 9.6,
+    "status": "INICIAL"
+  },
+  "rear_usb_height": {
+    "value": 3.6,
+    "status": "INICIAL"
+  },
+  "logo_relief": {
+    "value": 1.2,
+    "status": "INICIAL"
+  },
+  "logo_text": {
+    "value": "IoT",
+    "status": "INICIAL",
+    "reason": "Marca tipografica provisional; no se suministro arte de marca."
+  },
+  "button_aperture_corner_radius": {
+    "value": 0.8,
+    "status": "INICIAL",
+    "reason": "Radio anterior 1.5 intersectaba el envolvente conservador cuadrado de 10 mm; ancho, alto y centros conservados."
+  },
+  "usb_top_throat": {
+    "value": [
+      9.6,
+      3.8
+    ],
+    "status": "INICIAL",
+    "reason": "Corte frontal hasta plano de union Z=3; evita membrana de 0.2 mm. Referencia USB intacta."
+  },
+  "usb_top_cable_envelope": {
+    "value": [
+      12,
+      7
+    ],
+    "status": "INICIAL",
+    "reason": "Ancho/alto de acceso elegido; medir sobremolde del cable real y probar insercion."
+  },
+  "usb_roof_and_sill": {
+    "value": 2.4,
+    "status": "DERIVADO",
+    "reason": "Espesor nominal APROBADO aplicado localmente: techo Z=8.5..10.9 y apoyo trasero Z=-0.9..1.5; elimina paredes de 0.2/0.9 mm en acceso USB."
+  }
+}

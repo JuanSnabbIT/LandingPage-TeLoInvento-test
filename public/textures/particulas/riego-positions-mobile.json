@@ -5,24 +5,24 @@
   "count": 6400,
   "bbox": {
     "min": [
-      -4.449063301086426,
-      2.7994531137665035e-08,
-      -0.5383352637290955
+      -4.436158180236816,
+      6.532987839591442e-08,
+      -0.5350052714347839
     ],
     "max": [
-      4.453502178192139,
-      3.1947579383850098,
-      0.5383357405662537
+      4.441829681396484,
+      3.194884777069092,
+      0.5362905859947205
     ]
   },
   "sources": [
     "assets-source/models/capacidades/riego.glb"
   ],
-  "generatedAt": "2026-09-14T15:44:22.613823+00:00",
+  "generatedAt": "2026-09-14T18:00:31.444817+00:00",
   "params": "riego-params-mobile.bin",
   "hasColor": true,
   "animated": false,
   "links": "riego-links-mobile.bin",
-  "linkCount": 8072,
+  "linkCount": 5180,
   "structure": "surface-lattice-v1"
 }

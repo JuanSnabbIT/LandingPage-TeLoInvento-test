@@ -21,7 +21,26 @@ const steps = CAPACIDADES_CARDS.slice(1).map(() => ({ t: 0 }));
 let timeline: gsap.core.Timeline | null = null;
 
 /**
- * Mueve la nube a la tarjeta `index` animando, en orden, el progreso de los
+ * Driver de scroll (desktop): el scroll horizontal fijado de Capacidades.tsx
+ * informa la posición continua del carril de tarjetas, `pos` en
+ * [0, tarjetas - 1] (1.5 = a mitad de camino entre seguridad y hogar), y el
+ * progreso de cada tramo manual sale directo de ahí -- misma función pura del
+ * scroll que el resto de la escena. Corta cualquier tween de click en curso y
+ * deja `current` en la tarjeta más cercana (la que lee `dynamicFrom`).
+ */
+export function setCapacidadesPosition(pos: number, tramoIndices: readonly number[]) {
+  timeline?.kill();
+  timeline = null;
+  const p = Math.max(0, Math.min(CAPACIDADES_CARDS.length - 1, pos));
+  current = Math.round(p);
+  steps.forEach((s, k) => {
+    s.t = Math.max(0, Math.min(1, p - k));
+    registry.setProgress(tramoIndices[k], s.t);
+  });
+}
+
+/**
+ * Driver de click (teléfono): mueve la nube a la tarjeta `index` animando, en orden, el progreso de los
  * tramos manuales que separan la tarjeta actual de la pedida (no del scroll:
  * el click es el driver acá). Saltar dos tarjetas pasa por la del medio, así
  * el morph siempre es entre formas vecinas. `tramoIndices` son las

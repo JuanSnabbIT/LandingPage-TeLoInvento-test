@@ -20,7 +20,7 @@ const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', '.card', '.st
  * Never revealed: grid containers (targeted through their children instead)
  * and every box the 3D scene draws into -- `.visual`, `.photo-ph`,
  * `.capacidades__stage` -- AND every element that CONTAINS one of those
- * boxes (`.capacidades__card`, `.contacto__intro`). A reveal tween on a
+ * boxes (`.capacidades__showcase`, `.capacidades__card`, `.contacto__intro`). A reveal tween on a
  * stage box, or on an ancestor of it, translates the DOM anchor the scene
  * reads its rect from every frame, so the model drifts behind its box on
  * entry (spec 13 §11; came back on 2026-09-14 when the Capacidades stage
@@ -30,7 +30,7 @@ const TARGETS = [':scope > .wrap > *', ':scope > .wrap > div > *', '.card', '.st
 const SKIP = [
   '.card-grid', '.stat-grid', '.grid', '.form-grid', 'form',
   '.visual', '.photo-ph', '.capacidades__stage',
-  '.capacidades__card', '.contacto__intro',
+  '.capacidades__showcase', '.capacidades__card', '.contacto__intro',
   '.capacidades__carousel', '.capacidades__nav',
 ].join(', ');
 

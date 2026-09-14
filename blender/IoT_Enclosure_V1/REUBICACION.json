@@ -1,0 +1,86 @@
+﻿[
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\iot-v1-final",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev11.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev11.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev12.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev12.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev13.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev13.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev14.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev14.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev15.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev15.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01-rev16.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\IoT_Enclosure_V1_CP01-rev16.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\IoT_Enclosure_V1_CP01.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01.blend1",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\IoT_Enclosure_V1_CP01.blend1"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev10.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev10.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev2.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev2.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev3.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev3.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev4.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev4.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev5.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev5.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev6.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev6.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev7.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev7.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev8.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev8.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01-rev9.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01-rev9.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\assets-source\\models\\inbox\\IoT_Enclosure_V1_CP01.blend",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\IoT_Enclosure_V1\\versiones-anteriores\\inbox\\IoT_Enclosure_V1_CP01.blend"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\carcasa_l_stand.blend1",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\respaldos\\carcasa_l_stand.blend1"
+    },
+    {
+        "Source":  "C:\\LandingPage-TeLoInvento\\dispositivo_industrial_bornera.blend1",
+        "Destination":  "C:\\LandingPage-TeLoInvento\\blender\\respaldos\\dispositivo_industrial_bornera.blend1"
+    }
+]

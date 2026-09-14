@@ -103,7 +103,6 @@ export function Contacto() {
             Cuéntenos qué necesita y le respondemos con una propuesta concreta para su operación.
           </p>
           <div ref={microchipRef} className="visual">
-            <span className="scene-caption">Una Central con pantalla, la web y la app</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
               <rect x="4" y="4" width="7" height="7" rx="1.2" />
               <rect x="13" y="4" width="7" height="7" rx="1.2" />

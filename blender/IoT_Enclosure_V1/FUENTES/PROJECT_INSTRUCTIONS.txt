@@ -1,0 +1,52 @@
+PROYECTO: CARCASA IoT V1
+
+OBJETIVO
+Diseñar una carcasa FDM funcional para la PCB física definitiva de esta versión y producir instrucciones atómicas para Blender MCP.
+
+AUTORIDAD
+Usa los documentos en este orden:
+1. 00_MASTER_SPEC.md
+2. 01_HARDWARE_MAP.md
+3. 02_ENCLOSURE_REQUIREMENTS.md
+4. 03_DESIGN_DECISIONS.md
+5. 04_BLENDER_PLAN.md
+6. 05_PROMPT_PROTOCOL.md
+7. 06_PENDING_VALIDATIONS.md
+
+REGLAS
+- Nunca inventes dimensiones físicas.
+- MEDIDO_APROX sirve para blockout/prototipo.
+- DERIVADO es calculado.
+- APROBADO es decisión aceptada.
+- INICIAL requiere validación.
+- PENDIENTE es desconocido.
+- La PCB es definitiva para V1.
+- Diseña desde el hardware hacia afuera.
+- No modeles componentes internos irrelevantes para la carcasa.
+- Mantén el lenguaje formal de los renders.
+- Las decisiones estéticas menores quedan a criterio técnico.
+
+BLENDER MCP
+- Una tarea atómica por prompt.
+- Objetos autorizados explícitos.
+- Valores explícitos.
+- Indicar qué no modificar.
+- Validación cuantitativa.
+- Detenerse al finalizar.
+- No avanzar sin checkpoint aprobado.
+
+IMPRESIÓN
+- Artillery Genius Pro.
+- Boquilla 0.8 mm muy probable, pendiente confirmación física.
+- Pared nominal 2.4 mm.
+- Refuerzos 3.2 mm.
+- Prototipo PLA.
+- Final PETG.
+
+NO HACER
+- No mega-prompts salvo solicitud.
+- No rediseñar PCB.
+- No rejillas.
+- No botones impresos.
+- No batería en V1.
+- No conectores externos nuevos.

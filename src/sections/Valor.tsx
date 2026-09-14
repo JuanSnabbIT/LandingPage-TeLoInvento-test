@@ -37,7 +37,6 @@ export function Valor() {
           </div>
         </div>
         <div ref={ref} className="visual">
-          <span className="scene-caption">Conectividad para supervisar y recibir alertas</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3.5 2" />

@@ -32,9 +32,10 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
   const networkData = useRef<Array<Float32Array | undefined>>([]);
   const protectedElements = useRef<Element[]>([]);
   useEffect(() => {
-    // Sólo el TEXTO de la tarjeta del carrusel, no la tarjeta entera: la caja
-    // de escena vive adentro de `.capacidades__card`, y proteger el wrapper
-    // descartaba todos los fragmentos del modelo (el `p` ya entra por `section p`).
+    // Sólo el TEXTO de las tarjetas del carrusel, no la tarjeta entera: la caja
+    // de escena se superpone a la parte de arriba de `.capacidades__card`, y
+    // proteger la tarjeta descartaba todos los fragmentos del modelo (el `p`
+    // ya entra por `section p`).
     protectedElements.current = [...document.querySelectorAll('header, section h1, section h2, section p, section ul, section ol, .capacidades__card h3, form, .scene-caption')];
   }, []);
   useEffect(() => () => { particleGeometry.dispose(); networks.forEach(g => g.dispose()); }, [particleGeometry, networks]);
@@ -58,9 +59,8 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     uSweepDir: { value: new THREE.Vector3(0, -1, 0) }, uSweepScale: { value: 0.5 }, uSweepJitter: { value: cloudTokens.sweepJitter },
     uSpread: { value: 1 }, uSizeJitter: { value: cloudTokens.sizeJitter },
     uSwirl: { value: 0 }, uSwirlRadius: { value: cloudTokens.swirl.radius }, uSwirlTurns: { value: cloudTokens.swirl.turns },
-    uTime: { value: 0 }, uFlame: { value: 0 }, uFlameFreq: { value: cloudTokens.flame.freq }, uFlameSpeed: { value: cloudTokens.flame.speed }, uFlameFlicker: { value: cloudTokens.flame.flicker },
-    uPointer: { value: new THREE.Vector3() }, uPointerOn: { value: 0 }, uPointerRadius: { value: cloudTokens.pointer.radius }, uPointerPush: { value: cloudTokens.pointer.push },
-    uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
+    uTime: { value: 0 }, uFlame: { value: 0 }, uFlameBlink: { value: cloudTokens.flame.blink }, uFlameBlinkRate: { value: cloudTokens.flame.blinkRate },
+    uPointer: { value: new THREE.Vector3() }, uPointerOn: { value: 0 }, uPointerRadius: { value: cloudTokens.pointer.radius }, uPointerLift: { value: cloudTokens.pointer.lift }, uPointerGrow: { value: cloudTokens.pointer.grow }, uPointerWhite: { value: cloudTokens.pointer.white },    uColorProdLight: { value: new THREE.Color(scenePalette.productLight) }, uColorProdDark: { value: new THREE.Color(scenePalette.productDark) },
     uColorLogoA: { value: new THREE.Color(scenePalette.logoA) }, uColorLogoB: { value: new THREE.Color(scenePalette.logoB) },
     uSurface: { value: 0 }, uAlpha: { value: 1 }, uAlphaLight: { value: cloudTokens.alphaLight }, uAlphaDark: { value: cloudTokens.alphaDark },
   }), [S, curl]);
@@ -111,8 +111,10 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const s = registry.getSlot(slot); const el = s?.anchorRef.current;
     if (!s || !el) { out.identity(); return { surface: 1, visible: false }; }
     const t = computeAnchorTransform(el.getBoundingClientRect(), viewport, { fit: s.fit, maxDim: BBOX_MAXDIM });
-    const extra = s.parallax && !reduced
-      ? tmp.q.setFromEuler(tmp.euler.set(tmp.parallax.pitch * s.parallax * 0.5 * weight, tmp.parallax.yaw * s.parallax * weight, 0, 'XYZ'))
+    // Parallax en todos los modelos (`motion.parallax.amount`); un slot lo pisa con su `parallax` (0 = sin giro).
+    const amount = s.parallax ?? motion.parallax.amount;
+    const extra = amount && !reduced
+      ? tmp.q.setFromEuler(tmp.euler.set(tmp.parallax.pitch * amount * 0.5 * weight, tmp.parallax.yaw * amount * weight, 0, 'XYZ'))
       : undefined;
     anchorMatrix(t, s.pose, out, extra); return { surface: s.surface === 'light' ? 1 : 0, visible: t.visible };
   };
@@ -180,15 +182,30 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     const t = texB ? r.t : 0;
     u.uT.value = t;
     const rigid = r.kind === 'morphEnSitio' || r.kind === 'apagado';
+    // `stagger` por tramo (ver sequence.ts): un morphEnSitio entre formas SIN
+    // relación física (el carrusel de Capacidades) prende el mismo barrido
+    // dirigido que un viaje, en vez del mix directo A↔B por default de `rigid`.
+    const waved = r.kind === 'viaje' || (r.kind === 'morphEnSitio' && !!TRAMOS[r.index].stagger);
     u.uRigid.value = rigid ? 1 : 0;
-    u.uStagger.value = rigid ? 0 : cloudTokens.stagger;
-    u.uCurlOn.value = curl && !rigid ? 1 : 0;
+    u.uStagger.value = waved ? cloudTokens.stagger : 0;
+    // Curl más contenido que el de vuelo: es lo que rompe el "doble expuesto"
+    // de mezclar dos formas sin relación física -- sin él, el barrido por sí
+    // solo desincroniza CUÁNDO llega cada partícula pero no dónde, porque el
+    // índice i no es la misma pieza física en las dos formas (a diferencia
+    // de nodo/nodo-explotado, con `pairWith`); el tramo medio se ve como
+    // ruido en vez de un enjambre en tránsito.
+    u.uCurl.value = r.kind === 'viaje' ? cloudTokens.curl : cloudTokens.enSitio.curl;
+    u.uCurlOn.value = curl && waved ? 1 : 0;
     const pa = poseFor(r.slotA, u.uPoseA.value, r.kind === 'viaje' ? 1 - t : 1); const pb = poseFor(r.slotB, u.uPoseB.value, r.kind === 'viaje' ? t : 1);
     u.uPointer.value.copy(ptr.world); u.uPointerOn.value = ptr.on;
     u.uTime.value = state.clock.elapsedTime;
     // Formas con partículas animadas (la llama del logo): la nube pide frames seguidos mientras esté a la vista.
     const animated = !!(manifest.shapes[r.a]?.[lod]?.animated || (texB && manifest.shapes[r.b]?.[lod]?.animated));
-    u.uFlame.value = animated && !reduced ? cloudTokens.flame.amp : 0;
+    u.uFlame.value = animated && !reduced ? 1 : 0;
+    // "Vida" en reposo (respiración lenta, cloudTokens.life): igual que la
+    // llama, corre en TODA forma y pide frames seguidos mientras esté a la
+    // vista -- ver el `registry.markDirty()` al final de este callback.
+    const lifeOn = !reduced;
     if (r.kind === 'apagado') u.uPoseB.value.copy(u.uPoseA.value);
     const rectA = rectFor(r.slotA);
     const rectB = rectFor(r.slotB);
@@ -206,7 +223,13 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
     u.uParticleScale.value = span * cloudTokens.particleScale;
     // El enjambre respira: se abre a mitad del tramo y se cierra exacto al llegar.
     // El fade de profundidad se mide sobre la nube ABIERTA, no sobre la horneada.
-    const spread = rigid ? 1 : 1 + cloudTokens.spread * Math.sin(Math.PI * t);
+    // También respira en un morphEnSitio con barrido (`waved`): ayuda a leer el
+    // tramo medio como un enjambre que se abre y se vuelve a cerrar, no un
+    // colapso entre dos formas fijas. Encima de eso, una respiración continua
+    // y mucho más lenta/chica (`cloudTokens.life.breathe*`) corre SIEMPRE que
+    // no haya reduced-motion, tramo o no -- es la que da vida en reposo.
+    const idleBreath = !lifeOn ? 0 : cloudTokens.life.breatheAmp * Math.sin(state.clock.elapsedTime * cloudTokens.life.breatheFreq * 2 * Math.PI);
+    const spread = (waved ? 1 + cloudTokens.spread * Math.sin(Math.PI * t) : 1) + idleBreath;
     u.uSpread.value = spread;
     u.uSpan.value = span * spread;
     poseCenter(u.uPoseA.value, u.uCenterA.value);
@@ -230,10 +253,11 @@ export function ParticleCloud({ manifest, lod, size, reduced, curl }: Props) {
       alpha *= 0.3 + 0.7 * k; if (k < 1) registry.markDirty();
     }
     if (r.kind === 'viaje') alpha *= 1 - cloudTokens.travelDip * Math.sin(Math.PI * t);
+    else if (waved) alpha *= 1 - cloudTokens.enSitio.dip * Math.sin(Math.PI * t);
     u.uAlpha.value = alpha;
     m.visible = alpha > 0.01 && (pa.visible || pb.visible || r.kind === 'apagado');
     networkRefs.current.forEach(n => { if (n) n.visible = m.visible; });
-    if (u.uFlame.value > 0 && m.visible) registry.markDirty();
+    if ((u.uFlame.value > 0 || lifeOn) && m.visible) registry.markDirty();
   });
 
   const beforeRender = () => {

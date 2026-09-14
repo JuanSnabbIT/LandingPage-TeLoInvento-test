@@ -12,7 +12,6 @@ export function Solucion() {
     <section className="solucion" id="solucion">
       <div className="wrap grid">
         <div ref={ref} className="photo-ph">
-          <span className="scene-caption">Central y nodos, conectados en un solo set</span>
           <div className="cap">Central instalada en el hogar — foto real pendiente de producir</div>
         </div>
         <div>

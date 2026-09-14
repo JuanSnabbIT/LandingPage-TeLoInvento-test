@@ -4,7 +4,7 @@ Sin args: todas las formas, todos los LODs."""
 import bpy, bmesh, json, math, os, sys, datetime, zlib
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from surface_structure import lattice_surface, surface_links
+from surface_structure import lattice_surface, surface_links, even_surface
 from mathutils import Vector, Matrix
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
@@ -98,15 +98,16 @@ def object_bounds(objs):
 def hex_to_rgb8(h):
     h = h.lstrip('#'); return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
 
-def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=False, animate=None):
+def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=False, animate=None, scatter=None):
     """Lista de (tri 3x3 float32, área) en mundo, aplicando explode por nombre de objeto.
     Si `colors` (material base name -> hex) está definido, devuelve también un
     color RGB8 por triángulo según el material de la cara (blanco si no hay match).
-    Con `components=True` devuelve además el grupo (objeto) de cada triángulo y
-    una marca 0/1 por triángulo: 1 si su material está en `animate` (lista de
-    nombres base) -- las partículas de esos materiales se animan solas en el
-    shader (la llama del logo)."""
-    tris = []; areas = []; tri_colors = []; groups = []; tri_anim = []
+    Con `components=True` devuelve además el grupo (objeto) de cada triángulo,
+    un nivel de animación por triángulo (4 si su material está en `animate`,
+    lista de nombres base; 0 si no -- las partículas de esos materiales se
+    animan solas en el shader) y una marca por triángulo: True si su material
+    está en `scatter` (se muestrea con `even_surface` en vez de la retícula)."""
+    tris = []; areas = []; tri_colors = []; groups = []; tri_anim = []; tri_scatter = []
     for group_id, o in enumerate(objs):
         dep = bpy.context.evaluated_depsgraph_get()
         me = o.evaluated_get(dep).to_mesh()
@@ -123,11 +124,12 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=Fal
                 mname = slot.material.name.split('.')[0] if slot.material else ''
                 mat_rgb.append(hex_to_rgb8(colors.get(mname, '#ffffff')))
             if not mat_rgb: mat_rgb = [[255, 255, 255]]
-        mat_anim = []
+        mat_anim = []; mat_scatter = []
         for slot in o.material_slots:
             mname = slot.material.name.split('.')[0] if slot.material else ''
-            mat_anim.append(1 if animate and mname in animate else 0)
-        if not mat_anim: mat_anim = [0]
+            mat_anim.append(4 if animate and mname in animate else 0)   # nivel de animación máximo, ver canal w
+            mat_scatter.append(bool(scatter and mname in scatter))
+        if not mat_anim: mat_anim = [0]; mat_scatter = [False]
         for f in bm.faces:
             v = [(o.matrix_world @ vv.co) + off for vv in f.verts]
             tris.append([[p.x, p.y, p.z] for p in v])
@@ -135,6 +137,7 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=Fal
             if mat_rgb is not None:
                 tri_colors.append(mat_rgb[min(f.material_index, len(mat_rgb) - 1)])
             tri_anim.append(mat_anim[min(f.material_index, len(mat_anim) - 1)])
+            tri_scatter.append(mat_scatter[min(f.material_index, len(mat_scatter) - 1)])
             # Área EN MUNDO, no `f.calc_area()`: esa es el área en espacio local
             # de la malla e ignora la escala de `o.matrix_world`. Con objetos de
             # escala muy distinta (en nodo.glb, `Chassis_ClipTab` es un cubo
@@ -144,7 +147,7 @@ def triangles_world(objs, explode=None, max_dim=1.0, colors=None, components=Fal
             areas.append((v[1] - v[0]).cross(v[2] - v[0]).length * 0.5)
         bm.free(); o.evaluated_get(dep).to_mesh_clear()
     if components:
-        return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8), np.array(groups), np.array(tri_anim, dtype=np.uint8)
+        return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8), np.array(groups), np.array(tri_anim, dtype=np.uint8), np.array(tri_scatter, dtype=bool)
     if colors is not None:
         return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64), np.array(tri_colors, dtype=np.uint8)
     return np.array(tris, dtype=np.float32), np.array(areas, dtype=np.float64)
@@ -268,6 +271,35 @@ def edge_distance(points, edge_pts, radius):
     return out
 
 
+def visible_from(tris, direction, max_dim):
+    """Filtro de candidatos para `even_surface`: acepta sólo los puntos que se
+    ven desde `direction` (hacia la cámara, espacio Blender ya con yaw/pitch).
+
+    Descarta (1) los de caras que miran hacia el otro lado y (2) los tapados
+    por otra parte del modelo -- un rayo desde el punto hacia la cámara que
+    choca algo. La nube no tiene oclusión: sin esto, en la casa se veía la
+    pared de atrás a través de la puerta y el borde de la pared a través del
+    alero. Sólo tiene sentido para formas que se miran siempre de frente.
+    """
+    from mathutils.bvhtree import BVHTree
+    d = np.asarray(direction, dtype=np.float64); d /= np.linalg.norm(d)
+    verts = [tuple(v) for v in tris.reshape(-1, 3)]
+    polys = [(3 * i, 3 * i + 1, 3 * i + 2) for i in range(len(tris))]
+    bvh = BVHTree.FromPolygons(verts, polys, all_triangles=True)
+    n = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    n /= np.maximum(np.linalg.norm(n, axis=1)[:, None], 1e-12)
+    eps = max_dim * 2e-3
+    dv = Vector(d.tolist())
+
+    def accept(points, tri_idx):
+        keep = (n[tri_idx] @ d) > 0.02
+        for i in np.flatnonzero(keep):
+            if bvh.ray_cast(Vector((points[i] + d * eps).tolist()), dv, max_dim * 4)[0] is not None:
+                keep[i] = False
+        return keep
+    return accept
+
+
 def sample_surface(tris, areas, count, rng, shell, return_idx=False):
     """Muestreo uniforme por área + cáscara hacia adentro (a lo largo de -normal).
     Con `return_idx` devuelve además el índice de triángulo de cada muestra
@@ -301,6 +333,40 @@ def blender_to_yup(pts):
     Blender (x, -z, y):  Blender (x,y,z) -> glTF (x, z, -y).
     """
     return np.stack([pts[:, 0], pts[:, 2], -pts[:, 1]], axis=1).astype(np.float32)
+
+def ramp_levels(z, mask, start):
+    """Nivel de animación (0..4) que crece hacia ABAJO dentro de las partículas animadas.
+
+    `z`: alto en espacio Blender (Z arriba del asset); `mask`: partículas de
+    materiales `animate`; `start`: fracción del alto de esa región, medida desde
+    su punto más alto, donde empieza el parpadeo. Arriba de `start` queda en 0
+    (quieta, igual que el resto del modelo); de ahí sube hasta 4 en el punto
+    más bajo con curva de raíz: la llama se afina hacia la punta y ahí hay
+    pocas partículas, así que una rampa lineal dejaba casi todo el parpadeo
+    en los niveles bajos, sin que se notara. Es la llama del logo: firme
+    junto a la base, parpadeando cada vez más hacia la punta (pedido del
+    dueño del proyecto, 2026-09-14).
+    """
+    lv = np.zeros(len(z), dtype=np.uint8)
+    if not mask.any():
+        return lv
+    top, bot = float(z[mask].max()), float(z[mask].min())
+    f = (top - z) / max(top - bot, 1e-9)
+    k = np.clip((f - start) / max(1.0 - start, 1e-9), 0.0, 1.0)
+    lv[mask] = np.ceil(np.sqrt(k[mask]) * 4.0 - 1e-6).astype(np.uint8)
+    return lv
+
+def roll_yup(pts, angle):
+    """Gira la forma terminada (espacio three, Y-up) sobre el eje de la vista (Z).
+
+    Convención three: ángulo positivo = antihorario visto desde la cámara, así
+    que `roll` negativo manda el "arriba" del asset hacia +X (la ampolleta del
+    logo, inclinada como en la imagen de referencia). Se aplica a la forma
+    ENTERA (todas sus fuentes, y sus normales) antes de normalizar: el
+    encuadre [-1, 1] sale del contorno ya inclinado.
+    """
+    c, s = math.cos(angle), math.sin(angle)
+    return np.stack([pts[:, 0] * c - pts[:, 1] * s, pts[:, 0] * s + pts[:, 1] * c, pts[:, 2]], axis=1).astype(np.float32)
 
 def flatten_to_plane(pts, up=FLATTEN_UP, front=FLATTEN_FRONT):
     """Proyecta al plano de mejor ajuste (PCA) y deja z=0.
@@ -348,7 +414,7 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     # formas es la MISMA partícula. Eso es lo que hace que el morph par sea
     # rígido por pieza en vez de una reasignacion global.
     rng = np.random.RandomState(cfg['seed'] + _name_seed(spec.get('pairWith', name)))
-    all_tris = []; all_areas = []; all_colors = []; all_groups = []; all_anim = []; group_offset = 0; first_max = None
+    all_tris = []; all_areas = []; all_colors = []; all_groups = []; all_anim = []; all_scatter = []; group_offset = 0; first_max = None
     colors = spec.get('colors')  # material name -> hex; solo el logo lo usa hoy
     for src in spec['sources']:
         objs = import_glb(src['file'], src.get('exclude'))
@@ -374,8 +440,9 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
             missing = [k for k in explode if k not in names]
             if missing:
                 print('ERROR explode: mallas sin match', missing, 'disponibles', sorted(names)); sys.exit(2)
-        tris, areas, tcol, groups, tanim = triangles_world(objs, explode, first_max, colors, components=True, animate=spec.get('animate'))
-        all_groups.append(groups + group_offset); all_anim.append(tanim)
+        tris, areas, tcol, groups, tanim, tscat = triangles_world(objs, explode, first_max, colors, components=True,
+                                                                 animate=spec.get('animate'), scatter=spec.get('scatter'))
+        all_groups.append(groups + group_offset); all_anim.append(tanim); all_scatter.append(tscat)
         group_offset += len(objs)
         if colors is not None:
             all_colors.append(tcol)
@@ -383,6 +450,9 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     tris = np.concatenate(all_tris); areas = np.concatenate(all_areas)
     if spec.get('animate') and not np.concatenate(all_anim).any():
         print('ERROR animate: ningún material coincide con', spec['animate']); sys.exit(2)
+    scatter_tris = np.concatenate(all_scatter)
+    if spec.get('scatter') and not scatter_tris.any():
+        print('ERROR scatter: ningún material coincide con', spec['scatter']); sys.exit(2)
     # Aristas vivas sobre la MISMA sopa de triángulos que se muestrea, así el
     # sesgo de densidad y el tamaño por partícula miran la geometría real.
     edge_pts, edge_tris = sharp_edges(tris, first_max, cfg.get('sharpAngle', 28.0))
@@ -396,12 +466,51 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     # `shapes.json` no habría cambiado nada. Se cuantiza el resultado CON
     # boost, no las áreas crudas.
     weights = np.round(weights / weights.sum(), 8)
-    pts, tri_idx = lattice_surface(tris, weights, count)
+    # `density` (< 1): cuántas posiciones DISTINTAS se hornean, como fracción
+    # de `count`. Toda forma tiene que tener `count` partículas (el morph empareja
+    # el índice i entre formas), así que las sobrantes se apilan exactamente
+    # sobre las ya muestreadas. Es para formas que se ven chicas en pantalla: en
+    # la caja de 310x280 de Capacidades el riego mide ~300x100 px, y con 16 384
+    # posiciones distintas los puntos quedaban más juntos que su propio tamaño
+    # (~1.5 px) y se fundían en una mancha plana.
+    n_sample = int(round(count * spec.get('density', 1.0)))
+    if scatter_tris.any():
+        # `scatter`: los materiales listados se reparten con `even_surface`
+        # (espaciado parejo, sin filas) y el resto con la retícula. La cuota de
+        # cada parte es proporcional a su peso, así la densidad no cambia. Es
+        # para piezas donde las filas de la retícula se ven como aros: las
+        # cápsulas finas de los rayos y el cono torneado de la llama del logo.
+        n_scat = int(round(n_sample * weights[scatter_tris].sum() / weights.sum()))
+        lat_ids = np.flatnonzero(~scatter_tris); scat_ids = np.flatnonzero(scatter_tris)
+        # Forma entera en `scatter` (hogar): no queda nada para la retícula.
+        if n_sample - n_scat > 0:
+            p_lat, i_lat = lattice_surface(tris[lat_ids], weights[lat_ids], n_sample - n_scat)
+        else:
+            p_lat, i_lat = np.zeros((0, 3), dtype=np.float32), np.zeros(0, dtype=np.int64)
+        # `visibleFrom`: sólo lo que ve la cámara (dirección en espacio Blender, -Y = frente).
+        vis = spec.get('visibleFrom')
+        accept = None
+        if vis:
+            full = visible_from(tris, vis, first_max)
+            accept = lambda pts, idx: full(pts, scat_ids[idx])
+        p_scat, i_scat = even_surface(tris[scat_ids], weights[scat_ids], n_scat, rng, accept=accept)
+        pts = np.concatenate([p_lat, p_scat]).astype(np.float32)
+        tri_idx = np.concatenate([lat_ids[i_lat], scat_ids[i_scat]])
+        print('   scatter:', n_scat, 'partículas con espaciado parejo')
+    else:
+        pts, tri_idx = lattice_surface(tris, weights, n_sample)
+    if n_sample < count:
+        rep = np.resize(np.arange(n_sample), count)
+        pts = pts[rep]; tri_idx = tri_idx[rep]
+        print('   density:', n_sample, 'posiciones distintas de', count)
     normals = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
     normals /= np.maximum(np.linalg.norm(normals, axis=1)[:, None], 1e-12)
     sample_normals = blender_to_yup(normals[tri_idx])
     sample_groups = np.concatenate(all_groups)[tri_idx]
     sample_anim = np.concatenate(all_anim)[tri_idx]
+    if spec.get('animateRamp'):
+        # Todavía en espacio Blender (Z arriba del asset), antes del `roll`.
+        sample_anim = ramp_levels(pts[:, 2], sample_anim > 0, spec['animateRamp']['from'])
     sample_rgb = np.concatenate(all_colors)[tri_idx] if colors is not None else None
     # TAMAÑO DEL DETALLE bajo cada partícula, en [0,1]: 0 = detalle fino (pegada a
     # una arista viva, o sobre una pieza delgada), 1 = zona ancha y gruesa. Es lo
@@ -431,6 +540,9 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     # `flatten_to_plane` ya emite (u, v, 0) en espacio de pantalla; el resto de
     # las formas sale en espacio Blender y hay que devolverlas a Y-up.
     pts = flatten_to_plane(pts) if spec.get('flatten') else blender_to_yup(pts)
+    if spec.get('roll'):
+        pts = roll_yup(pts, spec['roll'])
+        sample_normals = roll_yup(sample_normals, spec['roll'])
     pts, mn, mx = normalize(pts)
     # Orden de Hilbert: identidad de partícula por localidad espacial (§6). Para
     # un par (`nodo` / `nodo-explotado`) se calcula UNA sola vez, sobre los puntos
@@ -452,10 +564,13 @@ def build_shape(name, spec, cfg, lod, size, order=None, write=True):
     if not write:
         return order
     sd = seeds(count, cfg['seed'])
-    # Canal w: semilla en [0, .5) más la marca `animate` en el bit alto (w >= .5).
-    # El shader lee `seed = fract(w * 2)` y `flag = step(.5, w)`; con half float la
-    # semilla conserva ~10 bits, de sobra para el jitter.
-    data = np.empty((count, 4), dtype=np.float32); data[:, :3] = pts; data[:, 3] = sd * 0.5 + sample_anim.astype(np.float32) * 0.5
+    # Canal w: w = (nivel + semilla) / 2, con `nivel` = amplitud de animación
+    # 0..4 (0 = quieta; ver `sample_anim`). El shader lee `seed = fract(w * 2)` y
+    # `nivel = floor(w * 2)`. En half float la semilla conserva 8 bits con nivel
+    # 4 (paso 1/512 en [2, 4)) y ~10 con nivel 0, de sobra para el jitter. Se
+    # acota a 0.996: una semilla más cerca de 1 redondeaba al nivel siguiente
+    # (con la marca 0/1 anterior, 5 partículas de la bombilla salían "llama").
+    data = np.empty((count, 4), dtype=np.float32); data[:, :3] = pts; data[:, 3] = (np.minimum(sd, 0.996) + sample_anim.astype(np.float32)) * 0.5
     out_dir = os.path.join(ROOT, cfg['outDir']); os.makedirs(out_dir, exist_ok=True)
     base = os.path.join(out_dir, f'{name}-positions-{lod}')
     data.astype(np.float16).tofile(base + '.bin')

@@ -17,7 +17,7 @@ export function useTramoScrubs(reduced: boolean) {
     const markers = isSceneDebug();
     const prev: number[] = [];
     TRAMOS.forEach((tr, i) => {
-      // El tramo del carrusel de Capacidades lo mueve un click, no el scroll -- ver capacidadesCarousel.ts.
+      // Los tramos del carrusel de Capacidades tienen su propio driver (scroll horizontal fijado en desktop, click en teléfono) -- ver Capacidades.tsx y capacidadesCarousel.ts.
       if (tr.driver === 'manual') return;
       const trigger = resolveEl(tr.trigger.start[0]);
       const endTrigger = resolveEl(tr.trigger.end[0]);

@@ -1,0 +1,210 @@
+{
+  "task": 24,
+  "frozen_before": {
+    "PCB": "ff113b2f4ddc0281d922b008c1855c2fad0e0adc6445bca8e58a7c1abc52d020",
+    "SCREEN_FACE": "0869b33d35b0c9fbbe247b0f20ad96676426f251439bd565c2134f7ac460d39f",
+    "BTN_01": "5f56d2f724800cdbaec33dbc7d21ed20b3dd2d9cb0d4d7a887020997cb3410e2",
+    "BTN_02": "7c5b80bcd30dbc0b35148724c26dd8ad45ba380fcb4daf862145e44cfb352817",
+    "BTN_03": "25329219e1496e0d7bd8f43f48e8db0f68045ae41c323a33e097a87405f5e38e",
+    "USB_C_TOP_REF": "7e26886cbb4a40f50f2557e02281aa2f190780ea27d8ab7a44d1e44cd5b396d1"
+  },
+  "before": {
+    "FRONT_BODY": {
+      "vertices": 1377,
+      "faces": 2766,
+      "volume_mm3": 63085.409750680716,
+      "nonmanifold_edges": 0,
+      "components": 1,
+      "bounds": [
+        [
+          -3.9000000953674316,
+          88.9000015258789
+        ],
+        [
+          -15.420400619506836,
+          137.01409912109375
+        ],
+        [
+          -33.60697937011719,
+          11.634599685668945
+        ]
+      ]
+    },
+    "REAR_BODY": {
+      "vertices": 5118,
+      "faces": 10256,
+      "volume_mm3": 106805.92908361777,
+      "nonmanifold_edges": 0,
+      "components": 1,
+      "bounds": [
+        [
+          -3.9000000953674316,
+          88.9000015258789
+        ],
+        [
+          -15.420400619506836,
+          137.01409912109375
+        ],
+        [
+          -78.36540222167969,
+          7.237711429595947
+        ]
+      ]
+    }
+  },
+  "operations": [
+    {
+      "A_removed": "Four ballast retaining rails only",
+      "volume_removed_mm3": 1738.4804670526064,
+      "preserved": "central PCB guide, screw mounts, PCB guides, structural floor, foot pocket backing, rear USB"
+    },
+    {
+      "B": "Four front threaded tongues removed; head/pass pads in FRONT, four receiving bosses and structural shoulders in REAR",
+      "axes_world_xz": [
+        [
+          10,
+          -1
+        ],
+        [
+          32,
+          -1
+        ],
+        [
+          54,
+          -1
+        ],
+        [
+          76,
+          -1
+        ]
+      ],
+      "front_pass_diameter": 3.4,
+      "head_diameter_depth": [
+        6.2,
+        3.2
+      ],
+      "rear_pilot_diameter": 2.5,
+      "rear_pilot_depth_axis": 5.4,
+      "reason_contact_plane": "Parallel to hardware extraction axis; preserves head recess Y and avoids trapping front under receivers"
+    }
+  ],
+  "floor_y": -15.42040023803711,
+  "head_bearing_y": -12.220400238037112,
+  "m3_contact_axis_y": -8.820400238037111,
+  "contact_plane_pcb_y": -8.261034965515137,
+  "checkpoints": {
+    "CP24_A": {
+      "FRONT_BODY": {
+        "vertices": 1377,
+        "faces": 2766,
+        "volume_mm3": 63085.409750680716,
+        "nonmanifold_edges": 0,
+        "components": 1,
+        "bounds": [
+          [
+            -3.9000000953674316,
+            88.9000015258789
+          ],
+          [
+            -15.420400619506836,
+            137.01409912109375
+          ],
+          [
+            -33.60697937011719,
+            11.634599685668945
+          ]
+        ],
+        "nonmanifold_vertices": 0
+      },
+      "REAR_BODY": {
+        "vertices": 5119,
+        "faces": 10258,
+        "volume_mm3": 105067.49056740825,
+        "nonmanifold_edges": 0,
+        "components": 1,
+        "bounds": [
+          [
+            -3.9000000953674316,
+            88.9000015258789
+          ],
+          [
+            -15.420400619506836,
+            137.01409912109375
+          ],
+          [
+            -78.36540222167969,
+            7.237711429595947
+          ]
+        ],
+        "nonmanifold_vertices": 0
+      }
+    },
+    "CP24_B": {
+      "FRONT_BODY": {
+        "vertices": 2049,
+        "faces": 4126,
+        "volume_mm3": 63322.457559077455,
+        "nonmanifold_edges": 0,
+        "components": 1,
+        "bounds": [
+          [
+            -3.9000000953674316,
+            88.9000015258789
+          ],
+          [
+            -15.420400619506836,
+            137.01409912109375
+          ],
+          [
+            -33.60697937011719,
+            11.634599685668945
+          ]
+        ],
+        "nonmanifold_vertices": 0
+      },
+      "REAR_BODY": {
+        "vertices": 5722,
+        "faces": 11464,
+        "volume_mm3": 105640.91623553965,
+        "nonmanifold_edges": 0,
+        "components": 1,
+        "bounds": [
+          [
+            -3.9000000953674316,
+            88.9000015258789
+          ],
+          [
+            -15.420400619506836,
+            137.01409912109375
+          ],
+          [
+            -78.36540222167969,
+            7.237711429595947
+          ]
+        ],
+        "nonmanifold_vertices": 0
+      }
+    }
+  },
+  "front_after_boss_removal": {
+    "vertices": 1006,
+    "faces": 1657,
+    "volume_mm3": 59139.24265392773,
+    "nonmanifold_edges": 0,
+    "components": 1,
+    "bounds": [
+      [
+        -3.9000000953674316,
+        88.9000015258789
+      ],
+      [
+        -15.420400619506836,
+        137.01409912109375
+      ],
+      [
+        -33.60697937011719,
+        11.634599685668945
+      ]
+    ]
+  }
+}

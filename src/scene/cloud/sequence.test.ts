@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TRAMOS, CAROUSEL_TRAMOS, resolveTramo, quantize, staircase } from './sequence';
-import { CAPACIDADES_CARDS, driveCapacidadesCarousel, getCapacidadesCard } from './capacidadesCarousel';
+import { CAPACIDADES_CARDS, driveCapacidadesCarousel, getCapacidadesCard, setCapacidadesPosition } from './capacidadesCarousel';
 import { registry } from '../registry';
 
 const opts = { reposoCola: 0.2, reposoCabeza: 0.2, pasos: 3, meseta: 0.17, reduced: false };
@@ -74,6 +74,10 @@ describe('TRAMOS', () => {
     CAROUSEL_TRAMOS.forEach((idx, k) => {
       expect(TRAMOS[idx].driver).toBe('manual');
       expect(TRAMOS[idx].kind).toBe('morphEnSitio');
+      // Formas sin relación física entre sí (riego/seguridad/hogar): barrido
+      // dirigido prendido, no el mix directo A↔B por default de `morphEnSitio`
+      // (regresión 2026-09-14 -- sin esto se ve como una doble exposición).
+      expect(TRAMOS[idx].stagger).toBe(true);
       if (k > 0) expect(idx).toBe(CAROUSEL_TRAMOS[k - 1] + 1);
     });
     expect(CAPACIDADES_CARDS).toEqual([TRAMOS[CAROUSEL_TRAMOS[0]].from.shape, ...CAROUSEL_TRAMOS.map((i) => TRAMOS[i].to!.shape)]);
@@ -122,6 +126,17 @@ describe('carrusel de Capacidades (progreso manual)', () => {
     driveCapacidadesCarousel(0, CAROUSEL_TRAMOS, true);
     CAROUSEL_TRAMOS.forEach((idx) => expect(registry.getProgress(idx)).toBe(0));
     expect(resolveTramo(p, TRAMOS, opts).b).toBe('riego');
+  });
+  it('driver de scroll: la posición continua del carril reparte el progreso entre tramos manuales', () => {
+    setCapacidadesPosition(1.25, CAROUSEL_TRAMOS);
+    expect(CAROUSEL_TRAMOS.map((idx) => registry.getProgress(idx))).toEqual([1, 0.25]);
+    expect(getCapacidadesCard()).toBe('seguridad');
+    setCapacidadesPosition(9, CAROUSEL_TRAMOS);   // se acota a la última tarjeta
+    expect(CAROUSEL_TRAMOS.map((idx) => registry.getProgress(idx))).toEqual([1, 1]);
+    expect(getCapacidadesCard()).toBe('hogar');
+    setCapacidadesPosition(0, CAROUSEL_TRAMOS);
+    expect(CAROUSEL_TRAMOS.map((idx) => registry.getProgress(idx))).toEqual([0, 0]);
+    expect(getCapacidadesCard()).toBe('riego');
   });
 });
 describe('staircase', () => {

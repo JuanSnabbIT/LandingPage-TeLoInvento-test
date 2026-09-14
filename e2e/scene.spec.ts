@@ -61,6 +61,34 @@ test('tramos avanzan con el scroll', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+/**
+ * Capacidades en desktop: la sección queda fijada y el scroll desliza el carril
+ * de tarjetas; el modelo recorre riego → seguridad → hogar al mismo ritmo y el
+ * punto activo sigue a la tarjeta. Sin pin (teléfono) lo cubre scene-mobile.
+ */
+test('capacidades: el scroll horizontal fijado pasa las tarjetas y transforma el modelo', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?debug&force3d');
+  await waitForScene(page);
+  const spacer = await page.evaluate(() => {
+    const s = document.querySelector('#capacidades')!.parentElement!;
+    return { isPin: s.classList.contains('pin-spacer'), top: s.getBoundingClientRect().top + scrollY, h: s.offsetHeight, sec: document.querySelector<HTMLElement>('#capacidades')!.offsetHeight };
+  });
+  expect(spacer.isPin).toBe(true);
+  const start = spacer.top - (900 - spacer.sec) / 2;
+  const cards: number[] = []; const shapes: string[] = [];
+  for (const f of [0.02, 0.5, 0.98]) {
+    const r = await scrollAndRead(page, start + (spacer.h - spacer.sec) * f);
+    shapes.push(r.t >= 0.99 ? r.b : r.a);
+    cards.push(await page.evaluate(() => [...document.querySelectorAll('.capacidades__dots button')].findIndex((b) => b.classList.contains('is-active'))));
+    expect(await page.evaluate(() => Math.round(document.querySelector('#capacidades')!.getBoundingClientRect().top))).toBeGreaterThanOrEqual(0);
+  }
+  expect(cards).toEqual([0, 1, 2]);
+  expect(shapes).toEqual(['riego', 'seguridad', 'hogar']);
+  expect(errors).toEqual([]);
+});
+
 test('reduced motion cuantiza', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?debug');

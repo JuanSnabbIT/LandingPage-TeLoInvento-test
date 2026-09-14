@@ -23,28 +23,44 @@ export interface Tramo {
   driver?: 'manual';
   /**
    * Forma de origen calculada en el momento en vez de leída de `from.shape`.
-   * La usa el tramo que sale de Capacidades hacia Hogar: cuál de las dos
-   * tarjetas (riego/seguridad) estaba activa en el carrusel decide de cuál
-   * arranca el viaje, así no hay un salto de forma si el visitante scrollea
-   * habiendo dejado la seguridad activa. `from.shape` sigue declarado como
+   * La usa el tramo que sale de Capacidades hacia Valor: cuál de las tres
+   * tarjetas (riego/seguridad/hogar) estaba activa en el carrusel decide de
+   * cuál arranca el viaje, así no hay un salto de forma si el visitante
+   * scrollea habiendo dejado otra tarjeta activa. `from.shape` sigue declarado como
    * el default documentado (el estado inicial del carrusel, antes de que el
    * visitante interactúe).
    */
   dynamicFrom?: () => string;
+  /**
+   * Sólo tiene efecto en `morphEnSitio`. Por default ese `kind` fuerza
+   * `uRigid: 1` (§5.2 de la doc): sin desfase por partícula (`uStagger`), un
+   * mix directo A↔B — correcto para piezas que vuelven a su lugar
+   * (`nodo-explotado` → `nodo`) o para el apagado, donde cada partícula debe
+   * moverse en lockstep. Pero entre formas SIN relación física (riego,
+   * seguridad, hogar: el índice i no es "la misma pieza" en las dos) un mix
+   * directo se ve como una doble exposición borrosa -- las dos nubes
+   * promediadas a la vez, con huecos donde sus densidades no coinciden -- en
+   * vez de una transformación. `stagger: true` prende el mismo barrido
+   * dirigido (`uSweepDir`/`uStagger`) que usan los tramos `viaje`, así la
+   * forma se lee como una ola que cruza el modelo también en el carrusel de
+   * Capacidades. El curl y el swirl (turbulencia de vuelo) siguen apagados:
+   * es "barrido en el sitio", no un viaje por el aire.
+   */
+  stagger?: boolean;
 }
 /** Travel occupies the arrival window; the model rests while its section is read. */
 export const TRAMOS: Tramo[] = [
-  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 95%'], end: ['problema', 'top 48%'] }, sweep: [0, -1, 0] },
-  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 95%'], end: ['solucion', 'top 48%'] }, sweep: [1, 0, 0] },
-  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'riego', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [-1, 0, 0] },
-  // Carrusel de Capacidades: riego -> seguridad -> hogar, disparado por click en las tarjetas (capacidadesCarousel.ts), no por scroll. El `trigger` es inerte (useTramoScrubs los salta); apunta a la caja para cumplir la invariante trigger == to.slot.
-  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'seguridad', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [1, 0, 0], driver: 'manual' },
-  { from: { shape: 'seguridad', slot: 'capacidades' }, to: { shape: 'hogar', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [1, 0, 0], driver: 'manual' },
+  { from: { shape: 'logo', slot: 'hero-display' }, to: { shape: 'nodo', slot: 'problema' }, kind: 'viaje', trigger: { start: ['problema', 'top 100%'], end: ['problema', 'top 30%'] }, sweep: [0, -1, 0] },
+  { from: { shape: 'nodo', slot: 'problema' }, to: { shape: 'set', slot: 'solucion' }, kind: 'viaje', trigger: { start: ['solucion', 'top 100%'], end: ['solucion', 'top 30%'] }, sweep: [1, 0, 0] },
+  { from: { shape: 'set', slot: 'solucion' }, to: { shape: 'riego', slot: 'capacidades' }, kind: 'viaje', trigger: { start: ['capacidades', 'top 100%'], end: ['capacidades', 'top 30%'] }, sweep: [-1, 0, 0] },
+  // Carrusel de Capacidades: riego -> seguridad -> hogar. Su progreso no lo scrubbea useTramoScrubs: en desktop lo escribe el scroll horizontal fijado de Capacidades.tsx, en teléfono el click (capacidadesCarousel.ts). El `trigger` es inerte; apunta a la caja para cumplir la invariante trigger == to.slot.
+  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'seguridad', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [1, 0, 0], driver: 'manual', stagger: true },
+  { from: { shape: 'seguridad', slot: 'capacidades' }, to: { shape: 'hogar', slot: 'capacidades' }, kind: 'morphEnSitio', trigger: { start: ['capacidades', 'top 95%'], end: ['capacidades', 'top 48%'] }, sweep: [-1, 0, 0], driver: 'manual', stagger: true },
   // Salida de Capacidades: arranca de la tarjeta activa (`dynamicFrom`); `from.shape` es el default (carrusel sin tocar).
-  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 95%'], end: ['valor', 'top 48%'] }, sweep: [1, 0, 0], dynamicFrom: getCapacidadesCard },
-  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 95%'], end: ['proceso', 'top 68%'] }, sweep: [0, -1, 0] },
-  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'top 55%'], end: ['proceso', 'top 25%'] }, sweep: [0, 1, 0] },
-  { from: { shape: 'nodo', slot: 'proceso' }, to: { shape: 'microchip', slot: 'contacto-microchip' }, kind: 'viaje', trigger: { start: ['contacto-microchip', 'top 90%'], end: ['contacto-microchip', 'top 55%'] }, sweep: [1, 0, 0] },
+  { from: { shape: 'riego', slot: 'capacidades' }, to: { shape: 'wifi', slot: 'valor' }, kind: 'viaje', trigger: { start: ['valor', 'top 100%'], end: ['valor', 'top 30%'] }, sweep: [1, 0, 0], dynamicFrom: getCapacidadesCard },
+  { from: { shape: 'wifi', slot: 'valor' }, to: { shape: 'nodo-explotado', slot: 'proceso' }, kind: 'viaje', trigger: { start: ['proceso', 'top 105%'], end: ['proceso', 'top 60%'] }, sweep: [0, -1, 0] },
+  { from: { shape: 'nodo-explotado', slot: 'proceso' }, to: { shape: 'nodo', slot: 'proceso' }, kind: 'morphEnSitio', trigger: { start: ['proceso', 'top 50%'], end: ['proceso', 'top 5%'] }, sweep: [0, 1, 0] },
+  { from: { shape: 'nodo', slot: 'proceso' }, to: { shape: 'microchip', slot: 'contacto-microchip' }, kind: 'viaje', trigger: { start: ['contacto-microchip', 'top 100%'], end: ['contacto-microchip', 'top 45%'] }, sweep: [1, 0, 0] },
   // Apagado sobre la MISMA caja que la llegada, más abajo: el chip descansa entero mientras su caja va del 55% al 32% del viewport y se apaga al meterse bajo el header. Sobre la sección entera (#contacto) se apagaba antes de que el visitante lo viera.
   { from: { shape: 'microchip', slot: 'contacto-microchip' }, to: null, kind: 'apagado', trigger: { start: ['contacto-microchip', 'top 32%'], end: ['contacto-microchip', 'top 4%'] }, sweep: [0, -1, 0] },
 ];

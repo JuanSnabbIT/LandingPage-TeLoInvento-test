@@ -1,0 +1,141 @@
+{
+  "files": [
+    {
+      "file": "STL\\FRONT_BODY.stl",
+      "triangles": 2766,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 63085.433775194724,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "STL\\REAR_BODY.stl",
+      "triangles": 10256,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 106805.96222356928,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\01_BUTTON_OPENING.stl",
+      "triangles": 160,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 1097.6181794305637,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\02_M25_PILOTS.stl",
+      "triangles": 780,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 4876.8611679429505,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\02_M3_PILOTS.stl",
+      "triangles": 780,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 5080.202823686105,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\03_GUIDE_FRONT_BODY.stl",
+      "triangles": 60,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 331.9996623178023,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\03_GUIDE_REAR_BODY.stl",
+      "triangles": 68,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 173.10018914051258,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\04_M3_JOINT_FRONT_BODY.stl",
+      "triangles": 484,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 1477.9243656651256,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "PROBETAS\\04_M3_JOINT_REAR_BODY.stl",
+      "triangles": 1258,
+      "nonmanifold_edges": 0,
+      "inconsistent_edges": 0,
+      "positive_volume_mm3": 587.3737715835233,
+      "z_min_mm": 0.0
+    },
+    {
+      "file": "STL\\FRONT_BODY.3mf",
+      "unit": "millimeter",
+      "triangles": 2766,
+      "archive_crc": "PASS"
+    },
+    {
+      "file": "STL\\REAR_BODY.3mf",
+      "unit": "millimeter",
+      "triangles": 10256,
+      "archive_crc": "PASS"
+    }
+  ],
+  "hardware": {
+    "PCB": "UNCHANGED",
+    "SCREEN_FACE": "UNCHANGED",
+    "BTN_01": "UNCHANGED",
+    "BTN_02": "UNCHANGED",
+    "BTN_03": "UNCHANGED",
+    "USB_C_TOP_REF": "UNCHANGED"
+  },
+  "blend": {
+    "FRONT_BODY": {
+      "vertices": 1377,
+      "faces": 2766,
+      "volume_mm3": 63085.409750680716,
+      "nonmanifold_edges": 0,
+      "components": 1,
+      "bounds": [
+        [
+          -3.9000000953674316,
+          88.9000015258789
+        ],
+        [
+          -15.420400619506836,
+          137.01409912109375
+        ],
+        [
+          -33.60697937011719,
+          11.634599685668945
+        ]
+      ]
+    },
+    "REAR_BODY": {
+      "vertices": 5118,
+      "faces": 10256,
+      "volume_mm3": 106805.92908361777,
+      "nonmanifold_edges": 0,
+      "components": 1,
+      "bounds": [
+        [
+          -3.9000000953674316,
+          88.9000015258789
+        ],
+        [
+          -15.420400619506836,
+          137.01409912109375
+        ],
+        [
+          -78.36540222167969,
+          7.237711429595947
+        ]
+      ]
+    }
+  },
+  "status": "PASS: delivery read back independently; physical validation remains pending"
+}

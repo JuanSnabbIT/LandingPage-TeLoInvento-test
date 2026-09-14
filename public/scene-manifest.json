@@ -7,20 +7,20 @@
         "count": 16384,
         "bbox": {
           "min": [
-            -0.7431490421295166,
-            0,
-            -0.574999988079071
+            -0.9140995144844055,
+            0.00000772649855207419,
+            -0.20139528810977936
           ],
           "max": [
-            0.8950000405311584,
-            2.144584894180298,
-            0.6200000047683716
+            0.9047810435295105,
+            2.3488643169403076,
+            0.42389488220214844
           ]
         },
         "params": "/textures/particulas/hogar-params-lod2.bin",
         "hasColor": true,
         "links": "/textures/particulas/hogar-links-lod2.bin",
-        "linkCount": 32253,
+        "linkCount": 32413,
         "structure": "surface-lattice-v1"
       },
       "mobile": {
@@ -29,20 +29,20 @@
         "count": 6400,
         "bbox": {
           "min": [
-            -0.73974609375,
-            0,
-            -0.574999988079071
+            -0.9051921367645264,
+            0.00001891436659207102,
+            -0.20113420486450195
           ],
           "max": [
-            0.8950000405311584,
-            2.135983467102051,
-            0.6200000047683716
+            0.9049991369247437,
+            2.3489139080047607,
+            0.42208725214004517
           ]
         },
         "params": "/textures/particulas/hogar-params-mobile.bin",
         "hasColor": true,
         "links": "/textures/particulas/hogar-links-mobile.bin",
-        "linkCount": 12482,
+        "linkCount": 12527,
         "structure": "surface-lattice-v1"
       }
     },
@@ -53,13 +53,13 @@
         "count": 16384,
         "bbox": {
           "min": [
-            -1.204237461090088,
-            -2.9175760746002197,
+            -1.6912223100662231,
+            -2.425708770751953,
             -0.7293874025344849
           ],
           "max": [
-            1.202499270439148,
-            2.321901321411133,
+            1.8375846147537231,
+            2.112633466720581,
             0.7293881177902222
           ]
         },
@@ -67,7 +67,7 @@
         "hasColor": true,
         "animated": true,
         "links": "/textures/particulas/logo-links-lod2.bin",
-        "linkCount": 32048,
+        "linkCount": 32056,
         "structure": "surface-lattice-v1"
       },
       "mobile": {
@@ -76,13 +76,13 @@
         "count": 6400,
         "bbox": {
           "min": [
-            -1.1965525150299072,
-            -2.907696008682251,
+            -1.6829564571380615,
+            -2.4141156673431396,
             -0.7293874025344849
           ],
           "max": [
-            1.1927742958068848,
-            2.321901321411133,
+            1.8374392986297607,
+            2.112630605697632,
             0.7291433811187744
           ]
         },
@@ -90,7 +90,7 @@
         "hasColor": true,
         "animated": true,
         "links": "/textures/particulas/logo-links-mobile.bin",
-        "linkCount": 12269,
+        "linkCount": 12212,
         "structure": "surface-lattice-v1"
       }
     },
@@ -239,20 +239,20 @@
         "count": 16384,
         "bbox": {
           "min": [
-            -4.45054292678833,
-            2.239274898840904e-8,
-            -0.5391674637794495
+            -4.435879230499268,
+            6.630489934877914e-8,
+            -0.5361685752868652
           ],
           "max": [
-            4.452022552490234,
-            3.1966185569763184,
-            0.5391679406166077
+            4.444108486175537,
+            3.1962873935699463,
+            0.5357732176780701
           ]
         },
         "params": "/textures/particulas/riego-params-lod2.bin",
         "hasColor": true,
         "links": "/textures/particulas/riego-links-lod2.bin",
-        "linkCount": 29541,
+        "linkCount": 16239,
         "structure": "surface-lattice-v1"
       },
       "mobile": {
@@ -261,20 +261,20 @@
         "count": 6400,
         "bbox": {
           "min": [
-            -4.449063301086426,
-            2.7994531137665035e-8,
-            -0.5383352637290955
+            -4.436158180236816,
+            6.532987839591442e-8,
+            -0.5350052714347839
           ],
           "max": [
-            4.453502178192139,
-            3.1947579383850098,
-            0.5383357405662537
+            4.441829681396484,
+            3.194884777069092,
+            0.5362905859947205
           ]
         },
         "params": "/textures/particulas/riego-params-mobile.bin",
         "hasColor": true,
         "links": "/textures/particulas/riego-links-mobile.bin",
-        "linkCount": 8072,
+        "linkCount": 5180,
         "structure": "surface-lattice-v1"
       }
     },
@@ -434,5 +434,5 @@
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-14T15:46:49.807Z"
+  "generatedAt": "2026-09-14T20:02:12.861Z"
 }

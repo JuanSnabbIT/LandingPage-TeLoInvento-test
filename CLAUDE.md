@@ -41,7 +41,7 @@ descripción referencia explícitamente este mismo patrón de vault.
 - **La escena v3 ("la nube") es la única escena.** Una sola nube de
   puntos (`GL_POINTS`, no mallas instanciadas) recorre la página
   transformándose en nueve formas a lo largo de diez tramos (logo → nodo →
-  set → riego ⇄ seguridad ⇄ hogar (carrusel, por click) → wifi → nodo explotado → nodo →
+  set → riego ⇄ seguridad ⇄ hogar (carrusel: scroll horizontal fijado en desktop, click en teléfono) → wifi → nodo explotado → nodo →
   microchip → apagado): morph sin estado en el
   vertex shader entre dos texturas de posiciones horneadas (16 384
   partículas en desktop, 6 400 en mobile), más curl solo en vuelo. Sobre esa
@@ -72,24 +72,38 @@ descripción referencia explícitamente este mismo patrón de vault.
     `useSceneSlot` · `deviceTier` · `webglSupport` ·
     `frameBudget`/`FrameBudgetGuard` · `SlotErrorBoundary` · `debug`
   - `src/scene/cloud/` — `ParticleCloud` · `sequence` (TRAMOS +
-    `resolveTramo`) · `useShapeTextures`/`shapeLoader` ·
+    `resolveTramo`; `stagger: true` por tramo prende el barrido dirigido en un
+    `morphEnSitio` entre formas sin relación física — el carrusel de
+    Capacidades, ver `cloudTokens.enSitio`) · `useShapeTextures`/`shapeLoader` ·
     `cloud.vert`/`cloud.frag`/`curl.glsl` · `scissor` · `cloudTokens` ·
-    `capacidadesCarousel` (tween GSAP que mueve el tramo manual riego ⇄ seguridad)
+    `capacidadesCarousel` (progreso de los tramos manuales riego → seguridad → hogar:
+    `setCapacidadesPosition` desde el scroll horizontal de desktop, tween por click en teléfono)
   - El Hero es un slot más (`hero-display` sobre `.hero__anchor`, en
     `Hero.tsx`): texto a la izquierda, el logo en partículas a la derecha, con
-    `parallax` (giro leve con el puntero) y la llama animada (partículas
-    `TLI_Flame_*`, marcadas en el horneado con `animate` en `shapes.json`). La
+    horneado inclinado (`roll`) y la
+    llama de la malla sólida cuyas partículas de abajo parpadean (`animate` +
+    `animateRamp` en `shapes.json`, nivel en el canal w); rayos y llama se
+    muestrean con espaciado parejo (`scatter`) en vez de la retícula. La
     Central sólida (`HeroCentral`, `bestFitPlane`, `glow.*`) se retiró el
-    2026-09-14 — `central-v2.glb` sólo alimenta el horneado de `set`. El puntero
-    además empuja muy levemente las partículas de cualquier modelo (`cloudTokens.pointer`).
+    2026-09-14 — `central-v2.glb` sólo alimenta el horneado de `set`. Bajo el
+    cursor, en un área chica, las partículas de cualquier modelo se levantan,
+    crecen un poco y se aclaran a blanco, sin deformar la silueta (`cloudTokens.pointer`).
+    Todos los modelos giran levemente con el puntero (parallax, `motion.parallax`).
+    "Vida" en reposo en todos los modelos (`cloudTokens.life`): una
+    respiración lenta del modelo. Es continua: con un modelo en pantalla la
+    escena ya no queda en 0 frames (salvo con reduced-motion, que la apaga).
   - `src/motion/` — `tokens` · `scrollTrigger` (`createScrub`) ·
     `useTramoScrubs` · `useSectionReveals`
   - Las secciones con nube declaran su caja con `useSceneSlot`
     (Hero, Problema, Solución, Capacidades, Valor, Proceso, Contacto); el CSS de
-    escenarios vive en `src/styles/scene.css`. Capacidades es un carrusel de
-    tres tarjetas (Riego, Seguridad Perimetral, Set Hogar — próximamente, con
+    escenarios vive en `src/styles/scene.css`. Capacidades va en dos mitades
+    (título y bajada a la izquierda, carrusel a la derecha; apiladas en ≤900 px).
+    En desktop la sección se fija y el scroll desliza las tarjetas (pin + scrub,
+    sin flechas; los puntos llevan el scroll a cada tarjeta); en teléfono es un
+    carrusel por click. Tres tarjetas (Riego, Seguridad Perimetral, Set Hogar — próximamente, con
     su lista de espera `HogarWaitlist`) con la caja de escena dentro de la
-    tarjeta activa; la tarjeta Set Hogar muestra el placeholder `hogar.glb`
+    tarjeta activa; la tarjeta Set Hogar muestra el placeholder `hogar.glb` (ícono
+    de casa extruido, copia de una referencia del dueño)
     (`assets-source/models/hogar/README.md`). Plataforma Central (`microchip`)
     vive en Contacto, bajo el texto de introducción. La sección Hogar de la
     maqueta ya no existe como sección (2026-09-14).
@@ -111,11 +125,13 @@ blender -b --python assets-source/tools/bake_positions.py -- --shape nodo --lod 
 # regenerar public/scene-manifest.json después de hornear  (OBLIGATORIO)
 npm run manifest
 # poster del Hero (el logo, respaldo sin WebGL) -> public/posters/logo.webp
+# dibuja la nube HORNEADA del logo (con su inclinación): correrlo después de hornear
 blender -b --python assets-source/tools/render-poster.py
 
 npm test                                        # vitest (unitarios + smoke r3f)
 npm run e2e                                     # Playwright; levanta el dev server en 5199
 python assets-source/tools/test_bake_positions.py   # tests del horneado (numpy, sin bpy)
+cd assets-source/tools && python -m unittest test_surface_structure   # retícula de superficie
 npm run lint && npm run build
 ```
 

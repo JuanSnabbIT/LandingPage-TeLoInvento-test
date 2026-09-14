@@ -41,6 +41,50 @@ def lattice_surface(tris, areas, count):
     return np.concatenate(points).astype(np.float32), np.array(faces, dtype=np.int64)
 
 
+def even_surface(tris, areas, count, rng, oversample=6, accept=None):
+    """Even, pattern-free spacing: area-weighted random candidates thinned by
+    farthest-point sampling.
+
+    For pieces where the lattice draws its rows as visible rings -- thin
+    capsules and lathed cones (the rays and flame of the logo), whose long
+    triangles wrap around the part. Deterministic for a given `rng`.
+
+    `accept(points, tri_idx) -> bool mask`: optional candidate filter (the
+    bake uses it to keep only what the camera can see). Candidates are drawn
+    in rounds until `count * oversample` survive, so the spacing stays even
+    over the accepted surface instead of thinning out.
+    """
+    weights = np.maximum(areas, 0)
+    if weights.sum() <= 0 or count <= 0:
+        raise ValueError('A surface needs positive area and a positive count')
+    m = max(count * oversample, count)
+    p = weights / weights.sum()
+    cands, idxs, got = [], [], 0
+    for _ in range(12):
+        idx = rng.choice(len(tris), size=m, p=p)
+        r1 = np.sqrt(rng.random_sample(m)); r2 = rng.random_sample(m)
+        a, b, c = tris[idx, 0], tris[idx, 1], tris[idx, 2]
+        pts = (1 - r1)[:, None] * a + (r1 * (1 - r2))[:, None] * b + (r1 * r2)[:, None] * c
+        if accept is not None:
+            keep = np.asarray(accept(pts, idx), dtype=bool)
+            pts, idx = pts[keep], idx[keep]
+        cands.append(pts); idxs.append(idx); got += len(pts)
+        if got >= m:
+            break
+    if got < count:
+        raise ValueError(f'Only {got} accepted candidates for {count} points')
+    cand = np.concatenate(cands)[:m]; idx = np.concatenate(idxs)[:m]
+    m = len(cand)
+    chosen = np.empty(count, dtype=np.int64)
+    dist = np.full(m, np.inf)
+    cur = 0
+    for i in range(count):
+        chosen[i] = cur
+        dist = np.minimum(dist, ((cand - cand[cur]) ** 2).sum(axis=1))
+        cur = int(dist.argmax())
+    return cand[chosen].astype(np.float32), idx[chosen].astype(np.int64)
+
+
 def surface_links(points, normals, components, radius, max_degree=4):
     """Local tangent links only, bounded degree; no all-pairs runtime search.
 

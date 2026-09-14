@@ -4,8 +4,8 @@
 > `webgl-scene-brief`. Describe la escena v3 ("la nube") tal como está en el
 > código al 2026-09-14, tras dos refactors: el del 2026-09-11 (morph sin
 > estado, seis formas, siete tramos — sigue vigente en lo estructural; al
-> 2026-09-14 son nueve formas y diez tramos, dos de ellos movidos por click y
-> no por scroll, ver §5) y el
+> 2026-09-14 son nueve formas y diez tramos, dos de ellos con driver propio — scroll
+> horizontal fijado en desktop, click en teléfono —, ver §5) y el
 > del 2026-09-14 (vuelta de mallas instanciadas por partícula a puntos +
 > "redes de superficie", y de transición disparada a scroll scrubbeado). La
 > spec de diseño original vive en el vault: `13-spec-diseno-nube.md` (y sus
@@ -95,7 +95,7 @@ src/
     cloud/                   # la nube
       ParticleCloud.tsx        # <points> + 2 <lineSegments> ("redes"), matriz identidad, poses en uniforms
       sequence.ts              # TRAMOS (datos, con sweep por tramo) + resolveTramo (pura) + quantize
-      capacidadesCarousel.ts   # tarjeta activa del carrusel + tween GSAP que escribe el progreso del tramo manual
+      capacidadesCarousel.ts   # tarjeta activa del carrusel + progreso de los tramos manuales (posición del scroll horizontal en desktop, tween por click en teléfono)
       useShapeTextures.ts      # carga/caché/reintento de posiciones, params y links horneados
       shapeLoader.ts           # manifest + .bin → DataTexture RGBA16F / links → Uint32Array
       cloud.vert.ts / cloud.frag.ts / curl.glsl.ts   # GLSL3 sin estado, comparte puntos y redes
@@ -164,10 +164,17 @@ La variante elegida (ADR del 2026-09-11 en el vault):
    una semilla aleatoria). Sin estado: scrollear hacia atrás deshace
    exactamente el morph. Única excepción: los tramos riego → seguridad →
    hogar del carrusel de Capacidades llevan `driver: 'manual'` —
-   `useTramoScrubs` no les crea ScrollTrigger y su progreso lo escribe un
-   timeline GSAP desde el click, tramo por tramo (saltar dos tarjetas pasa
-   por la del medio)
-   (`cloud/capacidadesCarousel.ts`, `registry.setProgress`). Sigue siendo el
+   `useTramoScrubs` no les crea ScrollTrigger y su progreso lo escribe otro
+   driver (`cloud/capacidadesCarousel.ts`, `registry.setProgress`). En
+   desktop (≥901 px), el **scroll horizontal fijado** de `Capacidades.tsx`
+   (`gsap.matchMedia` + ScrollTrigger con `pin` y `scrub: true`): el carril de
+   tarjetas se desliza dentro de una ventana y `setCapacidadesPosition` deriva
+   el progreso de cada tramo de la posición REAL del carril (`x / paso`), así
+   el morph va exactamente al ritmo de las tarjetas; la caja del modelo es un
+   marcador fijo sobre la ventana, no está dentro de las tarjetas. Pausas
+   con la tarjeta quieta y alto de scroll por tarjeta en
+   `motion.capacidades`. En teléfono, un timeline GSAP desde el click, tramo
+   por tramo (saltar dos tarjetas pasa por la del medio). Sigue siendo el
    mismo `resolveTramo`: al elegir el último tramo con progreso > 0, un
    carrusel en 0 cae al tramo de llegada (misma forma, `riego`) sin salto. El
    tramo siguiente declara `dynamicFrom` (origen = tarjeta activa) para
@@ -305,7 +312,25 @@ perfecta).
 
 Los tramos `morphEnSitio` y `apagado` pasan `uRigid: 1`: ahi no hay
 desplazamiento entre cajas distintas, asi que el desfase y la respiracion
-(`uSpread`) se desactivan y el morph es un mix directo A<->B.
+(`uSpread`) se desactivan y el morph es un mix directo A<->B -- correcto
+cuando la forma B es la MISMA pieza reordenada (`nodo-explotado` -> `nodo`,
+`pairWith`: el indice i es la misma pieza fisica en las dos) o un apagado
+(la alpha ya se esta yendo a 0, no importa el camino).
+
+**Excepcion: `stagger: true` por tramo** (sequence.ts), usada por el carrusel
+de Capacidades (riego -> seguridad -> hogar). Esas formas NO tienen relacion
+fisica entre si (no hay `pairWith`), asi que el indice i de una NO es la
+misma pieza fisica en la otra -- un mix directo A<->B se ve como una doble
+exposicion borrosa: las dos nubes promediadas a la vez, con huecos donde sus
+densidades no coinciden (verificado en captura, 2026-09-14). Con
+`stagger: true` el tramo prende: el mismo barrido dirigido que un `viaje`
+(`uStagger`), la respiracion (`uSpread`) y un curl + una caida de alpha a
+mitad de camino MUY por debajo de los de vuelo (`cloudTokens.enSitio`: curl
+~40% y dip ~60% de los de `viaje`) -- lo suficiente para que el tramo medio
+se lea como un enjambre disperso en transito en vez de ruido, sin que se
+sienta "volando" (no hay caja de destino distinta). El swirl (orbita de
+vuelo) sigue apagado: no tiene eje que orbitar sin desplazamiento entre
+cajas.
 
 Por que 16 384 particulas (`lod2`) y no las 150k-250k que sugeria el estandar
 semilla: esta nube **convive con texto** en cajas de ~360 px y con una Central
@@ -365,9 +390,37 @@ Por forma y LOD:
    local e ignora la escala del objeto (con ese bug, `Chassis_ClipTab`, un
    cubo unitario con escala de objeto minúscula, se llevaba el 98 % de las
    partículas) — pero dentro de cada triángulo los puntos se colocan en una
-   **retícula regular**, no con baricéntricas al azar (ver §5.1). Opcionalmente
+   **retícula regular**, no con baricéntricas al azar (ver §5.1). Excepción:
+   los materiales listados en `scatter` (hoy los rayos y la llama del logo,
+   en `riego` las gotas, el metal torneado y los tallos, y `hogar` entera)
+   se reparten con `even_surface` — candidatos al azar por área raleados por
+   muestreo del punto más lejano: espaciado parejo sin filas —, con cuota
+   proporcional a su área para no cambiar la densidad. En cápsulas finas y
+   conos torneados los triángulos largos dan la vuelta a la pieza y las filas
+   de la retícula se leían como aros. `density` (< 1, hoy `riego` en 0.10 y
+   `hogar` en 0.30) hornea esa fracción de posiciones DISTINTAS y apila las partículas
+   sobrantes exactamente encima: el conteo `S·S` no cambia (el morph empareja
+   índices entre formas), pero en reposo se ven menos puntos, más separados.
+   Es para formas que se ven chicas en pantalla — en la caja de 310×280 de
+   Capacidades el riego mide ~300×100 px y con 16 384 posiciones los puntos
+   (~1.5 px) quedaban más juntos que su tamaño y se fundían en una imagen
+   plana. `visibleFrom` (dirección hacia la cámara en espacio Blender, hoy
+   sólo `hogar` con `[0, -1, 0]`) filtra los candidatos de `even_surface`:
+   descarta los de caras que miran hacia atrás y los tapados por otra parte
+   del modelo (rayo contra el BVH de la malla hacia la cámara). La nube no
+   tiene oclusión entre partículas, así que en una forma que se mira siempre
+   de frente lo de atrás se transparenta — en la casa (el ícono extruido), la
+   cara de atrás emborronaba el borde del hueco de la puerta. Opcionalmente
    empuja hacia adentro (`shell`) para dar volumen; hoy en `0` para todas las
    formas.
+2b. **Nivel de animación** (canal `w`, ver §7 "Puntero y llama"): las
+   partículas de materiales `animate` reciben nivel 4; con `animateRamp`
+   (`ramp_levels`, sólo el logo) el nivel sale de su alto dentro de esa región
+   — 0 desde arriba hasta `from` (0.3), y de ahí sube con curva de raíz hasta
+   4 en el punto más bajo. La llama del logo es la malla del GLB, muestreada
+   igual que el resto del modelo. (El 2026-09-14 se probó y se descartó una
+   llama procedural en volumen: el dueño la vio "desentonada con la forma de
+   los demás modelos".)
 3. **Detalle por partícula**: `sharp_edges` (aristas vivas, ≥28° entre
    normales o borde abierto) + `local_thickness` (rayo hacia adentro contra el
    BVH) dan, para cada punto muestreado, el menor de los dos, normalizado por
@@ -377,6 +430,12 @@ Por forma y LOD:
    sólidas vuelven a Y-up con `blender_to_yup()` (Blender `(x,y,z)` → glTF
    `(x, z, −y)`); sin esa vuelta el eje alto del asset queda en la profundidad
    de la escena y la Central se ve acostada en su caja.
+4b. **Inclinación** (`roll`, radianes, convención three — negativo = horario):
+   gira la forma ENTERA (todas sus fuentes, y sus normales) sobre el eje
+   de la vista, antes de normalizar, así el encuadre `[-1, 1]` sale del
+   contorno ya inclinado. El logo usa `-0.6` (la punta de la ampolleta hacia
+   la derecha, como en la imagen de referencia del dueño del proyecto). Va en
+   el horneado y no como pose de runtime para que el encuadre sea exacto.
 5. **Aplanado** (`flatten: true` — ninguna forma lo usa hoy; el logo lo tuvo
    hasta 2026-09-14 y pasó a volumen real): proyección PCA al plano de mejor
    ajuste con **la regla del "arriba" del asset** — la normal es el eje de
@@ -387,7 +446,7 @@ Por forma y LOD:
 6. **Normaliza** a `[-1, 1]` por el eje mayor (de ahí `maxDim = 2` en runtime).
 7. **Ordena por curva de Hilbert 3D** (Skilling; 8 bits en `lod2`, 6 en
    `mobile`) — aplicado a las posiciones y, en el mismo orden, a normales,
-   componente, color y canal de detalle. Es diseño, no optimización: vecinos
+   componente, color, canal de detalle y nivel de animación. Es diseño, no optimización: vecinos
    en A son vecinos en B, así el morph fluye en vez de explotar.
 8. **Pares** (`pairWith`): `nodo` y `nodo-explotado` comparten `rng`, así que
    comparten triángulos y baricéntricas; ambos se generan **sin** reorden
@@ -405,7 +464,8 @@ Por forma y LOD:
 Salida en `public/textures/particulas/`:
 
 - **`<forma>-positions-<lod>.bin`** — `Uint16Array` de `S·S·4` half-floats,
-  fila-mayor, `(x, y, z, seed)`. 128 KB (`lod2`, S=128) / 50 KB (`mobile`, S=80).
+  fila-mayor, `(x, y, z, w)` con `w = (nivel + semilla) / 2` — ver §7, "Puntero
+  y llama". 128 KB (`lod2`, S=128) / 50 KB (`mobile`, S=80).
 - **`<forma>-positions-<lod>.json`** — `{ shape, lod, size, count, bbox,
   sources, params, hasColor, links, linkCount, structure, generatedAt }`.
 - **`<forma>-params-<lod>.bin`** — `Uint8Array` RGBA, mismo índice de píxel
@@ -468,7 +528,11 @@ scroll sin mover después el puntero), carga de forma, crossfade de
 reduced-motion. `SceneTicker` renderiza mientras haya dirty y `graceMs` (1 s)
 después de la última marca. Con `scrub: true` (sin lerp numérico) ya no hay
 "asentamiento" de scrub que esperar — el `graceMs` cubre otras colas (curl
-apagándose, reveals) — así que en reposo real: 0 frames.
+apagándose, reveals). **Desde el 2026-09-14 ya no hay 0 frames en reposo
+mientras un modelo esté en pantalla**: la "vida" de las partículas (la
+respiración, ver "Vida en reposo" más abajo) pide frames seguidos. Con
+reduced-motion la vida se apaga y vuelve el reposo real: 0 frames
+(verificado: `registry.lastDirtyAt()` queda >3 s atrás con la escena quieta).
 
 **Registry / slots / proveedores de pose.** Una sección declara su caja:
 
@@ -486,25 +550,52 @@ cambia la forma horneada de esa caja). Desde el 2026-09-14 el Hero también es
 un slot sobre `.hero__anchor` (antes registraba un **proveedor de pose**,
 `registerPoseProvider('hero-display')`, con la matriz de la pantalla de la
 Central sólida; el mecanismo sigue en `registry` por si vuelve a hacer falta).
-Un slot puede declarar `parallax` (giro máximo en rad): ParticleCloud lo
-aplica sobre la pose con un yaw/pitch amortiguado por el puntero
-(`motion.parallax.damping`), que el origen de un viaje pierde y el destino
-gana con `t`. Los scrubs de tramo se montan en un componente propio
+**Parallax en todos los modelos** (desde 2026-09-14; antes sólo el Hero):
+ParticleCloud aplica sobre la pose de cada slot un yaw/pitch amortiguado por
+el puntero (`motion.parallax.amount` 0.22 rad de yaw, el pitch es la mitad;
+`motion.parallax.damping`), que el origen de un viaje pierde y el destino
+gana con `t`. Un slot puede pisar el giro con su propio `parallax` (0 lo
+apaga). Sólo con puntero fino y sin reduced-motion. Los scrubs de tramo se montan en un componente propio
 **después** de las secciones, para que todos los slots ya estén registrados.
 
 **Puntero y llama (2026-09-14).** Dos movimientos que no son función del
-scroll, ambos en el vertex shader y acotados: (1) el puntero empuja las
-partículas de cualquier modelo hacia afuera del cursor, en el plano de
-pantalla, con radio y empuje relativos al span del modelo
-(`cloudTokens.pointer`: 0.5 y 0.045 — muy sutil a propósito); la posición del
-puntero llega amortiguada desde ParticleCloud (`anchorToWorldXY` en z = 0) y
-sólo con puntero fino y sin reduced-motion. (2) Las partículas marcadas en el
-horneado (`animate` en `shapes.json`, la llama del logo) reciben un campo de
-curl que fluye en el tiempo más un parpadeo de tamaño (`cloudTokens.flame`);
-mientras una forma con esa marca está a la vista la nube pide frames seguidos
-(`registry.markDirty` por frame), así que el Hero sí renderiza continuo — es
-el único lugar. La marca viaja en el canal `w` de la textura de posiciones
-(`seed * .5 + flag * .5`; el shader lee `seed = fract(w * 2)`, `flag = step(.5, w)`).
+scroll, ambos en el vertex shader y acotados: (1) en un área chica alrededor
+del cursor (`cloudTokens.pointer.radius` 0.16 del span), las partículas de
+cualquier modelo se **levantan** un poco hacia la cámara (+Z, `lift` 0.08 del
+span), **crecen** (`grow` +35 % de tamaño de punto, que es lo que hace legible
+la elevación con la cámara a 10 unidades) y se **aclaran a blanco** (`white`
+0.9, en el fragment vía `vHighlight`). No hay desplazamiento en el plano de
+pantalla: la silueta no se deforma. Reemplaza al empuje radial anterior
+(2026-09-14, rechazado por el dueño: "no me gusta la deformación"). La
+posición del puntero llega amortiguada desde ParticleCloud
+(`anchorToWorldXY` en z = 0), sólo con puntero fino y sin reduced-motion. (2) Las partículas con **nivel de
+animación** horneado (0 quieta .. 4 máximo; la llama del logo, §6.3 paso 2b)
+**no se mueven: parpadean.** Cada una baja su alpha con un pulso ralo
+(`pow(.5 + .5·sin, 4)`: casi siempre encendida, se apaga de a ratos), a su
+propio ritmo por semilla (`cloudTokens.flame.blinkRate` 1.4 rad/s × 0.6..1.4,
+ciclos de ~3–7 s) y con profundidad `blink` (0.9) × nivel/4. El parpadeo va
+por `vFade`, así que también atenúa las líneas de red que tocan esas
+partículas. La llama queda sólida como el resto del modelo — antes se probó
+desplazarla con curl, y el dueño pidió dejarla como viene y que sólo
+parpadeen las partículas de abajo. (Un prendido/apagado completo de las puntas
+de las lenguas y las chispas se probó el 2026-09-14 y el dueño lo descartó.)
+Mientras una forma
+animada está a la vista la nube pide frames seguidos (`registry.markDirty`
+por frame). El
+nivel viaja en el canal `w` de la textura de posiciones: `w = (nivel +
+semilla) / 2`, el shader lee `seed = fract(w * 2)` y `nivel = floor(w * 2)`.
+La semilla se acota a 0.996 al hornear: en half float una semilla más cerca
+de 1 redondea al nivel siguiente.
+
+**Vida en reposo (2026-09-14).** Pedido del dueño ("darle vida a las
+partículas"). Queda sólo la **respiración**: `uSpread` suma
+`breatheAmp · sin(t · breatheFreq · 2π)` (1.2 %, ciclo de 5 s) a la
+respiración de tramo que ya existía, en TODA forma, en reposo y en tramo
+(`cloudTokens.life`). No toca el shader: `uSpread` ya abre y cierra las
+partículas alrededor del centro. Apagada con reduced-motion; mientras corre,
+la nube pide frames seguidos con el modelo visible. (Unos destellos
+aleatorios — partículas que se aclaraban con halo de a ratos — se probaron
+junto a la respiración y el dueño los descartó el mismo día.)
 
 **Scissor de corredor — la nube nunca dibuja sobre texto.** La capa está en
 z 5 (sobre el contenido, bajo el header en z 20): los fondos de sección son

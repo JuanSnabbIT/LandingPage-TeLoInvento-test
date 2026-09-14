@@ -1,0 +1,168 @@
+{
+  "exports": [
+    {
+      "file": "STL\\FRONT_BODY.stl",
+      "object": "FRONT_BODY",
+      "triangles": 2766,
+      "dimensions_mm": [
+        92.80000305175781,
+        158.66986083984375,
+        18.854320526123047
+      ],
+      "volume_mm3": 63085.433775194724,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 2104.094537643358,
+      "sha256": "fd2316d42734f206306bf8cfa7d5cd9a80d796df5561b72c16dcc8b05197621a"
+    },
+    {
+      "file": "STL\\REAR_BODY.stl",
+      "object": "REAR_BODY",
+      "triangles": 10256,
+      "dimensions_mm": [
+        92.80000305175781,
+        85.60311126708984,
+        152.43450927734375
+      ],
+      "volume_mm3": 106805.96222356928,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 7949.607439202853,
+      "sha256": "4bf307b1fd498fb2d3bc15d4681a84d47d1fcb08eece87db921e4e76d8cbe051"
+    },
+    {
+      "file": "PROBETAS\\01_BUTTON_OPENING.stl",
+      "object": "COUPON_BUTTON",
+      "triangles": 160,
+      "dimensions_mm": [
+        16.600000381469727,
+        15.0,
+        8.0
+      ],
+      "volume_mm3": 1097.6181794305637,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 0,
+      "sha256": "b2dc58f3bf608ba4126edaa89e48406e0269ac860353b5c6487c35c0edba3598"
+    },
+    {
+      "file": "PROBETAS\\02_M25_PILOTS.stl",
+      "object": "COUPON_M25",
+      "triangles": 780,
+      "dimensions_mm": [
+        42.0,
+        14.0,
+        8.399999618530273
+      ],
+      "volume_mm3": 4876.8611679429505,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 0,
+      "sha256": "4838b34397fb9ebf7f6dce42670290035efba4f3eabe5f31ac9cf7c4c1240618"
+    },
+    {
+      "file": "PROBETAS\\02_M3_PILOTS.stl",
+      "object": "COUPON_M3",
+      "triangles": 780,
+      "dimensions_mm": [
+        42.0,
+        14.0,
+        8.800000190734863
+      ],
+      "volume_mm3": 5080.202823686105,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 0,
+      "sha256": "fa1603f6b1ddf6b0d4089115f241c82bb74d9439f62e15f71de6dbe78c33746d"
+    },
+    {
+      "file": "PROBETAS\\03_GUIDE_FRONT_BODY.stl",
+      "object": "COUPON_GUIDE_FRONT_BODY",
+      "triangles": 60,
+      "dimensions_mm": [
+        4.400000095367432,
+        20.000003814697266,
+        4.999998092651367
+      ],
+      "volume_mm3": 331.9996623178023,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 0,
+      "sha256": "e7c9d2e039b16b8188ade7affef9efad5235d7a3885c88eefdb29f2dea557367"
+    },
+    {
+      "file": "PROBETAS\\03_GUIDE_REAR_BODY.stl",
+      "object": "COUPON_GUIDE_REAR_BODY",
+      "triangles": 68,
+      "dimensions_mm": [
+        3.6000001430511475,
+        20.00000762939453,
+        3.5000057220458984
+      ],
+      "volume_mm3": 173.10018914051258,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 10.200000503720572,
+      "sha256": "98ecf21f347f8c19aa20f8ae325446cea0d9dce55395c793aae15d0dd7c992e7"
+    },
+    {
+      "file": "PROBETAS\\04_M3_JOINT_FRONT_BODY.stl",
+      "object": "COUPON_M3_JOINT_FRONT_BODY",
+      "triangles": 484,
+      "dimensions_mm": [
+        13.0,
+        15.500000953674316,
+        14.920400619506836
+      ],
+      "volume_mm3": 1477.9243656651256,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 161.68820475554648,
+      "sha256": "acbc08a8b60e659405826ec5a60eaad15694c7e7f28bca362fd9134835ca748d"
+    },
+    {
+      "file": "PROBETAS\\04_M3_JOINT_REAR_BODY.stl",
+      "object": "COUPON_M3_JOINT_REAR_BODY",
+      "triangles": 1258,
+      "dimensions_mm": [
+        13.0,
+        14.237710952758789,
+        5.600001335144043
+      ],
+      "volume_mm3": 587.3737715835233,
+      "degenerate_triangles": 0,
+      "edge_count_errors_quantized": 0,
+      "support_candidate_area_mm2_excluding_bed": 21.077606778653657,
+      "sha256": "f93fec67e34b2f1b2e9bb71c743951ca54c9f1ce92644491d93147afbbf86805"
+    }
+  ],
+  "frozen_hardware": {
+    "PCB": "ff113b2f4ddc0281d922b008c1855c2fad0e0adc6445bca8e58a7c1abc52d020",
+    "SCREEN_FACE": "0869b33d35b0c9fbbe247b0f20ad96676426f251439bd565c2134f7ac460d39f",
+    "BTN_01": "5f56d2f724800cdbaec33dbc7d21ed20b3dd2d9cb0d4d7a887020997cb3410e2",
+    "BTN_02": "7c5b80bcd30dbc0b35148724c26dd8ad45ba380fcb4daf862145e44cfb352817",
+    "BTN_03": "25329219e1496e0d7bd8f43f48e8db0f68045ae41c323a33e097a87405f5e38e",
+    "USB_C_TOP_REF": "7e26886cbb4a40f50f2557e02281aa2f190780ea27d8ab7a44d1e44cd5b396d1"
+  },
+  "geometric_centroid_uniform_density_world_mm": [
+    42.4975700378418,
+    41.81664276123047,
+    -29.40154266357422
+  ],
+  "mass_and_loaded_stability": "PENDIENTE: masas del hardware, lastre y patas desconocidas",
+  "assembly_bounds_world_mm": [
+    [
+      -3.9,
+      88.9
+    ],
+    [
+      -15.4204006,
+      137.0140991
+    ],
+    [
+      -78.3654022,
+      11.6345997
+    ]
+  ],
+  "status": "PROTOTIPO CAD FINALIZADO; VALIDACION FISICA PENDIENTE"
+}

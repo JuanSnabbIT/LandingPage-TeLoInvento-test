@@ -240,6 +240,57 @@ def test_exclude_drops_the_mesh_before_measuring():
     assert (mx - mn)[1] < 2.0, f'el encuadre sigue incluyendo el disco: {list(mx - mn)}'
 
 
+def test_roll_tilts_the_top_to_the_right():
+    """`roll` negativo (convención three) inclina el "arriba" del asset hacia +X.
+
+    Es la inclinación del logo (`roll: -0.6`): la punta de la ampolleta hacia la
+    derecha y la llama abajo a la izquierda, como en la referencia del dueño.
+    """
+    pts = np.array([[0, 1, 0], [0, -1, 0], [0.3, 0, 0.2]], dtype=np.float32)
+    out = bp.roll_yup(pts, -0.6)
+    assert out[0, 0] > 0.5 and out[0, 1] > 0.7, f'la punta no fue arriba a la derecha: {out[0]}'
+    assert out[1, 0] < -0.5, f'la base no fue abajo a la izquierda: {out[1]}'
+    assert np.allclose(np.linalg.norm(out[:, :2], axis=1), np.linalg.norm(pts[:, :2], axis=1), atol=1e-6)
+    assert np.allclose(out[:, 2], pts[:, 2]), 'roll no debe tocar la profundidad'
+
+
+def test_ramp_levels_blink_grows_toward_the_bottom():
+    """La llama del logo: quieta cerca de la base, nivel creciente hacia la punta.
+
+    Sólo las partículas de `mask` (materiales `animate`) reciben nivel; el
+    resto del modelo queda en 0 aunque esté más abajo.
+    """
+    z = np.array([1.0, 0.8, 0.5, 0.2, 0.0, -5.0], dtype=np.float32)
+    mask = np.array([True, True, True, True, True, False])
+    lv = bp.ramp_levels(z, mask, 0.3)
+    assert lv.dtype == np.uint8
+    assert lv[0] == 0 and lv[1] == 0, f'arriba de `from` debe quedar quieta: {lv}'
+    assert list(lv[1:5]) == sorted(lv[1:5]), f'el nivel debe crecer hacia abajo: {lv}'
+    assert lv[4] == 4, f'la punta debe llegar a 4: {lv}'
+    assert lv[5] == 0, 'fuera de la máscara no se anima'
+
+
+def test_density_bakes_fewer_distinct_positions_but_full_count():
+    """`density` hornea menos posiciones DISTINTAS y apila el resto encima.
+
+    El conteo total no cambia (el morph empareja el índice i entre formas);
+    lo que baja es cuántos puntos distintos se ven en reposo.
+    """
+    import shutil, tempfile
+    cfg = json.load(open(bp.CFG_PATH, encoding='utf-8'))
+    out = tempfile.mkdtemp(prefix='bake-density-')
+    cfg = {**cfg, 'outDir': out}
+    try:
+        bp.build_shape('denso', {'sources': [{'file': 'assets-source/models/capacidades/microchip.glb'}], 'density': 0.25}, cfg, 'mobile', 32)
+        pos = np.fromfile(os.path.join(out, 'denso-positions-mobile.bin'), dtype=np.float16).reshape(-1, 4)
+        assert len(pos) == 32 * 32, f'el conteo total debe seguir siendo 1024, dio {len(pos)}'
+        distintas = len(np.unique(pos[:, :3], axis=0))
+        assert distintas <= 256, f'con density 0.25 deben quedar <= 256 posiciones distintas, dio {distintas}'
+        assert distintas > 200, f'demasiadas posiciones colapsadas: {distintas}'
+    finally:
+        shutil.rmtree(out, ignore_errors=True)
+
+
 def test_pitch_stands_a_flat_plate_upright():
     """`pitch` endereza una pieza que el modelador dejo acostada en XY.
 

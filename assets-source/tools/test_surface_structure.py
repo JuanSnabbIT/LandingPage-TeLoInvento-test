@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from surface_structure import lattice_surface, surface_links
+from surface_structure import lattice_surface, surface_links, even_surface
 
 
 class SurfaceStructureTests(unittest.TestCase):
@@ -19,6 +19,33 @@ class SurfaceStructureTests(unittest.TestCase):
         areas = np.array([100.] + [.1]*1000)
         _, faces = lattice_surface(tris, areas, 200)
         self.assertEqual(np.count_nonzero(faces > 0), 100)
+
+    def test_even_surface_spacing_beats_random_and_is_deterministic(self):
+        # Una cinta larga y fina partida en triángulos largos: el caso de los rayos.
+        tris = np.array([[[x,0,0],[x+1,0,0],[x,.2,0]] for x in range(10)] +
+                        [[[x+1,0,0],[x+1,.2,0],[x,.2,0]] for x in range(10)], dtype=float)
+        areas = np.full(len(tris), .1)
+        p, faces = even_surface(tris, areas, 300, np.random.RandomState(5))
+        q, _ = even_surface(tris, areas, 300, np.random.RandomState(5))
+        self.assertEqual(len(p), 300)
+        np.testing.assert_array_equal(p, q)
+        self.assertTrue(np.all(faces < len(tris)))
+        def nearest(pts):
+            d = np.linalg.norm(pts[:, None] - pts[None], axis=-1); np.fill_diagonal(d, np.inf)
+            return d.min(axis=1)
+        rng = np.random.RandomState(5)
+        idx = rng.randint(0, len(tris), 300); r1 = np.sqrt(rng.rand(300)); r2 = rng.rand(300)
+        rand = (1-r1)[:,None]*tris[idx,0] + (r1*(1-r2))[:,None]*tris[idx,1] + (r1*r2)[:,None]*tris[idx,2]
+        # Espaciado parejo: la vecina más cercana nunca cae casi encima.
+        self.assertGreater(nearest(p).min(), 3 * nearest(rand).min())
+        self.assertLess(nearest(p).std() / nearest(p).mean(), nearest(rand).std() / nearest(rand).mean())
+
+    def test_even_surface_accept_filters_candidates_but_keeps_count(self):
+        tris = np.array([[[0,0,0],[1,0,0],[0,1,0]], [[1,0,0],[1,1,0],[0,1,0]]], dtype=float)
+        p, _ = even_surface(tris, np.array([.5, .5]), 150, np.random.RandomState(2),
+                            accept=lambda pts, idx: pts[:, 0] < 0.5)
+        self.assertEqual(len(p), 150)
+        self.assertTrue(np.all(p[:, 0] < 0.5))
 
     def test_links_respect_components_distance_and_degree(self):
         points = np.array([[x,y,0] for x in range(6) for y in range(6)], dtype=float)

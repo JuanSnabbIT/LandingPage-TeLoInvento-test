@@ -7,16 +7,16 @@ import { useSceneSlot } from '../scene/useSceneSlot';
  * texto a la izquierda, la ampolleta del logo en partículas a la derecha.
  * `.hero__anchor` es el slot `hero-display` de la nube, como cualquier otra
  * caja de sección -- antes lo daba `HeroCentral` (la Central sólida con el
- * logo dentro de su pantalla), que ya no existe. `parallax`: giro leve con
- * el puntero (lo aplica ParticleCloud); el fuego del logo se anima solo
- * (partículas `TLI_Flame_*`, marcadas en el horneado).
+ * logo dentro de su pantalla), que ya no existe. Giro leve con el puntero
+ * como todos los modelos (`motion.parallax`, lo aplica ParticleCloud); las
+ * partículas de abajo de la llama parpadean (marcadas en el horneado).
  *
  * Sin scroll pin ni ScrollTrigger propio: la escena lee el rect de la caja
  * cada frame (src/scene/anchoring.ts) y el progreso lo maneja useTramoScrubs.
  */
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
-  useSceneSlot({ id: 'hero-display', anchorRef: ref, fit: 1.0, pose: 'frontal', surface: 'dark', parallax: 0.22 });
+  useSceneSlot({ id: 'hero-display', anchorRef: ref, fit: 1.0, pose: 'frontal', surface: 'dark' });
   return (
     <section className="hero dark">
       <div className="wrap hero__grid">

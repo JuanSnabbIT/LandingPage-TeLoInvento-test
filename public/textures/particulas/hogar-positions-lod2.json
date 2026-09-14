@@ -5,24 +5,24 @@
   "count": 16384,
   "bbox": {
     "min": [
-      -0.7431490421295166,
-      0.0,
-      -0.574999988079071
+      -0.9140995144844055,
+      7.72649855207419e-06,
+      -0.20139528810977936
     ],
     "max": [
-      0.8950000405311584,
-      2.144584894180298,
-      0.6200000047683716
+      0.9047810435295105,
+      2.3488643169403076,
+      0.42389488220214844
     ]
   },
   "sources": [
     "assets-source/models/hogar/hogar.glb"
   ],
-  "generatedAt": "2026-09-14T15:44:01.071935+00:00",
+  "generatedAt": "2026-09-14T18:32:18.590679+00:00",
   "params": "hogar-params-lod2.bin",
   "hasColor": true,
   "animated": false,
   "links": "hogar-links-lod2.bin",
-  "linkCount": 32253,
+  "linkCount": 32413,
   "structure": "surface-lattice-v1"
 }

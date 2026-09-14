@@ -9,18 +9,38 @@
   margin: 0 0 16px;
   max-width: 20ch;
 }
+/* Dos mitades (2026-09-14): título y bajada a la izquierda, carrusel a la derecha. */
+.capacidades .grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+}
 .capacidades p.lead {
   color: var(--ink-dim);
   font-size: 16px;
   line-height: 1.6;
   max-width: 52ch;
-  margin: 0 0 clamp(32px, 5vw, 52px);
+  margin: 0;
+}
+.capacidades__showcase {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .capacidades .grid {
+    grid-template-columns: 1fr;
+    gap: clamp(32px, 5vw, 52px);
+  }
 }
 /*
- * Carrusel (rediseño 2026-09-14): una tarjeta a la vez, flechas a los
- * costados. El modelo 3D vive en `.capacidades__stage`, dentro de la
- * tarjeta activa -- así el slot de la nube (`useSceneSlot`) siempre apunta
- * al mismo elemento del DOM sin importar cuál tarjeta esté activa.
+ * Carrusel: una tarjeta a la vez. `.capacidades__viewport` es la ventana;
+ * `.capacidades__stage` (la caja del modelo 3D) es un marcador fijo sobre
+ * ella, encima del hueco que cada tarjeta reserva arriba
+ * (`.capacidades__stage-space`) -- así el slot de la nube (`useSceneSlot`)
+ * siempre apunta al mismo elemento y el modelo queda quieto mientras las
+ * tarjetas cambian. Teléfono: tarjetas apiladas en la misma celda (mide lo
+ * de la más alta, la de Hogar con su formulario) y flechas. Desktop: carril
+ * horizontal que desliza el scroll (Capacidades.tsx), sin flechas.
  */
 .capacidades__carousel {
   display: flex;
@@ -29,6 +49,14 @@
   gap: 18px;
   max-width: 480px;
   margin: 0 auto;
+}
+.capacidades__viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.capacidades__track {
+  display: grid;
 }
 .capacidades__nav {
   flex: none;
@@ -53,40 +81,73 @@
   color: var(--blue);
 }
 .capacidades__card {
+  grid-area: 1 / 1;
   position: relative;
-  flex: 1 1 auto;
   min-width: 0;
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 26px;
   text-align: center;
 }
-/* Slot for the 3D stage (T20/T21) -- hidden unless the scene is live; the transparent/floor-glow treatment lives in src/styles/scene.css. */
-.capacidades__stage {
+.capacidades__card:not(.is-active) {
+  visibility: hidden;
+}
+/*
+ * Caja de la escena (T20/T21) -- oculta salvo con la escena viva; el
+ * tratamiento transparente y el brillo de piso viven en src/styles/scene.css.
+ * Absoluta sobre la ventana, a la altura del hueco de la tarjeta: arriba y a
+ * los costados, el padding (26) + el borde (1) de la tarjeta.
+ */
+.capacidades__stage,
+.capacidades__stage-space {
   height: 280px;
-  margin: 0 0 18px;
   display: none;
 }
-html.scene-3d .capacidades__stage {
+html.scene-3d .capacidades__viewport > .capacidades__stage {
   display: block;
+  position: absolute;
+  top: 27px;
+  left: 27px;
+  right: 27px;
+  z-index: 1;
+  pointer-events: none;
+}
+html.scene-3d .capacidades__stage-space {
+  display: block;
+  margin: 0 0 18px;
 }
 @media (max-width: 900px) {
-  .capacidades__stage {
+  .capacidades__stage,
+  .capacidades__stage-space {
     height: 180px;
   }
 }
-/* Los tres textos apilados en la misma celda: la tarjeta mide lo de la más alta y no cambia de tamaño al cambiar de set. */
 .capacidades__body {
-  display: grid;
-}
-.capacidades__text {
-  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.capacidades__text:not(.is-active) {
-  visibility: hidden;
+/* Desktop: carril horizontal dentro de una ventana del ancho de una tarjeta; lo desliza el scroll. */
+@media (min-width: 901px) {
+  .capacidades__nav {
+    display: none;
+  }
+  .capacidades__viewport {
+    flex: none;
+    width: min(100%, 380px);
+    overflow: hidden;
+  }
+  .capacidades__track {
+    display: flex;
+    gap: 24px;
+  }
+  .capacidades__card {
+    flex: 0 0 100%;
+  }
+  .capacidades__card:not(.is-active) {
+    visibility: visible;
+  }
 }
 .capacidades__card .icon {
   width: 42px;
@@ -209,10 +270,17 @@ html.scene-3d .capacidades__card .icon {
     flex-wrap: wrap;
     gap: 14px;
   }
-  .capacidades__card {
+  .capacidades__viewport {
     flex: 1 1 100%;
     order: -1;
+  }
+  .capacidades__card {
     padding: 20px;
+  }
+  html.scene-3d .capacidades__viewport > .capacidades__stage {
+    top: 21px;
+    left: 21px;
+    right: 21px;
   }
   .capacidades__dots {
     margin-top: 14px;

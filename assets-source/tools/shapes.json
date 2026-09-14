@@ -10,14 +10,25 @@
   "outDir": "public/textures/particulas",
   "shapes": {
     "logo": {
+      "_comment": "`roll` inclina la forma entera sobre el eje de la vista (radianes, convención three: negativo = horario), la punta de la ampolleta hacia la derecha como en la referencia del dueño del proyecto (2026-09-14).",
       "sources": [
         {
           "file": "assets-source/models/hero-central/logo-lod1.glb"
         }
       ],
       "flatten": false,
-      "_animate": "Partículas que el shader anima solas (turbulencia + parpadeo): la llama del logo. Se marca por material en el canal w de la textura de posiciones.",
+      "roll": -0.6,
+      "_animate": "La llama es la malla del GLB, muestreada igual que el resto (sólida, sin moverse). Sus partículas parpadean en el shader: `animateRamp.from` es la fracción del alto de la llama, desde la base, donde empieza el parpadeo; de ahí crece hasta la punta. El nivel viaja en el canal w.",
       "animate": [
+        "TLI_Flame_Core",
+        "TLI_Flame_Outer"
+      ],
+      "animateRamp": {
+        "from": 0.3
+      },
+      "_scatter": "Materiales que se muestrean con espaciado parejo (even_surface) en vez de la retícula: en las cápsulas de los rayos y el cono de la llama las filas de la retícula se veían como aros.",
+      "scatter": [
+        "TLI_Yellow",
         "TLI_Flame_Core",
         "TLI_Flame_Outer"
       ],
@@ -147,6 +158,14 @@
           ]
         }
       ],
+      "_density": "Fracción de posiciones distintas: en la caja chica de Capacidades 16 384 puntos se fundían en una mancha plana. Las partículas sobrantes se apilan sobre las muestreadas.",
+      "density": 0.1,
+      "_scatter": "Espaciado parejo (even_surface) donde la retícula dibujaba aros o franjas: las gotas (esferas), el embudo y vástago torneados y los tallos. Las hojas se leen bien con la retícula.",
+      "scatter": [
+        "Riego_Agua",
+        "Riego_Metal",
+        "Riego_Tallo"
+      ],
       "colors": {
         "Riego_Metal": "#9AA7B8",
         "Riego_Hoja": "#4FA96A",
@@ -186,20 +205,22 @@
       }
     },
     "hogar": {
-      "_comment": "Placeholder procedural (assets-source/models/hogar/README.md). Casa_Senal reusa el color de WiFi_Signal -- misma idea de conectividad que la forma 'wifi'.",
+      "_comment": "Ícono de casa extruido (assets-source/models/hogar/README.md), copia de la referencia del dueño: silueta de un solo color con chimenea y la puerta como hueco, mismo tratamiento que 'wifi'. `yaw` la gira un poco para que se lea el grosor (la tarjeta usa pose frontal). `scatter`: los biseles dejan triángulos largos donde la retícula dibujaría aros.",
       "sources": [
         {
-          "file": "assets-source/models/hogar/hogar.glb"
+          "file": "assets-source/models/hogar/hogar.glb",
+          "yaw": -0.3
         }
       ],
+      "_visibleFrom": "Sólo se hornean los puntos que ve la cámara (hacia -Y en Blender): sin oclusión entre partículas, la cara de atrás se transparentaba y emborronaba el borde del hueco de la puerta.",
+      "visibleFrom": [0, -1, 0],
+      "_density": "Toda la forma cae en la cara de frente (visibleFrom): con 16 384 posiciones distintas se fundía en una imagen plana.",
+      "density": 0.3,
+      "scatter": [
+        "Casa"
+      ],
       "colors": {
-        "Casa_Muro": "#C9CEDA",
-        "Casa_Techo": "#5479E1",
-        "Casa_Puerta": "#3A4250",
-        "Casa_Ventana": "#5FC8E8",
-        "Casa_Chimenea": "#8B95A6",
-        "Casa_Antena": "#58677E",
-        "Casa_Senal": "#58CCD9"
+        "Casa": "#29A8E6"
       }
     },
     "wifi": {

@@ -1,0 +1,439 @@
+{
+  "source": "C:\\LandingPage-TeLoInvento\\IoT_Enclosure_V1_CP01.blend",
+  "frozen_before": {
+    "PCB": "ff113b2f4ddc0281d922b008c1855c2fad0e0adc6445bca8e58a7c1abc52d020",
+    "SCREEN_FACE": "0869b33d35b0c9fbbe247b0f20ad96676426f251439bd565c2134f7ac460d39f",
+    "BTN_01": "5f56d2f724800cdbaec33dbc7d21ed20b3dd2d9cb0d4d7a887020997cb3410e2",
+    "BTN_02": "7c5b80bcd30dbc0b35148724c26dd8ad45ba380fcb4daf862145e44cfb352817",
+    "BTN_03": "25329219e1496e0d7bd8f43f48e8db0f68045ae41c323a33e097a87405f5e38e",
+    "USB_C_TOP_REF": "7e26886cbb4a40f50f2557e02281aa2f190780ea27d8ab7a44d1e44cd5b396d1"
+  },
+  "checkpoints": [
+    {
+      "stage": "CP01_baseline",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 257,
+          "faces": 530,
+          "volume_mm3": 56719.60543820858,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -5.820400238037109,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 1380,
+          "faces": 2756,
+          "volume_mm3": 87433.5262460789,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -5.820400238037109,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              6.284818649291992
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "stage": "CP02_pcb_pilots",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 257,
+          "faces": 530,
+          "volume_mm3": 56719.60543820858,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -5.820400238037109,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 1907,
+          "faces": 3012,
+          "volume_mm3": 87350.53322909008,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -5.820400238037109,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              6.284818649291992
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "stage": "CP03_base_extension",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 378,
+          "faces": 583,
+          "volume_mm3": 59462.2740995158,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 2141,
+          "faces": 3120,
+          "volume_mm3": 104796.84118595628,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              7.237711429595947
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "stage": "CP04_bottom_fasteners",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 1038,
+          "faces": 921,
+          "volume_mm3": 63408.4412618373,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 3811,
+          "faces": 3972,
+          "volume_mm3": 104185.0953209948,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              7.237711429595947
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "stage": "CP05_feet_ballast_usb",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 1038,
+          "faces": 921,
+          "volume_mm3": 63408.4412618373,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 4862,
+          "faces": 4510,
+          "volume_mm3": 106462.45959491532,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              7.237711429595947
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "stage": "CP06_mechanical",
+      "metrics": {
+        "FRONT_BODY": {
+          "vertices": 1038,
+          "faces": 921,
+          "volume_mm3": 63408.4412618373,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -33.60697937011719,
+              11.634599685668945
+            ]
+          ]
+        },
+        "REAR_BODY": {
+          "vertices": 4862,
+          "faces": 4510,
+          "volume_mm3": 106462.45959491532,
+          "nonmanifold_edges": 0,
+          "components": 1,
+          "bounds": [
+            [
+              -3.9000000953674316,
+              88.9000015258789
+            ],
+            [
+              -15.420400619506836,
+              137.01409912109375
+            ],
+            [
+              -78.36540222167969,
+              7.237711429595947
+            ]
+          ]
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "units": "mm",
+    "wall": {
+      "value": 2.4,
+      "status": "APROBADO"
+    },
+    "reinforcement": {
+      "value": 3.2,
+      "status": "APROBADO"
+    },
+    "pcb_pilot_diameter": {
+      "value": 2.1,
+      "status": "INICIAL"
+    },
+    "pcb_pilot_depth": {
+      "value": 6.0,
+      "status": "INICIAL"
+    },
+    "m3_pilot_diameter": {
+      "value": 2.5,
+      "status": "INICIAL"
+    },
+    "m3_pilot_depth": {
+      "value": 6.4,
+      "status": "INICIAL"
+    },
+    "m3_clearance_diameter": {
+      "value": 3.4,
+      "status": "INICIAL"
+    },
+    "m3_head_recess_diameter": {
+      "value": 6.2,
+      "status": "INICIAL"
+    },
+    "m3_head_recess_depth": {
+      "value": 3.2,
+      "status": "INICIAL"
+    },
+    "m3_screw_length": {
+      "value": 8.0,
+      "status": "INICIAL"
+    },
+    "pcb_screw_length": {
+      "value": 6.0,
+      "status": "INICIAL"
+    },
+    "base_extension": {
+      "value": 9.6,
+      "status": "INICIAL",
+      "reason": "Espacio inferior para rosca M3, apoyo de cabeza y extraccion de lenguetas bajo el perimetro PCB; reserva de lastre baja."
+    },
+    "foot_diameter": {
+      "value": 15.0,
+      "status": "APROBADO"
+    },
+    "foot_depth": {
+      "value": 1.2,
+      "status": "INICIAL"
+    },
+    "assembly_clearance": {
+      "value": 0.3,
+      "status": "INICIAL"
+    },
+    "rear_usb_width": {
+      "value": 9.6,
+      "status": "INICIAL"
+    },
+    "rear_usb_height": {
+      "value": 3.6,
+      "status": "INICIAL"
+    },
+    "logo_relief": {
+      "value": 1.2,
+      "status": "INICIAL"
+    },
+    "logo_text": {
+      "value": "IoT",
+      "status": "INICIAL",
+      "reason": "Marca tipografica provisional; no se suministro arte de marca."
+    }
+  },
+  "layout": {
+    "floor_world_y": -15.420400238037109,
+    "seat_world_y": -9.82040023803711,
+    "m3_centres_world_xz": [
+      [
+        10,
+        -1.0
+      ],
+      [
+        32,
+        -1.0
+      ],
+      [
+        54,
+        -1.0
+      ],
+      [
+        76,
+        -1.0
+      ]
+    ],
+    "feet_world_xz": [
+      [
+        8,
+        -66
+      ],
+      [
+        8,
+        -17
+      ],
+      [
+        77,
+        -66
+      ],
+      [
+        77,
+        -17
+      ]
+    ],
+    "ballast_free_x": [
+      22.2,
+      62.8
+    ],
+    "ballast_free_z": [
+      -70,
+      -32
+    ],
+    "ballast_floor_y": -13.020400238037109,
+    "ballast_rail_top_y": -9.82040023803711
+  },
+  "frozen_after": {
+    "PCB": "ff113b2f4ddc0281d922b008c1855c2fad0e0adc6445bca8e58a7c1abc52d020",
+    "SCREEN_FACE": "0869b33d35b0c9fbbe247b0f20ad96676426f251439bd565c2134f7ac460d39f",
+    "BTN_01": "5f56d2f724800cdbaec33dbc7d21ed20b3dd2d9cb0d4d7a887020997cb3410e2",
+    "BTN_02": "7c5b80bcd30dbc0b35148724c26dd8ad45ba380fcb4daf862145e44cfb352817",
+    "BTN_03": "25329219e1496e0d7bd8f43f48e8db0f68045ae41c323a33e097a87405f5e38e",
+    "USB_C_TOP_REF": "7e26886cbb4a40f50f2557e02281aa2f190780ea27d8ab7a44d1e44cd5b396d1"
+  },
+  "intersections": {
+    "halves_mm3": 0.0001704515079516966,
+    "front_pcb_mm3": 0.0,
+    "rear_pcb_mm3": 6.365849571137474e-06
+  }
+}

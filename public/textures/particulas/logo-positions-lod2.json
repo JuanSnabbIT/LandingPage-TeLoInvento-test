@@ -5,24 +5,24 @@
   "count": 16384,
   "bbox": {
     "min": [
-      -1.204237461090088,
-      -2.9175760746002197,
+      -1.6912223100662231,
+      -2.425708770751953,
       -0.7293874025344849
     ],
     "max": [
-      1.202499270439148,
-      2.321901321411133,
+      1.8375846147537231,
+      2.112633466720581,
       0.7293881177902222
     ]
   },
   "sources": [
     "assets-source/models/hero-central/logo-lod1.glb"
   ],
-  "generatedAt": "2026-09-14T15:43:24.211250+00:00",
+  "generatedAt": "2026-09-14T20:02:05.488590+00:00",
   "params": "logo-params-lod2.bin",
   "hasColor": true,
   "animated": true,
   "links": "logo-links-lod2.bin",
-  "linkCount": 32048,
+  "linkCount": 32056,
   "structure": "surface-lattice-v1"
 }

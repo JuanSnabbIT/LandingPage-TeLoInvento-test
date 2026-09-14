@@ -5,7 +5,7 @@ export const cloudFrag = /* glsl */ `
   uniform int uProtectedCount;
   uniform vec4 uProtected[24];
   in vec3 vColor;
-  in float vTint, vFade, vNetwork;
+  in float vTint, vFade, vNetwork, vHighlight;
   out vec4 fragColor;
   vec3 displayColor(vec3 c) {
     return mix(12.92 * c, 1.055 * pow(max(c, vec3(0.)), vec3(1./2.4)) - .055, step(vec3(.0031308), c));
@@ -17,6 +17,7 @@ export const cloudFrag = /* glsl */ `
       if (gl_FragCoord.x >= box.x && gl_FragCoord.x <= box.z && gl_FragCoord.y >= box.y && gl_FragCoord.y <= box.w) discard;
     }
     vec3 c = mix(mix(uColorProdDark, uColorProdLight, uSurface), vColor, vTint);
+    c = mix(c, vec3(1.), vHighlight);   // bajo el cursor: hacia blanco
     float alpha = uAlpha * mix(uAlphaDark, uAlphaLight, uSurface) * vFade;
     #ifdef SURFACE_LINES
       alpha *= vNetwork * mix(.40, .30, uSurface);
