@@ -1,0 +1,27 @@
+{
+  "shape": "seguridad",
+  "lod": "mobile",
+  "size": 80,
+  "count": 6400,
+  "bbox": {
+    "min": [
+      -0.9998275637626648,
+      -1.5335396528244019,
+      -0.0999617874622345
+    ],
+    "max": [
+      0.9998275637626648,
+      1.2699143886566162,
+      0.22641998529434204
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/seguridad.glb"
+  ],
+  "generatedAt": "2026-09-14T14:46:41.695305+00:00",
+  "params": "seguridad-params-mobile.bin",
+  "hasColor": true,
+  "links": "seguridad-links-mobile.bin",
+  "linkCount": 12412,
+  "structure": "surface-lattice-v1"
+}

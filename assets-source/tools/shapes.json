@@ -132,56 +132,69 @@
         "Mat_Cover_Transparent": "#5FC8E8"
       }
     },
-    "capacidades": {
-      "_comment": "Una pieza por tarjeta de la seccion, en el mismo orden: Set de Riego, Set de Seguridad Perimetral, Plataforma Central.",
+    "riego": {
+      "_comment": "Antes una de las 3 piezas de la fila 'capacidades'; ahora forma propia a pantalla completa para el carrusel de Capacidades (tarjeta Set de Riego).",
       "sources": [
         {
           "file": "assets-source/models/capacidades/riego.glb",
-          "offset": [
-            -0.35,
-            0,
-            0
-          ],
-          "scale": 0.42,
           "exclude": [
             "Suelo_Disco"
           ]
-        },
-        {
-          "file": "assets-source/models/capacidades/seguridad.glb",
-          "offset": [
-            0,
-            0,
-            0
-          ],
-          "scale": 0.32
-        },
-        {
-          "file": "assets-source/models/capacidades/microchip.glb",
-          "offset": [
-            0.35,
-            0,
-            0
-          ],
-          "scale": 0.32,
-          "pitch": 1.5708
         }
       ],
       "colors": {
         "Riego_Metal": "#9AA7B8",
         "Riego_Hoja": "#4FA96A",
         "Riego_Tallo": "#3C8452",
-        "Riego_Agua": "#5FC8E8",
+        "Riego_Agua": "#5FC8E8"
+      }
+    },
+    "seguridad": {
+      "_comment": "Antes una de las 3 piezas de la fila 'capacidades'; ahora forma propia a pantalla completa para el carrusel de Capacidades (tarjeta Set de Seguridad Perimetral).",
+      "sources": [
+        {
+          "file": "assets-source/models/capacidades/seguridad.glb"
+        }
+      ],
+      "colors": {
         "Baliza_Base": "#5A6472",
         "Baliza_Rojo": "#E2574C",
         "Baliza_Rayo": "#FFC83D",
         "Azul_Escudo": "#5479E1",
-        "Metal_Plata": "#A9B6C6",
+        "Metal_Plata": "#A9B6C6"
+      }
+    },
+    "microchip": {
+      "_comment": "Antes la pieza 'Plataforma Central' de la fila 'capacidades'; ahora forma propia, reubicada en Contacto. `pitch` endereza la placa (queda acostada en el .glb origen).",
+      "sources": [
+        {
+          "file": "assets-source/models/capacidades/microchip.glb",
+          "pitch": 1.5708
+        }
+      ],
+      "colors": {
         "Chip_Verde": "#3E9A6E",
         "Chip_Amarillo": "#E8B84B",
         "Chip_Cian": "#5FD0E8",
         "Chip_Oscuro": "#2B3444",
         "Chip_Pin": "#B0BAC8"
+      }
+    },
+    "hogar": {
+      "_comment": "Placeholder procedural (assets-source/models/hogar/README.md). Casa_Senal reusa el color de WiFi_Signal -- misma idea de conectividad que la forma 'wifi'.",
+      "sources": [
+        {
+          "file": "assets-source/models/hogar/hogar.glb"
+        }
+      ],
+      "colors": {
+        "Casa_Muro": "#C9CEDA",
+        "Casa_Techo": "#5479E1",
+        "Casa_Puerta": "#3A4250",
+        "Casa_Ventana": "#5FC8E8",
+        "Casa_Chimenea": "#8B95A6",
+        "Casa_Antena": "#58677E",
+        "Casa_Senal": "#58CCD9"
       }
     },
     "wifi": {

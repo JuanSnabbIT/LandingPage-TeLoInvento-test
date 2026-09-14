@@ -1,0 +1,27 @@
+{
+  "shape": "hogar",
+  "lod": "lod2",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -0.7431490421295166,
+      0.0,
+      -0.574999988079071
+    ],
+    "max": [
+      0.8950000405311584,
+      2.144584894180298,
+      0.6200000047683716
+    ]
+  },
+  "sources": [
+    "assets-source/models/hogar/hogar.glb"
+  ],
+  "generatedAt": "2026-09-14T14:27:04.022309+00:00",
+  "params": "hogar-params-lod2.bin",
+  "hasColor": true,
+  "links": "hogar-links-lod2.bin",
+  "linkCount": 32253,
+  "structure": "surface-lattice-v1"
+}

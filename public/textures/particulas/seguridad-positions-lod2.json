@@ -1,0 +1,27 @@
+{
+  "shape": "seguridad",
+  "lod": "lod2",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -0.9998703598976135,
+      -1.5335397720336914,
+      -0.0999617874622345
+    ],
+    "max": [
+      0.9998489618301392,
+      1.2699713706970215,
+      0.22641998529434204
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/seguridad.glb"
+  ],
+  "generatedAt": "2026-09-14T14:46:35.853945+00:00",
+  "params": "seguridad-params-lod2.bin",
+  "hasColor": true,
+  "links": "seguridad-links-lod2.bin",
+  "linkCount": 32088,
+  "structure": "surface-lattice-v1"
+}

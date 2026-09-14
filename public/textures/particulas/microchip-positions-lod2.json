@@ -1,0 +1,27 @@
+{
+  "shape": "microchip",
+  "lod": "lod2",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -2.945000171661377,
+      -2.8535685539245605,
+      -0.4399401545524597
+    ],
+    "max": [
+      2.943638324737549,
+      3.0350699424743652,
+      0.43993446230888367
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/microchip.glb"
+  ],
+  "generatedAt": "2026-09-14T14:46:46.201800+00:00",
+  "params": "microchip-params-lod2.bin",
+  "hasColor": true,
+  "links": "microchip-links-lod2.bin",
+  "linkCount": 32431,
+  "structure": "surface-lattice-v1"
+}

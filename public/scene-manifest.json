@@ -1,48 +1,48 @@
 {
   "shapes": {
-    "capacidades": {
+    "hogar": {
       "lod2": {
-        "file": "/textures/particulas/capacidades-positions-lod2.bin",
+        "file": "/textures/particulas/hogar-positions-lod2.bin",
         "size": 128,
         "count": 16384,
         "bbox": {
           "min": [
-            -4.976600646972656,
-            -1.5569779872894287,
-            -0.21296478807926178
+            -0.7431490421295166,
+            0,
+            -0.574999988079071
           ],
           "max": [
-            4.543460845947266,
-            2.265831470489502,
-            0.2287367880344391
+            0.8950000405311584,
+            2.144584894180298,
+            0.6200000047683716
           ]
         },
-        "params": "/textures/particulas/capacidades-params-lod2.bin",
+        "params": "/textures/particulas/hogar-params-lod2.bin",
         "hasColor": true,
-        "links": "/textures/particulas/capacidades-links-lod2.bin",
-        "linkCount": 30070,
+        "links": "/textures/particulas/hogar-links-lod2.bin",
+        "linkCount": 32253,
         "structure": "surface-lattice-v1"
       },
       "mobile": {
-        "file": "/textures/particulas/capacidades-positions-mobile.bin",
+        "file": "/textures/particulas/hogar-positions-mobile.bin",
         "size": 80,
         "count": 6400,
         "bbox": {
           "min": [
-            -4.984755516052246,
-            -1.5569779872894287,
-            -0.22192694246768951
+            -0.73974609375,
+            0,
+            -0.574999988079071
           ],
           "max": [
-            4.541358947753906,
-            2.2704410552978516,
-            0.2289954423904419
+            0.8950000405311584,
+            2.135983467102051,
+            0.6200000047683716
           ]
         },
-        "params": "/textures/particulas/capacidades-params-mobile.bin",
+        "params": "/textures/particulas/hogar-params-mobile.bin",
         "hasColor": true,
-        "links": "/textures/particulas/capacidades-links-mobile.bin",
-        "linkCount": 11249,
+        "links": "/textures/particulas/hogar-links-mobile.bin",
+        "linkCount": 12482,
         "structure": "surface-lattice-v1"
       }
     },
@@ -89,6 +89,52 @@
         "hasColor": true,
         "links": "/textures/particulas/logo-links-mobile.bin",
         "linkCount": 12269,
+        "structure": "surface-lattice-v1"
+      }
+    },
+    "microchip": {
+      "lod2": {
+        "file": "/textures/particulas/microchip-positions-lod2.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -2.945000171661377,
+            -2.8535685539245605,
+            -0.4399401545524597
+          ],
+          "max": [
+            2.943638324737549,
+            3.0350699424743652,
+            0.43993446230888367
+          ]
+        },
+        "params": "/textures/particulas/microchip-params-lod2.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/microchip-links-lod2.bin",
+        "linkCount": 32431,
+        "structure": "surface-lattice-v1"
+      },
+      "mobile": {
+        "file": "/textures/particulas/microchip-positions-mobile.bin",
+        "size": 80,
+        "count": 6400,
+        "bbox": {
+          "min": [
+            -2.939296245574951,
+            -2.8508450984954834,
+            -0.43994009494781494
+          ],
+          "max": [
+            2.943638324737549,
+            3.0293664932250977,
+            0.43993422389030457
+          ]
+        },
+        "params": "/textures/particulas/microchip-params-mobile.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/microchip-links-mobile.bin",
+        "linkCount": 12192,
         "structure": "surface-lattice-v1"
       }
     },
@@ -181,6 +227,98 @@
         "hasColor": true,
         "links": "/textures/particulas/nodo-links-mobile.bin",
         "linkCount": 12205,
+        "structure": "surface-lattice-v1"
+      }
+    },
+    "riego": {
+      "lod2": {
+        "file": "/textures/particulas/riego-positions-lod2.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -4.45054292678833,
+            2.239274898840904e-8,
+            -0.5391674637794495
+          ],
+          "max": [
+            4.452022552490234,
+            3.1966185569763184,
+            0.5391679406166077
+          ]
+        },
+        "params": "/textures/particulas/riego-params-lod2.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/riego-links-lod2.bin",
+        "linkCount": 29541,
+        "structure": "surface-lattice-v1"
+      },
+      "mobile": {
+        "file": "/textures/particulas/riego-positions-mobile.bin",
+        "size": 80,
+        "count": 6400,
+        "bbox": {
+          "min": [
+            -4.449063301086426,
+            2.7994531137665035e-8,
+            -0.5383352637290955
+          ],
+          "max": [
+            4.453502178192139,
+            3.1947579383850098,
+            0.5383357405662537
+          ]
+        },
+        "params": "/textures/particulas/riego-params-mobile.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/riego-links-mobile.bin",
+        "linkCount": 8072,
+        "structure": "surface-lattice-v1"
+      }
+    },
+    "seguridad": {
+      "lod2": {
+        "file": "/textures/particulas/seguridad-positions-lod2.bin",
+        "size": 128,
+        "count": 16384,
+        "bbox": {
+          "min": [
+            -0.9998703598976135,
+            -1.5335397720336914,
+            -0.0999617874622345
+          ],
+          "max": [
+            0.9998489618301392,
+            1.2699713706970215,
+            0.22641998529434204
+          ]
+        },
+        "params": "/textures/particulas/seguridad-params-lod2.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/seguridad-links-lod2.bin",
+        "linkCount": 32088,
+        "structure": "surface-lattice-v1"
+      },
+      "mobile": {
+        "file": "/textures/particulas/seguridad-positions-mobile.bin",
+        "size": 80,
+        "count": 6400,
+        "bbox": {
+          "min": [
+            -0.9998275637626648,
+            -1.5335396528244019,
+            -0.0999617874622345
+          ],
+          "max": [
+            0.9998275637626648,
+            1.2699143886566162,
+            0.22641998529434204
+          ]
+        },
+        "params": "/textures/particulas/seguridad-params-mobile.bin",
+        "hasColor": true,
+        "links": "/textures/particulas/seguridad-links-mobile.bin",
+        "linkCount": 12412,
         "structure": "surface-lattice-v1"
       }
     },
@@ -291,5 +429,5 @@
     "medium": "lod2",
     "low": "mobile"
   },
-  "generatedAt": "2026-09-14T13:25:02.104Z"
+  "generatedAt": "2026-09-14T14:46:52.187Z"
 }

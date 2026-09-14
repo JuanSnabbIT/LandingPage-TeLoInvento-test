@@ -1,0 +1,27 @@
+{
+  "shape": "riego",
+  "lod": "lod2",
+  "size": 128,
+  "count": 16384,
+  "bbox": {
+    "min": [
+      -4.45054292678833,
+      2.239274898840904e-08,
+      -0.5391674637794495
+    ],
+    "max": [
+      4.452022552490234,
+      3.1966185569763184,
+      0.5391679406166077
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/riego.glb"
+  ],
+  "generatedAt": "2026-09-14T14:26:51.407974+00:00",
+  "params": "riego-params-lod2.bin",
+  "hasColor": true,
+  "links": "riego-links-lod2.bin",
+  "linkCount": 29541,
+  "structure": "surface-lattice-v1"
+}

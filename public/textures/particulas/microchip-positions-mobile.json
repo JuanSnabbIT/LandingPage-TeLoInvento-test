@@ -1,0 +1,27 @@
+{
+  "shape": "microchip",
+  "lod": "mobile",
+  "size": 80,
+  "count": 6400,
+  "bbox": {
+    "min": [
+      -2.939296245574951,
+      -2.8508450984954834,
+      -0.43994009494781494
+    ],
+    "max": [
+      2.943638324737549,
+      3.0293664932250977,
+      0.43993422389030457
+    ]
+  },
+  "sources": [
+    "assets-source/models/capacidades/microchip.glb"
+  ],
+  "generatedAt": "2026-09-14T14:46:50.922284+00:00",
+  "params": "microchip-params-mobile.bin",
+  "hasColor": true,
+  "links": "microchip-links-mobile.bin",
+  "linkCount": 12192,
+  "structure": "surface-lattice-v1"
+}
